@@ -28,11 +28,16 @@ set(PACKAGE_VERSION_PATCH 3)
 
 set(PACKAGE_VERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}.${PACKAGE_VERSION_PATCH}")
 
+list(APPEND CMAKE_MODULE_PATH $ENV{PANDORAPFA}/cmakemodules)
+
 # dependencies are declared like this
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(EDM4HEP)
 find_package(k4FWCore)
+find_package(PandoraSDK)
+find_package(LCContent)
 find_package(Gaudi)
+
 #---------------------------------------------------------------
 
 include(GNUInstallDirs)
