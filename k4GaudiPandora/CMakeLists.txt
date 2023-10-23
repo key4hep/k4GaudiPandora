@@ -17,7 +17,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ]]
 
-file(GLOB _plugin_sources src/components/*.cpp)
+file(GLOB _plugin_sources src/components/*.cpp )
+
+list(APPEND _plugin_sources
+# src/DDBFieldPlugin.cc
+# src/DDCaloDigi.cc
+# src/DDCaloHitCreator.cc
+# src/DDExternalClusteringAlgorithm.cc
+# src/DDGeometryCreator.cc
+ src/DDMCParticleCreator.cc
+# src/DDPandoraPFANewProcessor.cc
+# src/DDPfoCreator.cc
+# src/DDScintillatorPpdDigi.cc
+# src/DDSimpleMuonDigi.cc
+# src/DDTrackCreatorBase.cc
+# src/DDTrackCreatorCLIC.cc
+# src/DDTrackCreatorILD.cc
+ )
+
+
 gaudi_add_module(k4GaudiPandoraPlugins
                  SOURCES ${_plugin_sources}
                  LINK Gaudi::GaudiKernel
