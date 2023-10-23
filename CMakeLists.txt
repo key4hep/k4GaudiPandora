@@ -19,7 +19,7 @@ limitations under the License.
 CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
 
 
-project(k4ProjectTemplate)
+project(k4GaudiPandora)
 
 # please keep this layout for version setting, used by the automatic tagging script
 set(PACKAGE_VERSION_MAJOR 1)
@@ -47,6 +47,6 @@ endif()
 
 include(CTest)
 
-add_subdirectory(k4ProjectTemplate)
+add_subdirectory(k4GaudiPandora)
 
 include(cmake/CreateProjectConfig.cmake)
