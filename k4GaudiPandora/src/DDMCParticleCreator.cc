@@ -5,22 +5,28 @@
  * 
  *  $Log: $
  */
+#include "edm4hep/EventHeaderCollection.h"
+#include "edm4hep/MCParticle.h"
+#include "edm4hep/SimCalorimeterHit.h"
 
-#include "marlin/Global.h"
-#include "marlin/Processor.h"
+#include "Gaudi/Accumulators/RootHistogram.h"
+#include "Gaudi/Histograming/Sink/Utils.h"
 
-#include "EVENT/LCCollection.h"
-#include "EVENT/MCParticle.h"
-#include "EVENT/SimCalorimeterHit.h"
-
-#include "UTIL/LCRelationNavigator.h"
+#include "DD4hep/BitFieldCoder.h"
+#include "DD4hep/DD4hepUnits.h"
+#include "DD4hep/Detector.h"
 
 
 #include "DDCaloHitCreator.h"
 #include "DDMCParticleCreator.h"
 #include "DDTrackCreatorBase.h"
 
+#include <TFile.h>
+
 #include <cmath>
+#include <iostream>
+#include <random>
+#include <fmt/format.h>
 #include <limits>
 
 #include "DD4hep/Detector.h"
@@ -45,41 +51,43 @@ DDMCParticleCreator::~DDMCParticleCreator()
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent *const pLCEvent) const
+    
+pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const CollectionMaps &collectionMaps ) const
 {
     for (StringVector::const_iterator iter = m_settings.m_mcParticleCollections.begin(), iterEnd = m_settings.m_mcParticleCollections.end();
         iter != iterEnd; ++iter)
     {
-        try
+        if(collectionMaps.collectionMap_MC.find(*iter) == collectionMaps.collectionMap_MC.end()) continue;
+	try
         {
-            const EVENT::LCCollection *pMCParticleCollection = pLCEvent->getCollection(*iter);
-
-            for (int i = 0, iMax = pMCParticleCollection->getNumberOfElements(); i < iMax; ++i)
+            const std::vector<edm4hep::MCParticle>& pMCParticleCollection = (collectionMaps.collectionMap_MC.find(*iter))->second;
+	    std::cout<<"Do CreateMCParticles, collection:"<<(*iter)<<", size="<<pMCParticleCollection.size()<<std::endl;
+ 	     for (int im = 0; im < pMCParticleCollection.size(); im++)
             {
                 try
                 {
-                    EVENT::MCParticle *pMcParticle = dynamic_cast<MCParticle*>(pMCParticleCollection->getElementAt(i));
-
-                    if (NULL == pMcParticle)
-                        throw EVENT::Exception("Collection type mismatch");
-
+                    const edm4hep::MCParticle& pMcParticle = pMCParticleCollection.at(im);
                     PandoraApi::MCParticle::Parameters mcParticleParameters;
-                    mcParticleParameters.m_energy = pMcParticle->getEnergy();
-                    mcParticleParameters.m_particleId = pMcParticle->getPDG();
+                    mcParticleParameters.m_energy =   sqrt(pMcParticle.getMomentum()[0] * pMcParticle.getMomentum()[0] + pMcParticle.getMomentum()[1] * 			    pMcParticle.getMomentum()[1] + pMcParticle.getMomentum()[2] * pMcParticle.getMomentum()[2] + pMcParticle.getMass() * pMcParticle.getMass());
+                    mcParticleParameters.m_particleId = pMcParticle.getPDG();
                     mcParticleParameters.m_mcParticleType = pandora::MC_3D;
-                    mcParticleParameters.m_pParentAddress = pMcParticle;
-                    mcParticleParameters.m_momentum = pandora::CartesianVector(pMcParticle->getMomentum()[0], pMcParticle->getMomentum()[1],
-                        pMcParticle->getMomentum()[2]);
-                    mcParticleParameters.m_vertex = pandora::CartesianVector(pMcParticle->getVertex()[0], pMcParticle->getVertex()[1],
-                        pMcParticle->getVertex()[2]);
-                    mcParticleParameters.m_endpoint = pandora::CartesianVector(pMcParticle->getEndpoint()[0], pMcParticle->getEndpoint()[1],
-                        pMcParticle->getEndpoint()[2]);
+                    mcParticleParameters.m_pParentAddress = &pMcParticle;
 
-                    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::MCParticle::Create(m_pandora, mcParticleParameters));
+                    unsigned int p_id = pMcParticle.id();
+                    const edm4hep::MCParticle* p_mc = &pMcParticle;
+                    (*m_id_pMC_map) [p_id]   = p_mc;
+                    mcParticleParameters.m_momentum = pandora::CartesianVector(pMcParticle.getMomentum()[0], pMcParticle.getMomentum()[1],
+                        pMcParticle.getMomentum()[2]);
+                    mcParticleParameters.m_vertex = pandora::CartesianVector(pMcParticle.getVertex()[0], pMcParticle.getVertex()[1],
+                        pMcParticle.getVertex()[2]);
+                    mcParticleParameters.m_endpoint = pandora::CartesianVector(pMcParticle.getEndpoint()[0], pMcParticle.getEndpoint()[1],
+                        pMcParticle.getEndpoint()[2]);
+
+                    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::MCParticle::Create(*m_pPandora, mcParticleParameters));
 
                     // Create parent-daughter relationships
-                    for(MCParticleVec::const_iterator itDaughter = pMcParticle->getDaughters().begin(),
-                        itDaughterEnd = pMcParticle->getDaughters().end(); itDaughter != itDaughterEnd; ++itDaughter)
+                    for(std::vector<edm4hep::ConstMCParticle>::const_iterator itDaughter = pMcParticle.daughters_begin(),
+                        itDaughterEnd = pMcParticle.daughters_end(); itDaughter != itDaughterEnd; ++itDaughter)
                     {
                         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetMCParentDaughterRelationship(m_pandora,
                             pMcParticle, *itDaughter));
@@ -104,11 +112,8 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent 
     return pandora::STATUS_CODE_SUCCESS;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(const EVENT::LCEvent *const pLCEvent, const TrackVector &trackVector) const
-{
-    for (StringVector::const_iterator iter = m_settings.m_lcTrackRelationCollections.begin(), iterEnd = m_settings.m_lcTrackRelationCollections.end();
+for (StringVector::const_iterator iter = m_settings.m_lcTrackRelationCollections.begin(), iterEnd = m_settings.m_lcTrackRelationCollections.end();
          iter != iterEnd; ++iter)
     {
         try
