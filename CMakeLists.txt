@@ -37,6 +37,7 @@ find_package(k4FWCore)
 find_package(PandoraSDK)
 find_package(LCContent)
 find_package(Gaudi)
+find_package(DD4hep)
 
 #---------------------------------------------------------------
 
@@ -53,5 +54,6 @@ endif()
 include(CTest)
 
 add_subdirectory(k4GaudiPandora)
+add_subdirectory(DDSimpleMuon)
 
 include(cmake/CreateProjectConfig.cmake)
