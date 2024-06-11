@@ -1,24 +1,28 @@
-#ifndef DIGITIZER_DDCCALODIGI_H
-#define DIGITIZER_DDCCALODIGI_H 1
+#ifndef DDCCALODIGI_H
+#define DDCCALODIGI_H 1
 
-#include "marlin/Processor.h"
-#include <IMPL/CalorimeterHitImpl.h>
-#include <IMPL/LCFlagImpl.h>
+#include "Gaudi/Property.h"
+#include "GaudiAlg/Transformer.h"
+#include "edm4hep/SimCalorimeterHitCollection.h"
+#include "edm4hep/CalorimeterHitCollection.h"
+#include "edm4hep/EventHeaderCollection.h"
+#include "edm4hep/MCRecoCaloAssociationCollection.h"
+#include "k4FWCore/BaseClass.h"
+#include "k4Interface/IGeoSvc.h"
+#include "k4Interface/IUniqueIDGenSvc.h"
+
 #include "CalorimeterHitType.h"
-#include "lcio.h"
-#include <string>
-#include <vector>
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "DDScintillatorPpdDigi.h"
 #include "CLHEP/Random/MTwistEngine.h"
 
-using namespace lcio ;
-using namespace marlin ;
+#include <random>
+#include <string>
+#include <vector>
 
-const int MAX_LAYERS = 200;
-const int MAX_STAVES =  16;
+
 
 /** === DDCaloDigi Processor === <br>
  *  Simple calorimeter digitizer Processor. <br>
@@ -73,26 +77,123 @@ const int MAX_STAVES =  16;
  *  @author M. Thomson (DESY) <br>
  *  @version $Id$ <br>
  */
-class DDCaloDigi : public Processor {
+
+const int MAX_LAYERS = 200;
+const int MAX_STAVES =  16;
+
+using retType = std::tuple<
+    std::map<std::string, edm4hep::CalorimeterHitCollection>,
+    edm4hep::MCRecoCaloAssociationCollection>; //FIXME: Does this need to be a map as well???
+
+
+struct DDCaloDigi final
+  : k4FWCore :: MultiTransformer<
+  <retType>(const std::map<std::string, const edm4hep::SimCalorimeterHitCollection&>, 
+           const edm4hep::EventHeaderCollection&)> {
+  DDCaloDigi(const std::string& name, ISvcLocator* svcLoc);
+
+  StatusCode initialize() override;
+  StatusCode finalize() override;
+
+  std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::MCRecoCaloAssociationCollection> operator()
+  (const edm4hep::SimCalorimeterHitCollection& simCaloHits,
+   const edm4hep::EventHeaderCollection& headers) const override;
+
+
+   private:
+
   
- public:
+  Gaudi::Property<float> _thresholdEcal{this, "ECALThreshold", {5.0e-5}, "Threshold for ECAL Hits in GeV"};
+  Gaudi::Property<std::string> _unitThresholdEcal{this, "ECALThresholdUnit", {"GeV"}, "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
+  Gaudi::Property<float> _thresholdHcal{this, "HCALThreshold", {0.00004}, "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
+  Gaudi::Property<std::string> _unitThresholdHcal{this, "HCALThresholdUnit", {"GeV"}, "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
+  std::vector<int> ecalLayers;
+  ecalLayers.push_back(20);
+  ecalLayers.push_back(100);
+  Gaudi::Property<std::vector<int>> _ecalLayer{this, "ECALLayers", {ecalLayers}, "Index of ECal Layers"};
+  std::vector<int> hcalLayers;
+  hcalLayers.push_back(100);
+  Gaudi::Property<std::vector<int>> _hcalLayer{this, "ECALLayers", {hcalLayers}, "Index of HCal Layers"};
+  std::vector<float> calibrEcal;
+  calibrEcal.push_back(40.91);
+  calibrEcal.push_back(81.81);
+  Gaudi::Property<std::vector<float>> _calibrCoeffEcal{this, "CalibrECAL", {calibrEcal}, "Calibration coefficients for ECAL"};
+  std::vector<float> calibrHcalBarrel;
+  calibrHcalBarrel.push_back(0.);
+  Gaudi::Property<std::vector<float>> _calibrCoeffHcalBarrel{this, "CalibrHCALBarrel", {calibrHcalBarrel}, "Calibration coefficients for Barrel HCAL"};
+  std::vector<float> calibrHcalEndCap;
+  calibrHcalEndCap.push_back(0.);
+  Gaudi::Property<std::vector<float>> _calibrCoeffHcalEndCap{this, "CalibrHCALEndCap", {calibrHcalEndCap}, "Calibration coefficients for EndCap HCAL"};
+  std::vector<float> calibrHcalOther;
+  calibrHcalOther.push_back(0.);
+  Gaudi::Property<std::vector<float>> _calibrCoeffHcalOther{this, "CalibrHCALOther", {calibrHcalOther}, "Calibration coefficients for Other HCAL"};
+  Gaudi::Property<int> _digitalEcal{this, "IfDigitalEcal", {0}, "Digital Ecal"};
+  Gaudi::Property<int> _mapsEcalCorrection{this, "MapsEcalCorrection", {0}, "Ecal correction for theta dependency of calibration for MAPS"};
+  Gaudi::Property<int> _digitalHcal{this, "IfDigitalHcal", {0}, "Digital Hcal"};
+  Gaudi::Property<int> _ecalGapCorrection{this, "ECAconst float slop = 0.25; // (mm)LGapCorrection", {1}, "Correct for ECAL gaps"};
+  Gaudi::Property<int> _hcalGapCorrection{this, "HCALGapCorrection", {1}, "Correct for HCAL gaps"};
+  Gaudi::Property<float> _ecalEndcapCorrectionFactor{this, "ECALEndcapCorrectionFactor", {1.025}, "Energy correction for ECAL endcap"};
+  Gaudi::Property<float> _hcalEndcapCorrectionFactor{this, "HCALEndcapCorrectionFactor", {1.025}, "Energy correction for HCAL endcap"};
+  Gaudi::Property<float> _ecalGapCorrectionFactor{this, "ECALGapCorrectionFactor", {1.0}, "Factor applied to gap correction"};
+  Gaudi::Property<float> _ecalModuleGapCorrectionFactor{this, "ECALModuleGapCorrectionFactor", {0.5}, "Factor applied to module gap correction ECAL"};
+  Gaudi::Property<float> _hcalModuleGapCorrectionFactor{this, "HCALModuleGapCorrectionFactor", {0.5}, "Factor applied to module gap correction HCAL"};
+  Gaudi::Property<int> _histograms{this, "Histograms", {0}, "Hit times histograms"};
+  Gaudi::Property<int> _useEcalTiming{this, "UseEcalTiming", {0}, "Use ECAL hit times"};
+  Gaudi::Property<int> _ecalCorrectTimesForPropagation{this, "ECALCorrectTimesForPropagation", {0}, "Correct ECAL hit times for propagation: radial distance/c"};
+  Gaudi::Property<float> _ecalTimeWindowMin{this, "ECALTimeWindowMin", {-10.0}, "ECAL Time Window minimum time in ns"};
+  Gaudi::Property<float> _ecalEndcapTimeWindowMax{this, "ECALEndcapTimeWindowMax", {100}, "ECAL Endcap Time Window maximum time in ns"};
+  Gaudi::Property<float> _ecalBarrelTimeWindowMax{this, "ECALBarrelTimeWindowMax", {100}, "ECAL Barrel Time Window maximum time in ns"};
+  Gaudi::Property<float> _ecalDeltaTimeHitResolution{this, "ECALDeltaTimeHitResolution", {10}, "ECAL Minimum Delta Time in ns for resolving two hits"};
+  Gaudi::Property<float> _ecalTimeResolution{this, "ECALTimeResolution", {10}, "ECAL Time Resolution used to smear hit times"};
+  Gaudi::Property<bool> _ecalSimpleTimingCut{this, "ECALSimpleTimingCut", {true}, "Use simple time window cut on hit times? If false: use original hit-time clustering algorithm. If true: use time window defined by ECALBarrelTimeWindowMin and ECALBarrelTimeWindowMax"};
+  Gaudi::Property<int> _useHcalTiming{this, "UseHcalTiming", {1}, "Use HCAL hit times"};
+  Gaudi::Property<int> _hcalCorrectTimesForPropagation{this, "HCALCorrectTimesForPropagation", {0}, "Correct HCAL hit times for propagation: radial distance/c"};
+  Gaudi::Property<float> _hcalTimeWindowMin{this, "HCALTimeWindowMin", {-10.0}, "HCAL Time Window minimum time in ns"};
+  Gaudi::Property<float> _hcalEndcapTimeWindowMax{this, "HCALEndcapTimeWindowMax", {100}, "HCAL Endcap Time Window maximum time in ns"};
+  Gaudi::Property<float> _hcalBarrelTimeWindowMax{this, "HCALBarrelTimeWindowMax", {100}, "HCAL Barrel Time Window maximum time in ns"};
+  Gaudi::Property<float> _hcalDeltaTimeHitResolution{this, "HCALDeltaTimeHitResolution", {10}, "HCAL Minimum Delta Time in ns for resolving two hits"};
+  Gaudi::Property<float> _hcalTimeResolution{this, "HCALTimeResolution", {10}, "HCAL Time Resolution used to smear hit times"};
+  Gaudi::Property<bool> _hcalSimpleTimingCut{this, "HCALSimpleTimingCut", {true}, "Use simple time window cut on hit times? If false: use original hit-time clustering algorithm. If true: use time window defined by HCALBarrelTimeWindowMin and HCALBarrelTimeWindowMax"};
+  Gaudi::Property<float> _calibEcalMip{this, "CalibECALMIP", {1.0e-4}, "calibration to convert ECAL deposited energy to MIPs"};
+  Gaudi::Property<int> _applyEcalDigi{this, "ECAL_apply_realistic_digi", {0}, "apply realistic digitisation to ECAL hits? (0=none, 1=silicon, 2=scintillator)"};
+  Gaudi::Property<float> _ecal_PPD_pe_per_mip{this, "ECAL_PPD_PE_per_MIP", {7.0}, "# Photo-electrons per MIP (scintillator): used to poisson smear #PEs if >0"};
+  Gaudi::Property<int> _ecal_PPD_n_pixels{this, "ECAL_PPD_N_Pixels",{10000},"ECAL total number of MPPC/SiPM pixels for implementation of saturation effect"};
+  Gaudi::Property<float> _ecal_misCalibNpix{this, "ECAL_PPD_N_Pixels_uncertainty", {0.05}, "ECAL fractional uncertainty of effective total number of MPPC/SiPM pixels"};
+  Gaudi::Property<float> _misCalibEcal_uncorrel{this, "ECAL_miscalibration_uncorrel", {0.0}, "uncorrelated ECAL random gaussian miscalibration (as a fraction: 1.0 = 100%"};
+  Gaudi::Property<bool> _misCalibEcal_uncorrel_keep{this, "ECAL_miscalibration_uncorrel_memorise", {false}, "store oncorrelated ECAL miscalbrations in memory? (WARNING: can take a lot of memory if used..."};
+  Gaudi::Property<float> _misCalibEcal_correl{this, "ECAL_miscalibration_correl", {0.0}, "correlated ECAL random gaussian miscalibration (as a fraction: 1.0 = 100%"};
+  Gaudi::Property<float> _deadCellFractionEcal{this, "ECAL_deadCellRate", {0.0}, "ECAL random dead cell fraction (as a fraction: 0->1)"};
+  Gaudi::Property<bool> _deadCellEcal_keep{this, "ECAL_deadCell_memorise", {false}, "store dead ECAL cells in memory? (WARNING: can take a lot of memory if used..."};
+  Gaudi::Property<float> _strip_abs_length{this, "ECAL_strip_absorbtionLength", {1000000.0}, "length scale for absorbtion along scintillator strip (mm)"};
+  Gaudi::Property<float> _ecal_pixSpread{this, "ECAL_pixel_spread", {0.05}, "variation of mppc/sipm pixels capacitance in ECAL (as a fraction: 0.01=1%)"};
+  Gaudi::Property<float> _ecal_elec_noise{this, "ECAL_elec_noise_mips", {0.}, "typical electronics noise (ECAL, in MIP units)"};
+  Gaudi::Property<float> _ehEnergy{this, "energyPerEHpair", {3.6}, "energy required to create e-h pair in silicon (in eV)"};
+  Gaudi::Property<float> _ecalMaxDynMip{this, "ECAL_maxDynamicRange_MIP", {2500.}, "maximum of dynamic range for ECAL (in MIPs)"};
+  Gaudi::Property<int> _ecalStrip_default_nVirt{this, "StripEcal_default_nVirtualCells", {9}, "default number of virtual cells (used if not found in gear file)"};
+  Gaudi::Property<std::string> _ecal_deafult_layer_config{this, "ECAL_default_layerConfig", {"000000000000000"}, "default ECAL layer configuration (used if not found in gear file"};
+  Gaudi::Property<float> _calibHcalMip{this, "CalibHCALMIP", {1.0e-4}, "calibration to convert HCAL deposited energy to MIPs"};
+  Gaudi::Property<int> _applyHcalDigi{this, "HCAL_apply_realistic_digi", {0}, "apply realistic digitisation to HCAL hits? (0=none, 1=silicon, 2=scintillator)"};
+  Gaudi::Property<float> _hcal_PPD_pe_per_mip{this, "HCAL_PPD_PE_per_MIP", {7.0}, "# Photo-electrons per MIP (scintillator): used to poisson smear #PEs if >0"};
+  Gaudi::Property<int> _hcal_PPD_n_pixels{this, "HCAL_PPD_N_Pixels",{10000},"HCAL total number of MPPC/SiPM pixels for implementation of saturation effect"};
+  Gaudi::Property<float> _hcal_misCalibNpix{this, "HCAL_PPD_N_Pixels_uncertainty", {0.05}, "HCAL fractional uncertainty of effective total number of MPPC/SiPM pixels"};
+  Gaudi::Property<float> _misCalibHcal_uncorrel{this, "HCAL_miscalibration_uncorrel", {0.0}, "uncorrelated HCAL random gaussian miscalibration (as a fraction: 1.0 = 100%"};
+  Gaudi::Property<bool> _misCalibHcal_uncorrel_keep{this, "HCAL_miscalibration_uncorrel_memorise", {false}, "store oncorrelated HCAL miscalbrations in memory? (WARNING: can take a lot of memory if used..."};
+  Gaudi::Property<float> _misCalibHcal_correl{this, "HCAL_miscalibration_correl", {0.0}, "correlated HCAL random gaussian miscalibration (as a fraction: 1.0 = 100%"};
+  Gaudi::Property<float> _deadCellFractionHcal{this, "HCAL_deadCellRate", {0.0}, "HCAL random dead cell fraction (as a fraction: 0->1)"};
+  Gaudi::Property<bool> _deadCellHcal_keep{this, "HCAL_deadCell_memorise", {false}, "store dead HCAL cells in memory? (WARNING: can take a lot of memory if used..."};
+  Gaudi::Property<float> _hcal_pixSpread{this, "HCAL_pixel_spread", {0.05}, "variation of mppc/sipm pixels capacitance in HCAL (as a fraction: 0.01=1%)"};
+  Gaudi::Property<float> _hcal_elec_noise{this, "HCAL_elec_noise_mips", {0.}, "typical electronics noise (ECAL, in MIP units)"};
+  Gaudi::Property<float> _hcalMaxDynMip{this, "HCAL_maxDynamicRange_MIP", {2500.}, "maximum of dynamic range for HCAL (in MIPs)"};
+  //Gaudi::Property<int> _ecalStrip_default_nVirt{this, "StripEcal_default_nVirtualCells", {9}, "default number of virtual cells (used if not found in gear file)"};
+  //Gaudi::Property<std::string> _ecal_deafult_layer_config{this, "ECAL_default_layerConfig", {"000000000000000"}, "default ECAL layer configuration (used if not found in gear file"};
+ 
+
+
   
-  virtual Processor*  newProcessor() { return new DDCaloDigi ; }
-  
-  
-  DDCaloDigi() ;
-  DDCaloDigi(const DDCaloDigi&) = delete;
-  DDCaloDigi& operator=(const DDCaloDigi&) = delete;
-  
-  virtual void init() ;
-  
-  virtual void processRunHeader( LCRunHeader* run ) ;
-  
-  virtual void processEvent( LCEvent * evt ) ; 
-   
-  virtual void check( LCEvent * evt ) ; 
-  
-  virtual void end() ;
+  const float slop = 0.25; // (mm)
+  //DDCaloDigi() ;
+ // DDCaloDigi(const DDCaloDigi&) = delete;
+ // DDCaloDigi& operator=(const DDCaloDigi&) = delete;
 
   virtual void fillECALGaps() ;
   
@@ -104,14 +205,13 @@ class DDCaloDigi : public Processor {
 
   float analogueEcalCalibCoeff(int layer );
 
- protected:
 
-  float ecalEnergyDigi(float energy, int id0, int id1);
-  float ahcalEnergyDigi(float energy, int id0, int id1);
+  float ecalEnergyDigi(float energy,int id);
+  float ahcalEnergyDigi(float energy, int id);
 
   float siliconDigi(float energy);
   float scintillatorDigi(float energy, bool isEcal);
-  LCCollection* combineVirtualStripCells(LCCollection* col, bool isBarrel, int orientation );
+  auto combineVirtualStripCells(auto col, bool isBarrel, int stripOrientation );
 
   int getNumberOfVirtualCells();
   std::vector < std::pair <int, int> > & getLayerConfig();
@@ -123,12 +223,9 @@ class DDCaloDigi : public Processor {
   int _nRun = 0;
   int _nEvt = 0;
   
-  LCFlagImpl _flag{};
+  //LCFlagImpl _flag{};
 
-  std::vector<std::string> _ecalCollections{};
-  std::vector<std::string> _hcalCollections{};
-  std::vector<std::string> _outputEcalCollections{};
-  std::vector<std::string> _outputHcalCollections{};
+  
 
   std::string _outputRelCollection = "";
 
@@ -159,7 +256,7 @@ class DDCaloDigi : public Processor {
   int   _hcalGapCorrection = 1;
   float _hcalModuleGapCorrectionFactor = 0.5;
 
-  std::vector<CalorimeterHitImpl*> _calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS];
+  std::vector<edm4hep::MutableCalorimeterHit*> _calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS];
   std::vector<int> _calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS];
 
   float _zOfEcalEndcap = 0.0;
@@ -297,8 +394,47 @@ class DDCaloDigi : public Processor {
   TH1F* fEcalRLayer21 = NULL;
 
 } ;
-
+DECLARE_COMPONENT(DDCaloDigi)
 #endif
 
+
+
+
+
+
+
+
+
+
+//  ecalCollections.push_back(std::string("EcalRingCollection"));
+  // std::vector<std::string> _ecalCollections; // this is for silicon
+  // _ecalCollections.push_back(std::string("EcalBarrelCollection"));
+  // _ecalCollections.push_back(std::string("EcalEndcapCollection"));
+  //Gaudi::Property<std::vector<std::string>> _ecalCollections{this, "ECALCollections", {_ecalCollections}, "ECAL Collection Names"};
+  
+  //  std::vector<std::string> _hcalCollections;
+  // _hcalCollections.push_back(std::string("HcalBarrelRegCollection"));
+  // _hcalCollections.push_back(std::string("HcalEndcapRingsCollection"));
+  // _hcalCollections.push_back(std::string("HcalEndcapsCollection"));
+ //Gaudi::Property<std::vector<std::string>> _hcalCollections{this, "HCALCollections", {_hcalCollections}, "HCAL Collection Names"};
+  
+  //  std::vector<std::string> _outputEcalCollections{};
+  // _outputEcalCollections.push_back(std::string("ECALBarrel"));
+  // _outputEcalCollections.push_back(std::string("ECALEndcap"));
+  // _outputEcalCollections.push_back(std::string("ECALOther"));
+  
+  //  std::vector<std::string> _outputHcalCollections{};
+  // _outputHcalCollections.push_back(std::string("HCALBarrel"));
+  // _outputHcalCollections.push_back(std::string("HCALEndcap"));
+  // _outputHcalCollections.push_back(std::string("HCALOther"));
+
+  // Gaudi::Property<std::string> _outputEcalCollections[0]{this, "output_ECALCollections0", {"ECALBarrel"}, "ECAL Collection of real Hits in Barrel"};
+  // Gaudi::Property<std::string> _outputEcalCollections[1]{this, "output_ECALCollections1", {"ECALEndcap"}, "ECAL Collection of real Hits in EndCap"};
+  // Gaudi::Property<std::string> _outputEcalCollections[2]{this, "output_ECALCollections2", {"ECALOther"}, "ECAL Collection of real Hits other"};
+  
+  // Gaudi::Property<std::string> _outputHcalCollections[0]{this, "output_HCALCollections0", {"HCALBarrel"}, "HCAL Collection of real Hits in Barrel"};
+  // Gaudi::Property<std::string> _outputHcalCollections[1]{this, "output_HCALCollections1", {"HCALEndcap"}, "HCAL Collection of real Hits in EndCap"};
+  // Gaudi::Property<std::string> _outputHcalCollections[2]{this, "output_HCALCollections2", {"HCALOther"}, "HCAL Collection of real Hits other"};
+  // Gaudi::Property<std::string> _outputRelCollection{this, "RelationOutputCollection", {"RelationCaloHit"}, "CaloHit Relation Collection"};
 
 

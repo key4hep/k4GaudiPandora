@@ -12,8 +12,8 @@
 #include "edm4hep/MCParticle.h"
 #include "Api/PandoraApi.h"
 
-#include "CaloHitCreator.h"
-#include "TrackCreator.h"
+#include "DDCaloHitCreator.h"
+#include "DDTrackCreatorBase.h"
 /**
  *  @brief  DDMCParticleCreator class
  */
