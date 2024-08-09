@@ -21,7 +21,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					# src/components/*.cpp
 					src/CalorimeterHitType.cc
 					# src/DDBFieldPlugin.cc
-					# src/DDCaloDigi.cc
+					src/DDCaloDigi.cc
 					# src/DDCaloHitCreator.cc
 					# src/DDExternalClusteringAlgorithm.cc
 					# src/DDGeometryCreator.cc
@@ -29,7 +29,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					# src/DDPandoraPFANewProcessor.cc
 					# src/DDPfoCreator.cc
 					# src/DDScintillatorPpdDigi.cc
-					src/DDSimpleMuonDigi.cc
+					# src/DDSimpleMuonDigi.cc
 					# src/DDTrackCreatorBase.cc
 					# src/DDTrackCreatorCLIC.cc
 					# src/DDTrackCreatorILD.cc
@@ -42,6 +42,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       EDM4HEP::edm4hep
                       DD4hep::DDRec
                       DD4hep::DDCore
+                      CLHEP::CLHEP
                       )
 target_include_directories(k4GaudiPandoraPlugins PRIVATE include)
 install(TARGETS k4GaudiPandoraPlugins
