@@ -42,8 +42,8 @@
 #include "DDRec/MaterialManager.h"
 
 using namespace std;
-using namespace dd4hep;
-using namespace DDSegmentation;
+using namespace dd4hep ;
+using namespace DDSegmentation ;
 
 // protect against rounding errors
 // will not find caps smaller than this
@@ -51,27 +51,27 @@ const float slop = 0.25;  // (mm)
 //const float pi = acos(-1.0); ///FIXME
 //const float twopi = 2.0*pi;  ///FIXME: DD4HEP INTERFERES WITH THESE
 
-DECLARE_COMPONENT(DDCaloDigi)
+//DECLARE_COMPONENT(DDCaloDigi)
+
+// Forward Declaration, gets linked in from DDPandoraPFANewProcessor
+dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
-    : MultiTransformer(
-          aName, aSvcLoc,
+    : MultiTransformer(aName, aSvcLoc,
           {
-              KeyValues("SimCaloHitCollections", {"SimCalorimeterHitCollection1", "SimCalorimeterHitCollection2",
-                                                  "SimCalorimeterHitCollection3"}),
+              KeyValues("SimCaloHitCollections", {"SimCalorimeterHitCollection1"}),
               KeyValues("HeaderName", {"EventHeader"}),
           },
-          {KeyValues("output_ECALCollections", {"ECalorimeterHit1", "ECalorimeterHit2", "ECalorimeterHit3"}),
-           KeyValues("output_HCALCollections", {"HCalorimeterHit1", "HCalorimeterHit2", "HCalorimeterHit3"}),
-           KeyValues("RelationOutputCollection", {"RelationSimCaloHit"})}) {
-  m_uidSvc = service<IUniqueIDGenSvc>("UniqueIDGenSvc", true);
-  if (!m_uidSvc) {
-    error() << "Unable to get UniqueIDGenSvc" << endmsg;
-  }
-}
-
-//forward declarations. See in DDPandoraPFANewProcessor.cc
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
+          {
+            KeyValues("output_ECALCollections", {"ECalorimeterHit1", "ECalorimeterHit2", "ECalorimeterHit3"}),
+            //KeyValues("output_HCALCollections", {"HCalorimeterHit1", "HCalorimeterHit2", "HCalorimeterHit3"}),
+            KeyValues("RelationOutputCollection", {"RelationSimCaloHit"}),
+          })
+{
+  // m_uidSvc = service<IUniqueIDGenSvc>("UniqueIDGenSvc", true);
+  // if (!m_uidSvc) {
+  //   error() << "Unable to get UniqueIDGenSvc" << endmsg;
+  // }
 
 // // helper struct for string comparision
 // struct XToLower{
@@ -80,46 +80,48 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 //   }
 // }
 
-if (_histograms) {
-  fEcal = new TH1F("fEcal", "Ecal time profile", 1000, 0., 1000.0);
-  fHcal = new TH1F("fHcal", "Hcal time profile", 1000, 0., 1000.0);
+// if (_histograms) {
+//   fEcal = new TH1F("fEcal", "Ecal time profile", 1000, 0., 1000.0);
+//   fHcal = new TH1F("fHcal", "Hcal time profile", 1000, 0., 1000.0);
 
-  fEcalC = new TH1F("fEcalC", "Ecal time profile cor", 1000, 0., 1000.0);
-  fHcalC = new TH1F("fHcalC", "Hcal time profile cor", 1000, 0., 1000.0);
+//   fEcalC = new TH1F("fEcalC", "Ecal time profile cor", 1000, 0., 1000.0);
+//   fHcalC = new TH1F("fHcalC", "Hcal time profile cor", 1000, 0., 1000.0);
 
-  fEcalC1 = new TH1F("fEcalC1", "Ecal time profile cor", 100, 0., 1000.0);
-  fHcalC1 = new TH1F("fHcalC1", "Hcal time profile cor", 100, 0., 1000.0);
+//   fEcalC1 = new TH1F("fEcalC1", "Ecal time profile cor", 100, 0., 1000.0);
+//   fHcalC1 = new TH1F("fHcalC1", "Hcal time profile cor", 100, 0., 1000.0);
 
-  fEcalC2 = new TH1F("fEcalC2", "Ecal time profile cor", 10, 0., 1000.0);
-  fHcalC2 = new TH1F("fHcalC2", "Hcal time profile cor", 10, 0., 1000.0);
+//   fEcalC2 = new TH1F("fEcalC2", "Ecal time profile cor", 10, 0., 1000.0);
+//   fHcalC2 = new TH1F("fHcalC2", "Hcal time profile cor", 10, 0., 1000.0);
 
-  fHcalLayer1     = new TH2F("fHcalLayer1", "Hcal layer 1 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer11    = new TH2F("fHcalLayer11", "Hcal layer 11 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer21    = new TH2F("fHcalLayer21", "Hcal layer 21 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer31    = new TH2F("fHcalLayer31", "Hcal layer 31 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer41    = new TH2F("fHcalLayer41", "Hcal layer 41 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer51    = new TH2F("fHcalLayer51", "Hcal layer 51 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer61    = new TH2F("fHcalLayer61", "Hcal layer 61 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalLayer71    = new TH2F("fHcalLayer71", "Hcal layer 71 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-  fHcalRLayer1    = new TH1F("fHcalRLayer1", "Hcal R layer 1", 50, 0., 5000.0);
-  fHcalRLayer11   = new TH1F("fHcalRLayer11", "Hcal R layer 11", 50, 0., 5000.0);
-  fHcalRLayer21   = new TH1F("fHcalRLayer21", "Hcal R layer 21", 50, 0., 5000.0);
-  fHcalRLayer31   = new TH1F("fHcalRLayer31", "Hcal R layer 31", 50, 0., 5000.0);
-  fHcalRLayer41   = new TH1F("fHcalRLayer41", "Hcal R layer 41", 50, 0., 5000.0);
-  fHcalRLayer51   = new TH1F("fHcalRLayer51", "Hcal R layer 51", 50, 0., 5000.0);
-  fHcalRLayer61   = new TH1F("fHcalRLayer61", "Hcal R layer 61", 50, 0., 5000.0);
-  fHcalRLayer71   = new TH1F("fHcalRLayer71", "Hcal R layer 71", 50, 0., 5000.0);
-  fHcalRLayerNorm = new TH1F("fHcalRLayerNorm", "Hcal R layer Norm", 50, 0., 5000.0);
+//   fHcalLayer1     = new TH2F("fHcalLayer1", "Hcal layer 1 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer11    = new TH2F("fHcalLayer11", "Hcal layer 11 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer21    = new TH2F("fHcalLayer21", "Hcal layer 21 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer31    = new TH2F("fHcalLayer31", "Hcal layer 31 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer41    = new TH2F("fHcalLayer41", "Hcal layer 41 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer51    = new TH2F("fHcalLayer51", "Hcal layer 51 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer61    = new TH2F("fHcalLayer61", "Hcal layer 61 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalLayer71    = new TH2F("fHcalLayer71", "Hcal layer 71 map", 300, -4500., 4500.0, 300, -4500, 4500.);
+//   fHcalRLayer1    = new TH1F("fHcalRLayer1", "Hcal R layer 1", 50, 0., 5000.0);
+//   fHcalRLayer11   = new TH1F("fHcalRLayer11", "Hcal R layer 11", 50, 0., 5000.0);
+//   fHcalRLayer21   = new TH1F("fHcalRLayer21", "Hcal R layer 21", 50, 0., 5000.0);
+//   fHcalRLayer31   = new TH1F("fHcalRLayer31", "Hcal R layer 31", 50, 0., 5000.0);
+//   fHcalRLayer41   = new TH1F("fHcalRLayer41", "Hcal R layer 41", 50, 0., 5000.0);
+//   fHcalRLayer51   = new TH1F("fHcalRLayer51", "Hcal R layer 51", 50, 0., 5000.0);
+//   fHcalRLayer61   = new TH1F("fHcalRLayer61", "Hcal R layer 61", 50, 0., 5000.0);
+//   fHcalRLayer71   = new TH1F("fHcalRLayer71", "Hcal R layer 71", 50, 0., 5000.0);
+//   fHcalRLayerNorm = new TH1F("fHcalRLayerNorm", "Hcal R layer Norm", 50, 0., 5000.0);
 
-  fEcalLayer1     = new TH2F("fEcalLayer1", "Ecal layer 1 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-  fEcalLayer11    = new TH2F("fEcalLayer11", "Ecal layer 11 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-  fEcalLayer21    = new TH2F("fEcalLayer21", "Ecal layer 21 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-  fEcalRLayer1    = new TH1F("fEcalRLayer1", "Ecal R layer 1", 100, 0., 5000.0);
-  fEcalRLayer11   = new TH1F("fEcalRLayer11", "Ecal R layer 11", 100, 0., 5000.0);
-  fEcalRLayer21   = new TH1F("fEcalRLayer21", "Ecal R layer 21", 100, 0., 5000.0);
-  fEcalRLayerNorm = new TH1F("fEcalRLayerNorm", "Ecal R layer Norm", 100, 0., 5000.0);
-  m_geoSvc        = serviceLocator()->service(m_geoSvcName);
-};
+//   fEcalLayer1     = new TH2F("fEcalLayer1", "Ecal layer 1 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
+//   fEcalLayer11    = new TH2F("fEcalLayer11", "Ecal layer 11 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
+//   fEcalLayer21    = new TH2F("fEcalLayer21", "Ecal layer 21 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
+//   fEcalRLayer1    = new TH1F("fEcalRLayer1", "Ecal R layer 1", 100, 0., 5000.0);
+//   fEcalRLayer11   = new TH1F("fEcalRLayer11", "Ecal R layer 11", 100, 0., 5000.0);
+//   fEcalRLayer21   = new TH1F("fEcalRLayer21", "Ecal R layer 21", 100, 0., 5000.0);
+//   fEcalRLayerNorm = new TH1F("fEcalRLayerNorm", "Ecal R layer Norm", 100, 0., 5000.0);
+//   m_geoSvc        = aSvcLoc->service(m_geoSvcName);
+// }
+
+}
 
 StatusCode DDCaloDigi::initialize() {
   //fHcalCvsE = new TH2F("fHcalCvsE", "Hcal time profile cor",100, 0., 500.0,100,0.,10.)
@@ -158,58 +160,53 @@ StatusCode DDCaloDigi::initialize() {
     for (unsigned int i = 0; i < ecalBarrelLayers.size(); ++i) {
       _barrelPixelSizeT[i] = ecalBarrelLayers[i].cellSize0;
       _barrelPixelSizeZ[i] = ecalBarrelLayers[i].cellSize1;
-      streamlog_out(DEBUG) << "barrel pixel size " << i << " " << _barrelPixelSizeT[i] << " " << _barrelPixelSizeZ[i]
-                           << endl;
+      debug() << "barrel pixel size " << i << " " << _barrelPixelSizeT[i] << " " << _barrelPixelSizeZ[i] << endl;
     }
 
     for (unsigned int i = 0; i < ecalEndcapLayers.size(); ++i) {
       _endcapPixelSizeX[i] = ecalEndcapLayers[i].cellSize0;
       _endcapPixelSizeY[i] = ecalEndcapLayers[i].cellSize1;
-      streamlog_out(DEBUG) << "endcap pixel size " << i << " " << _endcapPixelSizeX[i] << " " << _endcapPixelSizeY[i]
-                           << endl;
+      debug() << "endcap pixel size " << i << " " << _endcapPixelSizeX[i] << " " << _endcapPixelSizeY[i] << endl;
     }
 
     _strip_virt_cells = _ecalStrip_default_nVirt;
-    streamlog_out(WARNING) << "taking number of virtual cells from steering file (FIXME!): " << _strip_virt_cells
-                           << endl;
+       warning() << "taking number of virtual cells from steering file (FIXME!): " << _strip_virt_cells << endl;
     _ecalLayout = _ecal_deafult_layer_config;
-    streamlog_out(WARNING) << "taking layer layout from steering file (FIXME): " << _ecalLayout << endl;
+       warning() << "taking layer layout from steering file (FIXME): " << _ecalLayout << endl;
 
   } catch (std::exception& e) {
-    streamlog_out(ERROR) << "Could not get ECAL parameters from DD4hep!" << endl;
+      error() << "Could not get ECAL parameters from DD4hep!" << endl;
   }
 
   //convert ECAL thresholds to GeV units
-  if (_unitThresholdEcal.compare("GeV") == 0) {
+  if (_unitThresholdEcal.value().compare("GeV") == 0) {
     //ECAL threshold unit is GeV, do nothing
-  } else if (_unitThresholdEcal.compare("MIP") == 0) {
+  } else if (_unitThresholdEcal.value().compare("MIP") == 0) {
     //ECAL threshold unit is MIP, convert via MIP2GeV
-    _thresholdEcal *= _calibEcalMip;
-  } else if (_unitThresholdEcal.compare("px") == 0) {
+    _thresholdEcal.value() *= _calibEcalMip.value();
+  } else if (_unitThresholdEcal.value().compare("px") == 0) {
     //ECAL threshold unit is pixels, convert via MIP2GeV and lightyield
-    _thresholdEcal *= _ecal_PPD_pe_per_mip * _calibEcalMip;
+    _thresholdEcal.value() *= _ecal_PPD_pe_per_mip.value() * _calibEcalMip.value();
   } else {
-    streamlog_out(ERROR) << "could not identify ECAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting."
-                         << std::endl;
+    error() << "could not identify ECAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting." << std::endl;
     assert(0);
   }
 
   //convert HCAL thresholds to GeV units
-  if (_unitThresholdHcal.compare("GeV") == 0) {
+  if (_unitThresholdHcal.value().compare("GeV") == 0) {
     //HCAL threshold unit is GeV, do nothing
-  } else if (_unitThresholdHcal.compare("MIP") == 0) {
+  } else if (_unitThresholdHcal.value().compare("MIP") == 0) {
     //HCAL threshold unit is MIP, convert via MIP2GeV
-    for (unsigned int i = 0; i < _thresholdHcal.size(); i++) {
-      _thresholdHcal.at(i) *= _calibHcalMip;
+    for (unsigned int i = 0; i < _thresholdHcal.value().size(); i++) {
+      _thresholdHcal.value()[i] *= _calibHcalMip.value();
     }
-  } else if (_unitThresholdHcal.compare("px") == 0) {
+  } else if (_unitThresholdHcal.value().compare("px") == 0) {
     //HCAL threshold unit is pixels, convert via MIP2GeV and lightyield
     for (unsigned int i = 0; i < _thresholdHcal.size(); i++) {
-      _thresholdHcal.at(i) *= _hcal_PPD_pe_per_mip * _calibHcalMip;
+      _thresholdHcal[i] *= _hcal_PPD_pe_per_mip.value() * _calibHcalMip.value();
     }
   } else {
-    streamlog_out(ERROR) << "could not identify HCAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting."
-                         << std::endl;
+    error() << "could not identify HCAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting." << std::endl;
     assert(0);
   }
 
@@ -248,49 +245,46 @@ StatusCode DDCaloDigi::initialize() {
   } else {
     _randomEngineDeadCellHcal = 0;
   }
+  return StatusCode::SUCCESS;
 }
 
 retType DDCaloDigi::operator()(
-    const std::map<std::string, const edm4hep::SimCalorimeterHitCollection&>& simCaloHitCollections,
-    const edm4hep::EventHeaderCollection&                                     headers) const {
-  debug() << " process event : " << headers[0].getEventNumber() << " - run  " << headers[0].getRunNumber()
+    const edm4hep::SimCalorimeterHitCollection& simCaloHitCollections,
+    const edm4hep::EventHeaderCollection& eventHeaders) const {
+    auto const& headers = eventHeaders.at(0); //FIXME maybe
+  debug() << " process event : " << headers.getEventNumber() << " - run  " << headers.getRunNumber()
 
           << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
 
   //auto chschcol = edm4hep::CalorimeterHitCollection(); //collection
-  std::map<std::string, edm4hep::CalorimeterHitCollection> outputCollections;
-  auto Relcol = edm4hep::MCRecoCaloAssociationCollection();  // Relation collection CalorimeterHit, SimCalorimeterHit
+  edm4hep::CalorimeterHitCollection outputCollections;
+  edm4hep::CaloHitSimCaloHitLinkCollection outputRelations;
+  auto& Relcol = outputRelations;  // Relation collection CalorimeterHit-SimCalorimeterHit
 
   // copy the flags from the input collection
   //_flag.setBit(LCIO::CHBIT_LONG);
   //_flag.setBit(LCIO::RCHBIT_TIME);  //store timing on output hits.
 
   // decide on this event's correlated miscalibration
-  _event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(1.0, _misCalibEcal_correl);
-  _event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, _misCalibHcal_correl);
 
   //
   // * Reading Collections of ECAL Simulated Hits *
   //
-
-  for (auto const& inputPair : simCaloHitCollections) {
-    std::string colName                = inputPair.first;
-    auto&       ecalCol                = outputCollections["new" + colName];
-    auto const& inputCaloHitCollection = inputPair.second;  // (or is it ->second ??)
-    streamlog_out(DEBUG) << "looking for collection: " << colName << endl;
+  std::string colName = "SimCaloHitCollection"; //FIXME - take from property?
+  auto&       ecalCol = outputCollections; //"new" + colName
+  auto const& inputCaloHitCollection = simCaloHitCollections;
+    debug() << "looking for collection: " << colName << endl;
 
     if (colName.find("dummy") != string::npos) {
-      streamlog_out(DEBUG) << "ignoring input ECAL collection name (looks like dummy name)" << colName << endl;
-      continue;
+      debug() << "ignoring input ECAL collection name (looks like dummy name)" << colName << endl;
     }
 
     //fg: need to establish the subdetetcor part here
     //    use collection name as cellID does not seem to have that information
     CHT::Layout caloLayout = layoutFromString(colName);
 
-    try {
       // auto col = evt->getCollection( colName.c_str() ) ;
-      const auto initString = cellIDHandle.get();
+      const auto initString = "FIXME"; // cellIDHandle.get();
       //std::string    initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
       dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
                                                                         // check if decoder contains "layer"
@@ -302,33 +296,27 @@ retType DDCaloDigi::operator()(
       //ecalcol->setFlag(_flag.getFlag());
 
       // if making gap corrections clear the vectors holding pointers to calhits
-      if (_ecalGapCorrection != 0) {
-        for (int is = 0; is < MAX_STAVES; is++) {
-          for (int il = 0; il < MAX_LAYERS; il++) {
-            _calHitsByStaveLayer[is][il].clear();
-            _calHitsByStaveLayerModule[is][il].clear();
-          }
-        }
-      }
+      std::vector<edm4hep::MutableCalorimeterHit*> _calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS];
+      std::vector<int> _calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS];
 
       // deal with strips split into virtual cells
       //  if this collection is a strip which has been split into virtual cells, they need to be recombined
       int orientation = getStripOrientationFromColName(colName);
       if (orientation != SQUARE && getNumberOfVirtualCells() > 1) {
-        auto col = combineVirtualStripCells(ecalCol, caloLayout == CHT::barrel, orientation);
+        //auto fixmeCollectionUnused = combineVirtualStripCells(inputCaloHitCollection, caloLayout == CHT::barrel, orientation);
       }
 
       // for (int j(0); j < numElements; ++j) {
       for (const auto& hit : inputCaloHitCollection) {
         //  SimCalorimeterHit * hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt( j ) ) ;
         float energy = hit.getEnergy();
+        int cellID = hit.getCellID();
 
         // apply threshold cut
         if (energy > _thresholdEcal) {
-          int cellid = hit.getCellID();
-          int layer  = idDecoder(hit)["layer"];
-          int stave  = idDecoder(hit)["stave"];
-          int module = idDecoder(hit)["module"];
+          int layer  = 1; //FIXME bitFieldCoder(hit)["layer"];
+          int stave  = 2; // bitFieldCoder(hit)["stave"];
+          int module = 3; // bitFieldCoder(hit)["module"];
 
           // check that layer and assumed layer type are compatible
           checkConsistency(colName, layer);
@@ -381,13 +369,14 @@ retType DDCaloDigi::operator()(
               ecalTimeWindowMax = _ecalBarrelTimeWindowMax;
             float dt = r / 300. - 0.1;
 
-            std::vector<bool> used(n, false);
+
             //for(unsigned int i =0; i<n;i++) used[i] = false;
             auto               EsingleHit  = hit.getContributions();
             int                count       = 0;
             float              eCellInTime = 0.;
             float              eCellOutput = 0.;
             const unsigned int n           = EsingleHit.size();
+            std::vector<bool> used(n, false);
             ;  //number of subhits of this SimHit
             for (unsigned int i_t = 0; i_t < n; i_t++) {
               float timei     = EsingleHit[i_t].getTime();
@@ -397,7 +386,7 @@ retType DDCaloDigi::operator()(
               float deltat = 0;
               if (_ecalCorrectTimesForPropagation)
                 deltat = dt;
-              if (timei - deltat > _ecalTimeWindowMin && timei - deltat < ecalTimeWindowMax) {
+              if (timei - deltat > _ecalTimeWindowMin.value() && timei - deltat < ecalTimeWindowMax) {
                 float ecor = energyi * calibr_coeff;
                 eCellInTime += ecor;
               }
@@ -470,29 +459,29 @@ retType DDCaloDigi::operator()(
                     // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
                     edm4hep::MutableCalorimeterHit calHit = ecalCol.create();
                     if (_ecalGapCorrection != 0) {
-                      _calHitsByStaveLayer[stave][layer].push_back(calhit);
+                      _calHitsByStaveLayer[stave][layer].push_back(&calHit);
                       _calHitsByStaveLayerModule[stave][layer].push_back(module);
                     }
-                    calhit.setCellID(cellid);
+                    calHit.setCellID(cellID);
 
                     if (_digitalEcal) {
-                      calhit.setEnergy(calibr_coeff);
+                      calHit.setEnergy(calibr_coeff);
                     } else {
-                      calhit.setEnergy(calibr_coeff * energyi);
+                      calHit.setEnergy(calibr_coeff * energyi);
                       // calhit->setEnergy(energyi);
                     }
 
                     eCellOutput += energyi * calibr_coeff;
 
-                    calhit.setTime(timei);
-                    calhit.setPosition(hit.getPosition());
-                    calhit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
-                    calhit.setRawHit(hit);
+                    calHit.setTime(timei);
+                    calHit.setPosition(hit.getPosition());
+                    calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
+                    //calHit.setRawHit(hit);
 
                     // Set relation with LCRelationNavigator
                     auto caloRel = Relcol.create();
-                    caloRel.setRec(calHit);
-                    caloRel.setSim(hit);
+                    caloRel.setFrom(calHit);
+                    caloRel.setTo(hit);
                     // calohitNav.addRelation(calhit, hit, 1.0);
 
                   } else {
@@ -505,29 +494,29 @@ retType DDCaloDigi::operator()(
                     // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
             edm4hep::MutableCalorimeterHit calHit = ecalCol.create();
             if (_ecalGapCorrection != 0) {
-              _calHitsByStaveLayer[stave][layer].push_back(calhit);
+              _calHitsByStaveLayer[stave][layer].push_back(&calHit);
               _calHitsByStaveLayerModule[stave][layer].push_back(module);
             }
             float energyi = hit.getEnergy();
 
             // apply extra energy digitisation effects
-            energyi = ecalEnergyDigi(energyi, cellid);
+            energyi = ecalEnergyDigi(energyi, cellID);
 
-            calhit.setCellID(cellid);
+            calHit.setCellID(cellID);
             if (_digitalEcal) {
-              calhit.setEnergy(calibr_coeff);
+              calHit.setEnergy(calibr_coeff);
             } else {
-              calhit.setEnergy(calibr_coeff * energyi);
+              calHit.setEnergy(calibr_coeff * energyi);
             }
-            calhit.setTime(0);
-            calhit.setPosition(hit.getPosition());
-            calhit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
-            calhit.setRawHit(hit);
+            calHit.setTime(0);
+            calHit.setPosition(hit.getPosition());
+            calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
+            //calHit.setRawHit(hit);
 
             // Set relation with LCRelationNavigator
             auto caloRel = Relcol.create();
-            caloRel.setRec(calHit);
-            caloRel.setSim(hit);
+            caloRel.setFrom(calHit);
+            caloRel.setTo(hit);
             //calohitNav.addRelation(calhit, hit, 1.0);
           }  // timing if...else
 
@@ -536,16 +525,14 @@ retType DDCaloDigi::operator()(
       }
       // if requested apply gap corrections in ECAL ?
       if (_ecalGapCorrection != 0)
-        this->fillECALGaps();
+        this->fillECALGaps(_calHitsByStaveLayer, _calHitsByStaveLayerModule);
       // add ECAL collection to event
       // ecalcol->parameters().setValue(LCIO::CellIDEncoding,initString);
-      return std::make_tuple(std::move(outputCollections), std::move(caloRel));
+      edm4hep::CaloHitSimCaloHitLinkCollection caloRelMap;
+      caloRelMap["newAssoc"] = std::move(Relcol);
+      return std::make_tuple(std::move(outputCollections), std::move(caloRelMap));
       //evt->addCollection(ecalcol,_outputEcalCollections[i].c_str());
-    } catch (DataNotAvailableException& e) {
-      streamlog_out(DEBUG) << "could not find input ECAL collection " << colName << std::endl;
-    }
-  }
-  //}
+
 
   if (_histograms) {
     // fill normalisation of HCAL occupancy plots
@@ -572,37 +559,32 @@ retType DDCaloDigi::operator()(
   // * Reading HCAL Collections of Simulated Hits *
   //
 
-  for (auto const& inputPair : simCaloHitCollections) {
-    std::string colName                = inputPair.first;
-    auto&       hcalCol                = outputCollections["new" + colName];
-    auto const& inputCaloHitCollection = inputPair.second;  // (or is it ->second ??)
-    streamlog_out(DEBUG) << "looking for collection: " << colName << endl;
+
+    auto&       hcalCol                = outputCollections; //"new" + colName
+    auto const& inputCaloHitCollection = simCaloHitCollections;
+      debug() << "looking for collection: " << colName << endl;
 
     if (colName.find("dummy") != string::npos) {
-      streamlog_out(DEBUG) << "ignoring input HCAL collection name (looks like dummy name)" << colName << endl;
-      continue;
+      debug() << "ignoring input HCAL collection name (looks like dummy name)" << colName << endl;
     }
 
     //fg: need to establish the subdetetcor part here
     //    use collection name as cellID does not seem to have that information
     CHT::Layout caloLayout = layoutFromString(colName);
-
-    try {
       //LCCollection * col = evt->getCollection( _hcalCollections[i].c_str() ) ;
-      std::string                           initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-      dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
+      //std::string                           initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+      dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder("FIXME");  // check!
 
-      hcalcol->setFlag(_flag.getFlag());
+      //hcalCol.setFlag(_flag.getFlag());
       // for (int j(0); j < numElements; ++j) { //loop over all SimCalorimeterHits in this collection
+      auto hcaloRel = Relcol.create();
       for (const auto& hit : inputCaloHitCollection) {
         float energy = hit.getEnergy();
-
-        if (energy >
-            _thresholdHcal[0] /
-                2) {  //preselect for SimHits with energySum>threshold. Doubtful at least, as lower energy hit might fluctuate up and still be counted
-          int   cellid = hit.getCellID();
+        //preselect for SimHits with energySum>threshold. Doubtful at least, as lower energy hit might fluctuate up and still be counted
+        if (energy > _thresholdHcal[0] / 2) {
+          int   cellID = hit.getCellID();
           float calibr_coeff(1.);
-          int   layer = idDecoder(hit)["layer"];
+          int   layer = 1;//FIXME bitFieldCoder(hit)["layer"];
           // NOTE : for a digital HCAL this does not allow for varying layer thickness
           // with depth - would need a simple mod to make response proportional to layer thickness
           if (_digitalHcal) {
@@ -627,13 +609,10 @@ retType DDCaloDigi::operator()(
               hcalTimeWindowMax = _hcalEndcapTimeWindowMax;
             }
 
-            float r = sqrt(
-                x * x + y * y +
-                z * z);  //this is a crude approximation. assumes initial particle originated at the very center of the detector.
+            float r = sqrt(x * x + y * y + z * z);  //this is a crude approximation. assumes initial particle originated at the very center of the detector.
             float              dt         = r / 300 - 0.1;  //magic numbers! ~
             auto               HsingleHit = hit.getContributions();
             const unsigned int n          = HsingleHit.size();
-            ;  //number of subhits of this SimHit
 
             std::vector<bool> used(n, false);
 
@@ -658,8 +637,7 @@ retType DDCaloDigi::operator()(
               //sum up hit energies within timeWindowMin and timeWindowMax, use earliest subhit in this window as hit time for resulting calohit.
               //only one calorimeterhit will be generated from this.
 
-              if (!used
-                      [i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
+              if (!used[i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
                 // merge with other hits?
                 used[i_t] = true;
                 for (unsigned int j_t = i_t; j_t < n; j_t++) {  //loop through all hits after current hit
@@ -670,31 +648,31 @@ retType DDCaloDigi::operator()(
                     //              std::cout << " HCAL  deltat_ij : " << deltat_ij << std::endl;
                     if (_hcalSimpleTimingCut) {
                       float deltat_ij = _hcalCorrectTimesForPropagation ? dt : 0;
-                      if (timej - deltat_ij > _hcalTimeWindowMin && timej - deltat_ij < hcalTimeWindowMax) {
-                        energySum += energyj;
-                        if (timej < timei) {
-                          timei = timej;  //use earliest hit time for simpletimingcut
-                        }
-                      }
-                    } else {
-                      float deltat_ij = fabs(timei - timej);
-                      if (deltat_ij <
-                          _hcalDeltaTimeHitResolution) {  //if this subhit is close to current subhit, add this hit's energy to timecluster
-                        if (energyj > energyi)
-                          timei =
-                              timej;  //this is probably not what was intended. i guess this should find the largest hit of one timecluster and use its hittime for the cluster, but instead it compares the current hit energy to the sum of already found hit energies
-                        //std::cout << timei << " - " << timej << std::endl;
-                        //std::cout << energyi << " - " << energyj << std::endl;
-                        energyi += energyj;
-                        used[j_t] = true;
-                        //std::cout << timei << " " << energyi << std::endl;
+                      if (timej - deltat_ij > _hcalTimeWindowMin.value() && timej - deltat_ij < hcalTimeWindowMax) {
+                         energySum += energyj;
+                         if (timej < timei) {
+                           timei = timej;  //use earliest hit time for simpletimingcut
+                         }
+                       }
+                     } else {
+                        float deltat_ij = fabs(timei - timej);
+                        //if this subhit is close to current subhit, add this hit's energy to timecluster
+                        if (deltat_ij < _hcalDeltaTimeHitResolution) {
+                          if (energyj > energyi) {
+                            //this is probably not what was intended. i guess this should find the largest hit of one timecluster and use its hittime for the cluster, but instead it compares the current hit energy to the sum of already found hit energies
+                            timei = timej;
+                          }
+                          //std::cout << timei << " - " << timej << std::endl;
+                          //std::cout << energyi << " - " << energyj << std::endl;
+                          energyi += energyj;
+                          used[j_t] = true;
+                          //std::cout << timei << " " << energyi << std::endl;
                       }
                     }
                   }
                 }
                 if (_hcalSimpleTimingCut) {
-                  used = vector<bool>(
-                      n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
+                  used = vector<bool>(n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
                   energyi += energySum;  //fill energySum back into energyi to have rest of loop behave the same.
                 }
 
@@ -708,7 +686,7 @@ retType DDCaloDigi::operator()(
                 //timei carries the time of the earliest hit within this window
 
                 // apply extra energy digitisation effects
-                energyi = ahcalEnergyDigi(energyi, cellid);  //this only uses the current subhit "timecluster"!
+                energyi = ahcalEnergyDigi(energyi, cellID);  //this only uses the current subhit "timecluster"!
 
                 if (energyi > _thresholdHcal[0]) {  //now would be the correct time to do threshold comparison
                   float timeCor = 0;
@@ -720,21 +698,21 @@ retType DDCaloDigi::operator()(
                           hcalTimeWindowMax) {  //if current subhit timecluster is within specified timing window, create new CalorimeterHit and add to collections etc.
                     count++;
                     edm4hep::MutableCalorimeterHit calHit = hcalCol.create();
-                    calhit.setCellID(cellid);
+                    calHit.setCellID(cellID);
                     if (_digitalHcal) {
-                      calhit.setEnergy(calibr_coeff);
+                      calHit.setEnergy(calibr_coeff);
                       //eCellOutput+= calibr_coeff;
                     } else {
-                      calhit.setEnergy(calibr_coeff * energyi);
+                      calHit.setEnergy(calibr_coeff * energyi);
                       //eCellOutput+= energyi*calibr_coeff;
                     }
-                    calhit.setTime(timei);
-                    calhit.setPosition(hit.getPosition());
-                    calhit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
+                    calHit.setTime(timei);
+                    calHit.setPosition(hit.getPosition());
+                    calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
                     // Set relation with LCRelationNavigator
                     auto hcaloRel = Relcol.create();
-                    hcaloRel.setRec(calHit);
-                    hcaloRel.setSim(hit);
+                    hcaloRel.setFrom(calHit);
+                    hcaloRel.setTo(hit);
                     //calohitNav.addRelation(calhit, hit, 1.0);
 
                   } else {
@@ -743,30 +721,30 @@ retType DDCaloDigi::operator()(
                 }
               }
               //std::cout <<"hello" << std::endl;
-            }
+            } // end loop over contributions
           } else {  // don't use timing
                     // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
             edm4hep::MutableCalorimeterHit calHit = hcalCol.create();
-            calhit->setCellID(cellid);
+            calHit.setCellID(cellID);
             float energyi = hit.getEnergy();
 
             // apply realistic digitisation
-            energyi = ahcalEnergyDigi(energyi, cellid);
+            energyi = ahcalEnergyDigi(energyi, cellID);
 
             if (_digitalHcal) {
-              calhit.setEnergy(calibr_coeff);
+              calHit.setEnergy(calibr_coeff);
             } else {
-              calhit.setEnergy(calibr_coeff * energyi);
+              calHit.setEnergy(calibr_coeff * energyi);
             }
             //eCellOutput+= energyi*calibr_coeff;
-            calhit.setTime(0);
-            calhit.setPosition(hit.getPosition());
-            calhit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
-            calhit.setRawHit(hit);
+            calHit.setTime(0);
+            calHit.setPosition(hit.getPosition());
+            calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
+            //calHit.setRawHit(hit);
 
-            auto hcaloRel = Relcol.create();
-            hcaloRel.setRec(calHit);
-            hcaloRel.setSim(hit);
+            //auto hcaloRel = Relcol.create();
+            hcaloRel.setFrom(calHit);
+            hcaloRel.setTo(hit);
           }
 
           // std::cout << hit->getTimeCont(0) << " count = " << count <<  " EHCAL = " << energyCal << " - " << eCellInTime << " - " << eCellOutput << std::endl;
@@ -775,71 +753,69 @@ retType DDCaloDigi::operator()(
       // add HCAL collection to event
       // hcalcolparameters().setValue(LCIO::CellIDEncoding,initString);
       // evt->addCollection(hcalcol,_outputHcalCollections[i].c_str());
-      return std::make_tuple(std::move(outputCollections), std::move(hcaloRel));
-    } catch (DataNotAvailableException& e) {
-      streamlog_out(DEBUG) << "could not find input HCAL collection " << colName << std::endl;
-    }
-  }
 
   // Create and add relation collection for ECAL/HCAL to event
   //chschcol = calohitNav.createLCCollection();
   // evt->addCollection(chschcol,_outputRelCollection.c_str());
 
   // _nEvt++;
+  return std::make_tuple(std::move(outputCollections), std::move(outputRelations));
 }
 
 StatusCode DDCaloDigi::finalize() { return StatusCode::SUCCESS; }  //fix
 
-if (_histograms) {
-  TFile* hfile = new TFile("calTiming.root", "recreate");
-  fEcal->TH1F::Write();
-  fHcal->TH1F::Write();
-  fEcalC->TH1F::Write();
-  fHcalC->TH1F::Write();
-  fEcalC1->TH1F::Write();
-  fHcalC1->TH1F::Write();
-  fEcalC2->TH1F::Write();
-  fHcalC2->TH1F::Write();
-  //fHcalCvsE->TH2F::Write();
-  fHcalLayer1->TH2F::Write();
-  fHcalLayer11->TH2F::Write();
-  fHcalLayer21->TH2F::Write();
-  fHcalLayer31->TH2F::Write();
-  fHcalLayer41->TH2F::Write();
-  fHcalLayer51->TH2F::Write();
-  fHcalLayer61->TH2F::Write();
-  fHcalLayer71->TH2F::Write();
-  fHcalRLayer1->TH1F::Write();
-  fHcalRLayer11->TH1F::Write();
-  fHcalRLayer21->TH1F::Write();
-  fHcalRLayer31->TH1F::Write();
-  fHcalRLayer41->TH1F::Write();
-  fHcalRLayer51->TH1F::Write();
-  fHcalRLayer61->TH1F::Write();
-  fHcalRLayer71->TH1F::Write();
-  fHcalRLayerNorm->TH1F::Write();
-  fEcalLayer1->TH2F::Write();
-  fEcalLayer11->TH2F::Write();
-  fEcalLayer21->TH2F::Write();
-  fEcalRLayer1->TH1F::Write();
-  fEcalRLayer11->TH1F::Write();
-  fEcalRLayer21->TH1F::Write();
-  fEcalRLayerNorm->TH1F::Write();
+// if (_histograms) {
+//   TFile* hfile = new TFile("calTiming.root", "recreate");
+//   fEcal->TH1F::Write();
+//   fHcal->TH1F::Write();
+//   fEcalC->TH1F::Write();
+//   fHcalC->TH1F::Write();
+//   fEcalC1->TH1F::Write();
+//   fHcalC1->TH1F::Write();
+//   fEcalC2->TH1F::Write();
+//   fHcalC2->TH1F::Write();
+//   //fHcalCvsE->TH2F::Write();
+//   fHcalLayer1->TH2F::Write();
+//   fHcalLayer11->TH2F::Write();
+//   fHcalLayer21->TH2F::Write();
+//   fHcalLayer31->TH2F::Write();
+//   fHcalLayer41->TH2F::Write();
+//   fHcalLayer51->TH2F::Write();
+//   fHcalLayer61->TH2F::Write();
+//   fHcalLayer71->TH2F::Write();
+//   fHcalRLayer1->TH1F::Write();
+//   fHcalRLayer11->TH1F::Write();
+//   fHcalRLayer21->TH1F::Write();
+//   fHcalRLayer31->TH1F::Write();
+//   fHcalRLayer41->TH1F::Write();
+//   fHcalRLayer51->TH1F::Write();
+//   fHcalRLayer61->TH1F::Write();
+//   fHcalRLayer71->TH1F::Write();
+//   fHcalRLayerNorm->TH1F::Write();
+//   fEcalLayer1->TH2F::Write();
+//   fEcalLayer11->TH2F::Write();
+//   fEcalLayer21->TH2F::Write();
+//   fEcalRLayer1->TH1F::Write();
+//   fEcalRLayer11->TH1F::Write();
+//   fEcalRLayer21->TH1F::Write();
+//   fEcalRLayerNorm->TH1F::Write();
 
-  hfile->Close();
-  delete hfile;
-}
+//   hfile->Close();
+//   delete hfile;
+// }
 
-//delete randomengines if needed
-if (_randomEngineDeadCellHcal != 0) {
-  delete _randomEngineDeadCellHcal;
-}
+// //delete randomengines if needed
+// if (_randomEngineDeadCellHcal != 0) {
+//   delete _randomEngineDeadCellHcal;
+// }
 
-if (_randomEngineDeadCellEcal != 0) {
-  delete _randomEngineDeadCellEcal;
-}
+// if (_randomEngineDeadCellEcal != 0) {
+//   delete _randomEngineDeadCellEcal;
+// }
 
-void DDCaloDigi::fillECALGaps() {
+void DDCaloDigi::fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> _calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS],
+			      std::vector<int> _calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS]
+			      ) const {
   // Loop over hits in the Barrel
   // For each layer calculated differences in hit positions
   // Look for gaps based on expected separation of adjacent hits
@@ -851,19 +827,19 @@ void DDCaloDigi::fillECALGaps() {
         // compare all pairs of hits just once (j>i)
 
         for (unsigned int i = 0; i < _calHitsByStaveLayer[is][il].size() - 1; ++i) {
-          edm4hep::MutableCalorimeterHit hiti    = _calHitsByStaveLayer[is][il][i];
-          int                            modulei = _calHitsByStaveLayerModule[is][il][i];
-          float                          xi      = hiti.getPosition()[0];
-          float                          yi      = hiti.getPosition()[1];
-          float                          zi      = hiti.getPosition()[2];
+          edm4hep::MutableCalorimeterHit* hiti    = _calHitsByStaveLayer[is][il][i];
+          int                             modulei = _calHitsByStaveLayerModule[is][il][i];
+          float                           xi      = hiti->getPosition()[0];
+          float                           yi      = hiti->getPosition()[1];
+          float                           zi      = hiti->getPosition()[2];
 
           for (unsigned int j = i + 1; j < _calHitsByStaveLayer[is][il].size(); ++j) {
-            edm4hep::MutableCalorimeterHit hitj    = _calHitsByStaveLayer[is][il][j];
-            int                            modulej = _calHitsByStaveLayerModule[is][il][j];
-            float                          xj      = hitj.getPosition()[0];
-            float                          yj      = hitj.getPosition()[1];
-            float                          zj      = hitj.getPosition()[2];
-            float                          dz      = fabs(zi - zj);
+            edm4hep::MutableCalorimeterHit* hitj    = _calHitsByStaveLayer[is][il][j];
+            int                             modulej = _calHitsByStaveLayerModule[is][il][j];
+            float                           xj      = hitj->getPosition()[0];
+            float                           yj      = hitj->getPosition()[1];
+            float                           zj      = hitj->getPosition()[2];
+            float                           dz      = fabs(zi - zj);
             // *** BARREL CORRECTION ***
             if (fabs(zi) < _zOfEcalEndcap && fabs(zj) < _zOfEcalEndcap) {
               // account for stave directions using normals
@@ -913,10 +889,10 @@ void DDCaloDigi::fillECALGaps() {
                 if (ztgap)
                   ecor = 1. + f * (dt - _barrelPixelSizeT[il]) * (dz - _barrelPixelSizeZ[il]) / 4. /
                                   _barrelPixelSizeT[il] / _barrelPixelSizeZ[il];
-                float ei = hiti.getEnergy() * ecor;
-                float ej = hitj.getEnergy() * ecor;
-                hiti.setEnergy(ei);
-                hitj.setEnergy(ej);
+                float ei = hiti->getEnergy() * ecor;
+                float ej = hitj->getEnergy() * ecor;
+                hiti->setEnergy(ei);
+                hitj->setEnergy(ej);
               }
 
               // *** ENDCAP CORRECTION ***
@@ -970,8 +946,8 @@ void DDCaloDigi::fillECALGaps() {
 
                 // cout << "correction factor = " << ecor << endl;
 
-                hiti.setEnergy(hiti.getEnergy() * ecor);
-                hitj.setEnergy(hitj.getEnergy() * ecor);
+                hiti->setEnergy(hiti->getEnergy() * ecor);
+                hitj->setEnergy(hitj->getEnergy() * ecor);
               }
             }
           }
@@ -983,7 +959,7 @@ void DDCaloDigi::fillECALGaps() {
   return;
 }
 
-float DDCaloDigi::digitalHcalCalibCoeff(CHT::Layout caloLayout, float energy) {
+float DDCaloDigi::digitalHcalCalibCoeff(CHT::Layout caloLayout, float energy) const {
   float        calib_coeff = 0;
   unsigned int ilevel      = 0;
   for (unsigned int ithresh = 1; ithresh < _thresholdHcal.size(); ithresh++) {
@@ -994,41 +970,41 @@ float DDCaloDigi::digitalHcalCalibCoeff(CHT::Layout caloLayout, float energy) {
 
   switch (caloLayout) {
     case CHT::barrel:
-      if (ilevel > _calibrCoeffHcalBarrel.size() - 1) {
-        streamlog_out(ERROR) << " Semi-digital level " << ilevel
-                             << " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalBarrel.size()
-                             << ")" << std::endl;
+      if (ilevel > _calibrCoeffHcalBarrel.value().size() - 1) {
+        error() << " Semi-digital level " << ilevel
+		<< " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalBarrel.value().size()
+		<< ")" << std::endl;
       } else {
-        calib_coeff = _calibrCoeffHcalBarrel[ilevel];
+        calib_coeff = _calibrCoeffHcalBarrel.value()[ilevel];
       }
       break;
     case CHT::endcap:
-      if (ilevel > _calibrCoeffHcalEndCap.size() - 1) {
-        streamlog_out(ERROR) << " Semi-digital level " << ilevel
-                             << " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalEndCap.size()
-                             << ")" << std::endl;
+      if (ilevel > _calibrCoeffHcalEndCap.value().size() - 1) {
+        error() << " Semi-digital level " << ilevel
+		<< " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalEndCap.value().size()
+		<< ")" << std::endl;
       } else {
-        calib_coeff = _calibrCoeffHcalEndCap[ilevel];
+        calib_coeff = _calibrCoeffHcalEndCap.value()[ilevel];
       }
       break;
     case CHT::plug:
-      if (ilevel > _calibrCoeffHcalOther.size() - 1) {
-        streamlog_out(ERROR) << " Semi-digital level " << ilevel
-                             << " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalOther.size()
-                             << ")" << std::endl;
+      if (ilevel > _calibrCoeffHcalOther.value().size() - 1) {
+	error() << " Semi-digital level " << ilevel
+		<< " greater than number of HCAL Calibration Constants (" << _calibrCoeffHcalOther.value().size()
+		<< ")" << std::endl;
       } else {
-        calib_coeff = _calibrCoeffHcalOther[ilevel];
+        calib_coeff = _calibrCoeffHcalOther.value()[ilevel];
       }
       break;
     default:
-      streamlog_out(ERROR) << " Unknown HCAL Hit Type " << std::endl;
+    error() << " Unknown HCAL Hit Type " << std::endl;
       break;
   }
 
   return calib_coeff;
 }
 
-float DDCaloDigi::analogueHcalCalibCoeff(CHT::Layout caloLayout, int layer) {
+float DDCaloDigi::analogueHcalCalibCoeff(CHT::Layout caloLayout, int layer) const {
   float calib_coeff = 0;
 
   for (unsigned int k(0); k < _hcalLayers.size(); ++k) {
@@ -1052,7 +1028,7 @@ float DDCaloDigi::analogueHcalCalibCoeff(CHT::Layout caloLayout, int layer) {
           calib_coeff = _calibrCoeffHcalOther[k];
           break;
         default:
-          streamlog_out(ERROR) << " Unknown HCAL Hit Type " << std::endl;
+          error() << " Unknown HCAL Hit Type " << std::endl;
           break;
       }
     }
@@ -1061,7 +1037,7 @@ float DDCaloDigi::analogueHcalCalibCoeff(CHT::Layout caloLayout, int layer) {
   return calib_coeff;
 }
 
-float DDCaloDigi::digitalEcalCalibCoeff(int layer) {
+float DDCaloDigi::digitalEcalCalibCoeff(int layer) const {
   float calib_coeff = 0;
 
   for (unsigned int k(0); k < _ecalLayers.size(); ++k) {
@@ -1081,7 +1057,7 @@ float DDCaloDigi::digitalEcalCalibCoeff(int layer) {
   return calib_coeff;
 }
 
-float DDCaloDigi::analogueEcalCalibCoeff(int layer) {
+float DDCaloDigi::analogueEcalCalibCoeff(int layer) const {
   float calib_coeff = 0;
 
   // retrieve calibration constants
@@ -1102,18 +1078,18 @@ float DDCaloDigi::analogueEcalCalibCoeff(int layer) {
   return calib_coeff;
 }
 
-float DDCaloDigi::ecalEnergyDigi(float energy, int id) {
+float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
   // some extra digi effects (daniel)
   // controlled by _applyEcalDigi = 0 (none), 1 (silicon), 2 (scintillator)
 
   // small update for time-constant uncorrelated miscalibrations. DJ, Jan 2015
 
-  float e_out(energy);
-  if (_applyEcalDigi == 1)
+  float e_out = energy;
+  if (_applyEcalDigi == 1) {
     e_out = siliconDigi(energy);  // silicon digi
-  else if (_applyEcalDigi == 2)
+  } else if (_applyEcalDigi == 2) {
     e_out = scintillatorDigi(energy, true);  // scintillator digi
-
+  }
   // add electronics dynamic range
   // Sept 2015: Daniel moved this to the ScintillatorDigi part, so it is applied before unfolding of sipm response
   // if (_ecalMaxDynMip>0) e_out = min (e_out, _ecalMaxDynMip*_calibEcalMip);
@@ -1122,13 +1098,14 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) {
   if (_misCalibEcal_uncorrel > 0) {
     float miscal(0);
     if (_misCalibEcal_uncorrel_keep) {
-      int id;
+      int id{0};
       if (_ECAL_cell_miscalibs.find(id) !=
           _ECAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
-        miscal = _ECAL_cell_miscalibs[id];
+        miscal = _ECAL_cell_miscalibs.at(id);
       } else {  // we haven't seen this one yet, get a miscalib for it
-        miscal                   = CLHEP::RandGauss::shoot(1.0, _misCalibEcal_uncorrel);
-        _ECAL_cell_miscalibs[id] = miscal;
+        miscal = CLHEP::RandGauss::shoot(1.0, _misCalibEcal_uncorrel);
+	// FIXME: this is storing miscalibration globally for a run???
+        // FIXME _ECAL_cell_miscalibs[id] = miscal;
       }
     } else {
       miscal = CLHEP::RandGauss::shoot(1.0, _misCalibEcal_uncorrel);
@@ -1145,12 +1122,13 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) {
       int id;
 
       if (_ECAL_cell_dead.find(id) != _ECAL_cell_dead.end()) {  // this cell was previously seen
-        if (_ECAL_cell_dead[id] == true) {
+        if (_ECAL_cell_dead.at(id) == true) {
           e_out = 0;
         }
       } else {  // we haven't seen this one yet, get a miscalib for it
         bool thisDead       = (CLHEP::RandFlat::shoot(_randomEngineDeadCellEcal, .0, 1.0) < _deadCellFractionEcal);
-        _ECAL_cell_dead[id] = thisDead;
+	// FIXME global map
+        //_ECAL_cell_dead[id] = thisDead;
         if (thisDead == true) {
           e_out = 0;
         }
@@ -1165,7 +1143,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) {
   return e_out;
 }
 
-float DDCaloDigi::ahcalEnergyDigi(float energy, int id) {
+float DDCaloDigi::ahcalEnergyDigi(float energy, int id) const {
   // some extra digi effects (daniel)
   // controlled by _applyHcalDigi = 0 (none), 1 (scintillator/SiPM)
 
@@ -1187,10 +1165,11 @@ float DDCaloDigi::ahcalEnergyDigi(float energy, int id) {
       int id;
       if (_HCAL_cell_miscalibs.find(id) !=
           _HCAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
-        miscal = _HCAL_cell_miscalibs[id];
+        miscal = _HCAL_cell_miscalibs.at(id);
       } else {  // we haven't seen this one yet, get a miscalib for it
         miscal                   = CLHEP::RandGauss::shoot(1.0, _misCalibHcal_uncorrel);
-        _HCAL_cell_miscalibs[id] = miscal;
+	// FIXME: same as above
+        //_HCAL_cell_miscalibs[id] = miscal;
       }
     } else {
       miscal = CLHEP::RandGauss::shoot(1.0, _misCalibHcal_uncorrel);
@@ -1207,12 +1186,13 @@ float DDCaloDigi::ahcalEnergyDigi(float energy, int id) {
       int id;
 
       if (_HCAL_cell_dead.find(id) != _HCAL_cell_dead.end()) {  // this cell was previously seen
-        if (_HCAL_cell_dead[id] == true) {
+        if (_HCAL_cell_dead.at(id) == true) {
           e_out = 0;
         }
       } else {  // we haven't seen this one yet, get a miscalib for it
         bool thisDead       = (CLHEP::RandFlat::shoot(_randomEngineDeadCellHcal, .0, 1.0) < _deadCellFractionHcal);
-        _HCAL_cell_dead[id] = thisDead;
+	// FIXME globally dead cell map?
+        //FIXME _HCAL_cell_dead[id] = thisDead;
         if (thisDead == true) {
           e_out = 0;
         }
@@ -1226,7 +1206,7 @@ float DDCaloDigi::ahcalEnergyDigi(float energy, int id) {
   return e_out;
 }
 
-float DDCaloDigi::siliconDigi(float energy) {
+float DDCaloDigi::siliconDigi(float energy) const {
   // applies extra digitisation to silicon hits
 
   // calculate #e-h pairs
@@ -1246,7 +1226,7 @@ float DDCaloDigi::siliconDigi(float energy) {
   return smeared_energy;
 }
 
-float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) {
+float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) const {
   // this applies some extra digitisation to scintillator+PPD hits (PPD=SiPM, MPPC)
   // - poisson fluctuates the number of photo-electrons according to #PEs/MIP
   // - applies PPD saturation according to #pixels
@@ -1261,329 +1241,329 @@ float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) {
   return digiEn;
 }
 
-auto DDCaloDigi::combineVirtualStripCells(auto col, bool isBarrel, int stripOrientation) {
-  // combines the virtual cells in a strip
-  // input collection is for virtual cells
-  // returns collection of strips
+// edm4hep::SimCalorimeterHitCollection DDCaloDigi::combineVirtualStripCells(edm4hep::SimCalorimeterHitCollection const& col,
+//       bool isBarrel, int stripOrientation) const {
+//   // combines the virtual cells in a strip
+//   // input collection is for virtual cells
+//   // returns collection of strips
 
-  // daniel jeans, jan/feb 2014
+//   // daniel jeans, jan/feb 2014
 
-  // sanity check
-  if (stripOrientation == SQUARE) {
-    streamlog_out(ERROR) << "DDCaloDigi::combineVirtualStripCells trying to deal with silicon strips??? I do not know "
-                            "how to do that, refusing to do anything!"
-                         << std::endl;
-    return NULL;
-  }
+//   // sanity check
+//   if (stripOrientation == SQUARE) {
+//     debug()  << "DDCaloDigi::combineVirtualStripCells trying to deal with silicon strips??? I do not know "
+//                             "how to do that, refusing to do anything!"
+//                          << std::endl;
+//     return 0;
+//   }
 
-  //CellIDDecoder<SimCalorimeterHit> idDecoder( col );
-  // This variable is for tracking detectors only, not for calorimeters
-  // std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+//   //CellIDDecoder<SimCalorimeterHit> idDecoder( col );
+//   // This variable is for tracking detectors only, not for calorimeters
+//   // std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
 
-  // get the encoding string from the original collection
-  const auto                            initString = cellIDHandle.get();
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
+//   // get the encoding string from the original collection
+//   const auto initStringStrip = cellIDHandle.get();
+//   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initStringStrip);
 
-  // make the new output collection
-  //edm4hep::MutableSimCalorimeterHit tempstripcol = inputCaloHitCollection.create();;
-  auto stripcol = edm4hep::SimCalorimeterHitCollection();
-  stripcol.setFlag(_flag.getFlag());
-  //FIXME: add initString/ cellIDEncoding to stripcol
+//   // make the new output collection
+//   //edm4hep::MutableSimCalorimeterHit tempstripcol = inputCaloHitCollection.create();;
+//   auto stripcol = edm4hep::SimCalorimeterHitCollection();
+//   //FIXME stripcol.setFlag(_flag.getFlag());
+//   //FIXME: add initString/ cellIDEncoding to stripcol
 
-  // link between strip CellID and hits storage for strip hits
-  std::map<int, edm4hep::MutableSimCalorimeterHit*> newhits;  //SORT
+//   // link between strip CellID and hits storage for strip hits
+//   std::map<int, edm4hep::MutableSimCalorimeterHit*> newhits;  //SORT
 
-  // loop over input collection
-  int numElements = col.size();
+//   // loop over input collection
+//   int numElements = col.size();
 
-  // // sum energy for check
-  float tempenergysum(0);
-  for (const auto& hit : inputCaloHitCollection) {
-    tempenergysum += hit.getEnergy();
-  }
+//   // // sum energy for check
+//   float tempenergysum(0);
+//   for (const auto& hit : col) {
+//     tempenergysum += hit.getEnergy();
+//   }
 
-  float scTVirtLengthBar(-99);
-  float scLVirtLengthBar(-99);
-  float scTVirtLengthEnd(-99);
-  float scLVirtLengthEnd(-99);
+//   float scTVirtLengthBar(-99);
+//   float scLVirtLengthBar(-99);
+//   float scTVirtLengthEnd(-99);
+//   float scLVirtLengthEnd(-99);
 
-  for (const auto& hit : inputCaloHitCollection) {  // loop over virtual cells
+//   for (const auto& hit : col) {  // loop over virtual cells
 
-    // for now, ignore preshower layer.
-    //   in "usual" (non-preshower) ecal collections, km1 = 0 is the first layer AFTER the preshower
-    int km1 = bitFieldCoder(hit)["layer"];  // FIXME
+//     // for now, ignore preshower layer.
+//     //   in "usual" (non-preshower) ecal collections, km1 = 0 is the first layer AFTER the preshower
+//     int km1 = bitFieldCoder(hit)["layer"];  // FIXME
 
-    int gearlayer = km1 + 1;  // in "gearlayer", preshower is 0, first layer after absorber is 1
+//     int gearlayer = km1 + 1;  // in "gearlayer", preshower is 0, first layer after absorber is 1
 
-    // after fix of MOKKA, this should be not needed
-    // int gearlayer(-99); // this is the layer index which the GEAR geometry knows about. depends on driver version...
-    // if ( _ecal_driver_version == 0 ) { // SEcal04 driver
-    // } else if ( _ecal_driver_version == 1 ) { // SEcal05 driver
-    //   gearlayer = km1+1;
-    // } else {
-    //   streamlog_out ( ERROR ) << "ERROR unknown value for ecal driver version, _ecal_driver_version=" << _ecal_driver_version << endl;
-    // }
-    // assert (gearlayer>=0);
+//     // after fix of MOKKA, this should be not needed
+//     // int gearlayer(-99); // this is the layer index which the GEAR geometry knows about. depends on driver version...
+//     // if ( _ecal_driver_version == 0 ) { // SEcal04 driver
+//     // } else if ( _ecal_driver_version == 1 ) { // SEcal05 driver
+//     //   gearlayer = km1+1;
+//     // } else {
+//     //   streamlog_out ( ERROR ) << "ERROR unknown value for ecal driver version, _ecal_driver_version=" << _ecal_driver_version << endl;
+//     // }
+//     // assert (gearlayer>=0);
 
-    int m       = bitFieldCoder(hit)["module"];
-    int s       = bitFieldCoder(hit)["stave"];
-    int i_index = bitFieldCoder(hit)["x"];
-    int j_index = bitFieldCoder(hit)["y"];
+//     int m       = bitFieldCoder(hit)["module"];
+//     int s       = bitFieldCoder(hit)["stave"];
+//     int i_index = bitFieldCoder(hit)["x"];
+//     int j_index = bitFieldCoder(hit)["y"];
 
-    //cout << "ORIG: " << km1 << " " << m << " " << s << " " << i_index << " " << j_index << " : " <<
-    //  hit->getPosition()[0] << " "<< hit->getPosition()[1] << " "<< hit->getPosition()[2] << endl;
+//     //cout << "ORIG: " << km1 << " " << m << " " << s << " " << i_index << " " << j_index << " : " <<
+//     //  hit->getPosition()[0] << " "<< hit->getPosition()[1] << " "<< hit->getPosition()[2] << endl;
 
-    // should we combine virtual cells in the I or J direction?
-    //
-    // in barrel:
-    //   i is along slab (phi in barrel)
-    //   j is across slab (z in barrel)
-    //   increasing j = increasing z; increasing i = decreasing phi
-    //
-    // in endcap:
-    //     i is across slab
-    //     j is along slab
-    //     different staves are rotated around beam axis.
-    //        in +ve z endcap (m==6),
-    //          stave 0 is at -ve x and +ve y. in this stave, i is parallel to -x, j to +y
-    //          stave 3 is at +ve x and +ve y. in this stave, i is parallel to +y, j to +x
-    //        -ve z endcap (m==0) is same, just everything flipped in x.
+//     // should we combine virtual cells in the I or J direction?
+//     //
+//     // in barrel:
+//     //   i is along slab (phi in barrel)
+//     //   j is across slab (z in barrel)
+//     //   increasing j = increasing z; increasing i = decreasing phi
+//     //
+//     // in endcap:
+//     //     i is across slab
+//     //     j is along slab
+//     //     different staves are rotated around beam axis.
+//     //        in +ve z endcap (m==6),
+//     //          stave 0 is at -ve x and +ve y. in this stave, i is parallel to -x, j to +y
+//     //          stave 3 is at +ve x and +ve y. in this stave, i is parallel to +y, j to +x
+//     //        -ve z endcap (m==0) is same, just everything flipped in x.
 
-    bool collateAlongI =
-        isBarrel ? stripOrientation == STRIP_ALIGN_ALONG_SLAB :  // I is the index along the slab (R-phi in barrel)
-            stripOrientation == STRIP_ALIGN_ACROSS_SLAB;         // for some reason seems to be reversed in endcap...!!
+//     bool collateAlongI =
+//         isBarrel ? stripOrientation == STRIP_ALIGN_ALONG_SLAB :  // I is the index along the slab (R-phi in barrel)
+//             stripOrientation == STRIP_ALIGN_ACROSS_SLAB;         // for some reason seems to be reversed in endcap...!!
 
-    streamlog_out(DEBUG) << "isBarrel = " << isBarrel << " : stripOrientation= " << stripOrientation
-                         << " gear layer = " << gearlayer << endl;
+//     debug() << "isBarrel = " << isBarrel << " : stripOrientation= " << stripOrientation
+//                          << " gear layer = " << gearlayer << endl;
 
-    // let's get the length of the virtual cell in the direction of the strip
-    //    fixed rare crashes, and streamlined code to get virtualCellSizeAlongStrip. Sept 2014
-    float virtualCellSizeAlongStrip(0);
+//     // let's get the length of the virtual cell in the direction of the strip
+//     //    fixed rare crashes, and streamlined code to get virtualCellSizeAlongStrip. Sept 2014
+//     float virtualCellSizeAlongStrip(0);
 
-    float* layerpixsize(0);
-    float* savedPixSize(0);
-    if (isBarrel) {
-      if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {
-        layerpixsize = _barrelPixelSizeT;
-        savedPixSize = &scTVirtLengthBar;
-      } else {
-        layerpixsize = _barrelPixelSizeZ;
-        savedPixSize = &scLVirtLengthBar;
-      }
-    } else {
-      if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {
-        layerpixsize = _endcapPixelSizeX;
-        savedPixSize = &scTVirtLengthEnd;
-      } else {
-        layerpixsize = _endcapPixelSizeY;
-        savedPixSize = &scLVirtLengthEnd;
-      }
-    }
+//     float* layerpixsize(0);
+//     float* savedPixSize(0);
+//     if (isBarrel) {
+//       if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {
+//         layerpixsize = _barrelPixelSizeT;
+//         savedPixSize = &scTVirtLengthBar;
+//       } else {
+//         layerpixsize = _barrelPixelSizeZ;
+//         savedPixSize = &scLVirtLengthBar;
+//       }
+//     } else {
+//       if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {
+//         layerpixsize = _endcapPixelSizeX;
+//         savedPixSize = &scTVirtLengthEnd;
+//       } else {
+//         layerpixsize = _endcapPixelSizeY;
+//         savedPixSize = &scLVirtLengthEnd;
+//       }
+//     }
 
-    virtualCellSizeAlongStrip = layerpixsize[gearlayer];
-    if (virtualCellSizeAlongStrip > 0) {  // looks OK
-      if (*savedPixSize < 0) {            // no saved size yet, keep this one
-        *savedPixSize = virtualCellSizeAlongStrip;
-      }
-    } else {                    // no valid info in gear file for this layer
-      if (*savedPixSize > 0) {  // use saved value from other layer
-        virtualCellSizeAlongStrip = *savedPixSize;
-      } else {  // look at previous layers for one with same orientation (extra check, sept 2014)
-        std::vector<std::pair<int, int>> layerTypes = getLayerConfig();
+//     virtualCellSizeAlongStrip = layerpixsize[gearlayer];
+//     if (virtualCellSizeAlongStrip > 0) {  // looks OK
+//       if (*savedPixSize < 0) {            // no saved size yet, keep this one
+//         *savedPixSize = virtualCellSizeAlongStrip;
+//       }
+//     } else {                    // no valid info in gear file for this layer
+//       if (*savedPixSize > 0) {  // use saved value from other layer
+//         virtualCellSizeAlongStrip = *savedPixSize;
+//       } else {  // look at previous layers for one with same orientation (extra check, sept 2014)
+//         std::vector<std::pair<int, int>> layerTypes = getLayerConfig();
 
-        streamlog_out(DEBUG) << "could not get valid info from gear file..." << endl
-                             << "looking through previous layers to get a matching orientation" << endl
-                             << "this gear layer " << gearlayer << " type: " << layerTypes[gearlayer].first << " "
-                             << layerTypes[gearlayer].second << endl;
+//         debug() << "could not get valid info from gear file..." << endl
+//                              << "looking through previous layers to get a matching orientation" << endl
+//                              << "this gear layer " << gearlayer << " type: " << layerTypes[gearlayer].first << " "
+//                              << layerTypes[gearlayer].second << endl;
 
-        for (int il = gearlayer - 1; il >= 0; il--) {
-          // layer types include the preshower at posn "0"
-          // gearlayer has preshower as layer 0
-          if (layerTypes[il] == layerTypes[gearlayer]) {  // found layer with same setup
-            streamlog_out(DEBUG) << "found a match! " << il << " " << layerTypes[il].first << " "
-                                 << layerTypes[il].second << " : " << layerpixsize[il] << endl;
-            virtualCellSizeAlongStrip = layerpixsize[il];
-            *savedPixSize             = virtualCellSizeAlongStrip;
-            break;
-          }
-        }
-      }
-    }
-    streamlog_out(DEBUG) << "virtualCellSizeAlongStrip = " << virtualCellSizeAlongStrip << endl;
+//         for (int il = gearlayer - 1; il >= 0; il--) {
+//           // layer types include the preshower at posn "0"
+//           // gearlayer has preshower as layer 0
+//           if (layerTypes[il] == layerTypes[gearlayer]) {  // found layer with same setup
+//             debug() << "found a match! " << il << " " << layerTypes[il].first << " "
+//                                  << layerTypes[il].second << " : " << layerpixsize[il] << endl;
+//             virtualCellSizeAlongStrip = layerpixsize[il];
+//             *savedPixSize             = virtualCellSizeAlongStrip;
+//             break;
+//           }
+//         }
+//       }
+//     }
+//     debug() << "virtualCellSizeAlongStrip = " << virtualCellSizeAlongStrip << endl;
 
-    // calculate the new strip's I,J coordinates
-    int i_new = collateAlongI ? i_index / getNumberOfVirtualCells() : i_index;
-    int j_new = collateAlongI ? j_index : j_index / getNumberOfVirtualCells();
+//     // calculate the new strip's I,J coordinates
+//     int i_new = collateAlongI ? i_index / getNumberOfVirtualCells() : i_index;
+//     int j_new = collateAlongI ? j_index : j_index / getNumberOfVirtualCells();
 
-    // apply position-dependent energy correction
-    //
-    // relative virtual cell position within strip (0 = centre)
-    //    distance between centre of virtual cell and centre of strip
-    int   relativeIndx = collateAlongI ? i_index : j_index;
-    float relativePos =
-        relativeIndx % getNumberOfVirtualCells();  // this is index within strip wrt strip end (0->_strip_virt_cells-1)
-    relativePos -= (getNumberOfVirtualCells() - 1) / 2.0;  // index wrt strip centre
-    relativePos *= virtualCellSizeAlongStrip;              // distance wrt strip centre
+//     // apply position-dependent energy correction
+//     //
+//     // relative virtual cell position within strip (0 = centre)
+//     //    distance between centre of virtual cell and centre of strip
+//     int   relativeIndx = collateAlongI ? i_index : j_index;
+//     float relativePos =
+//         relativeIndx % getNumberOfVirtualCells();  // this is index within strip wrt strip end (0->_strip_virt_cells-1)
+//     relativePos -= (getNumberOfVirtualCells() - 1) / 2.0;  // index wrt strip centre
+//     relativePos *= virtualCellSizeAlongStrip;              // distance wrt strip centre
 
-    // effect of absorbtion length within scintillator
-    //     TODO: should check the polarity is consistent with mppc position, to make sure larger response nearer to mppc....
-    float energy_new = hit.getEnergy();
+//     // effect of absorbtion length within scintillator
+//     //     TODO: should check the polarity is consistent with mppc position, to make sure larger response nearer to mppc....
+//     float energy_new = hit.getEnergy();
 
-    float energyNonuniformityScaling(1.);
-    if (_strip_abs_length > 0) {
-      energyNonuniformityScaling = exp(-relativePos / _strip_abs_length);
-      energy_new *= energyNonuniformityScaling;
-    }
+//     float energyNonuniformityScaling(1.);
+//     if (_strip_abs_length > 0) {
+//       energyNonuniformityScaling = exp(-relativePos / _strip_abs_length);
+//       energy_new *= energyNonuniformityScaling;
+//     }
 
-    // calculate ID of the new Strip // FIXME???
-    bitFieldCoder["system"] = m;  // FIXME ????
-    bitFieldCoder["module"] = m;
-    bitFieldCoder["stave"]  = s;
-    bitFieldCoder["layer"]  = km1;
-    bitFieldCoder["x"]      = i_new;
-    bitFieldCoder["y"]      = j_new;
-    int cellID              = bitFieldCoder.getCellID;  // FIXME
+//     // calculate ID of the new Strip // FIXME???
+//     bitFieldCoder["system"] = m;  // FIXME ????
+//     bitFieldCoder["module"] = m;
+//     bitFieldCoder["stave"]  = s;
+//     bitFieldCoder["layer"]  = km1;
+//     bitFieldCoder["x"]      = i_new;
+//     bitFieldCoder["y"]      = j_new;
+//     int cellID              = bitFieldCoder.getCellID;  // FIXME
 
-    // calculate position of centre of this new strip
-    // it depends if we are in the barrel or endcap, and in which stave
-    //   (n.b. we could do this later, after checking for duplicates. however, keeping it here allows us to
-    //            check that we haven't supplied wrong nVirtualCells parameter)
+//     // calculate position of centre of this new strip
+//     // it depends if we are in the barrel or endcap, and in which stave
+//     //   (n.b. we could do this later, after checking for duplicates. however, keeping it here allows us to
+//     //            check that we haven't supplied wrong nVirtualCells parameter)
 
-    float stripPos[3] = {0};
-    if (isBarrel) {
-      if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {  // it's along z
-        stripPos[0] = hit.getPosition()[0];
-        stripPos[1] = hit.getPosition()[1];
-        stripPos[2] = hit.getPosition()[2] - relativePos;  // increasing j = increasing z
-      } else {                                             // it's along t
-        float phi   = atan2(_barrelStaveDir[s][1], _barrelStaveDir[s][0]);
-        stripPos[0] = hit.getPosition()[0] - relativePos * cos(phi);  // negative: increasing I = decreasing phi
-        stripPos[1] = hit.getPosition()[1] - relativePos * sin(phi);
-        stripPos[2] = hit.getPosition()[2];
-      }
-    } else {  // endcap
-      stripPos[0] = hit.getPosition()[0];
-      stripPos[1] = hit.getPosition()[1];
-      stripPos[2] = hit.getPosition()[2];  // z never changes
-      // there's almost certainly a neater way to get these different polarities in here...DJ
-      //    ....but this is, I believe, correct!
-      int xsign = m == 6 ? -1 : +1;  // endcaps are mirrored in x, not in y
+//     float stripPos[3] = {0};
+//     if (isBarrel) {
+//       if (stripOrientation == STRIP_ALIGN_ACROSS_SLAB) {  // it's along z
+//         stripPos[0] = hit.getPosition()[0];
+//         stripPos[1] = hit.getPosition()[1];
+//         stripPos[2] = hit.getPosition()[2] - relativePos;  // increasing j = increasing z
+//       } else {                                             // it's along t
+//         float phi   = atan2(_barrelStaveDir[s][1], _barrelStaveDir[s][0]);
+//         stripPos[0] = hit.getPosition()[0] - relativePos * cos(phi);  // negative: increasing I = decreasing phi
+//         stripPos[1] = hit.getPosition()[1] - relativePos * sin(phi);
+//         stripPos[2] = hit.getPosition()[2];
+//       }
+//     } else {  // endcap
+//       stripPos[0] = hit.getPosition()[0];
+//       stripPos[1] = hit.getPosition()[1];
+//       stripPos[2] = hit.getPosition()[2];  // z never changes
+//       // there's almost certainly a neater way to get these different polarities in here...DJ
+//       //    ....but this is, I believe, correct!
+//       int xsign = m == 6 ? -1 : +1;  // endcaps are mirrored in x, not in y
 
-      switch (s) {
-        case 0:
-          if (collateAlongI)
-            stripPos[0] += -xsign * relativePos;
-          else
-            stripPos[1] += -relativePos;
-          break;
-        case 1:
-          if (collateAlongI)
-            stripPos[1] += +relativePos;
-          else
-            stripPos[0] += -xsign * relativePos;
-          break;
-        case 2:
-          if (collateAlongI)
-            stripPos[0] += +xsign * relativePos;
-          else
-            stripPos[1] += +relativePos;
-          break;
-        case 3:
-          if (collateAlongI)
-            stripPos[1] += -relativePos;
-          else
-            stripPos[0] += +xsign * relativePos;
-          break;
-      }
+//       switch (s) {
+//         case 0:
+//           if (collateAlongI)
+//             stripPos[0] += -xsign * relativePos;
+//           else
+//             stripPos[1] += -relativePos;
+//           break;
+//         case 1:
+//           if (collateAlongI)
+//             stripPos[1] += +relativePos;
+//           else
+//             stripPos[0] += -xsign * relativePos;
+//           break;
+//         case 2:
+//           if (collateAlongI)
+//             stripPos[0] += +xsign * relativePos;
+//           else
+//             stripPos[1] += +relativePos;
+//           break;
+//         case 3:
+//           if (collateAlongI)
+//             stripPos[1] += -relativePos;
+//           else
+//             stripPos[0] += +xsign * relativePos;
+//           break;
+//       }
 
-    }  // endcap
+//     }  // endcap
 
-    //    cout << "new strip pos: " << stripPos[0] << " " << stripPos[1] << " " << stripPos[2] << endl;
+//     //    cout << "new strip pos: " << stripPos[0] << " " << stripPos[1] << " " << stripPos[2] << endl;
 
-    edm4hep::MutableSimCalorimeterHit* newhit = nullptr;
+//     edm4hep::MutableSimCalorimeterHit* newhit = nullptr;
 
-    // check if we have already seen a virtual cell from this strip
-    if (newhits.find(cellid) != newhits.end()) {  // already have one from this strip
+//     // check if we have already seen a virtual cell from this strip
+//     if (newhits.find(cellID) != newhits.end()) {  // already have one from this strip
 
-      edm4hep::MutableSimCalorimeterHit htt = newhits.find(cellid)->second;  // previously made hit in this stirp
-      // check that calculated positions are same!
-      bool isOK = true;
-      for (int i = 0; i < 3; i++) {
-        if (fabs(htt.getPosition()[i] - stripPos[i]) > 1) {  // should be identical, but allow a little slop
-          isOK = false;
-          break;
-        }
-      }
-      if (!isOK) {
-        streamlog_out(ERROR) << "strip virtual cell merging: inconsistent position calc!" << std::endl
-                             << "please check that the parameter ECAL_strip_nVirtualCells is correctly set..."
-                             << getNumberOfVirtualCells() << std::endl
-                             << " layer = (k-1) " << km1 << " (gear) " << gearlayer << endl;
+//       edm4hep::MutableSimCalorimeterHit* htt = newhits.find(cellID)->second;  // previously made hit in this stirp
+//       // check that calculated positions are same!
+//       bool isOK = true;
+//       for (int i = 0; i < 3; i++) {
+//         if (fabs(htt->getPosition()[i] - stripPos[i]) > 1) {  // should be identical, but allow a little slop
+//           isOK = false;
+//           break;
+//         }
+//       }
+//       if (!isOK) {
+//         error() << "strip virtual cell merging: inconsistent position calc!" << std::endl
+//                              << "please check that the parameter ECAL_strip_nVirtualCells is correctly set..."
+//                              << getNumberOfVirtualCells() << std::endl
+//                              << " layer = (k-1) " << km1 << " (gear) " << gearlayer << endl;
 
-        for (int i = 0; i < 3; i++) {
-          streamlog_out(DEBUG) << stripPos[i] << " ";
-        }
-        streamlog_out(DEBUG) << endl;
+//         for (int i = 0; i < 3; i++) {
+//             debug() << stripPos[i] << " ";
+//         }
+//             debug() << endl;
 
-        for (int i = 0; i < 3; i++) {
-          streamlog_out(DEBUG) << htt.getPosition()[i] << " ";
-        }
-        streamlog_out(DEBUG) << endl;
+//         for (int i = 0; i < 3; i++) {
+//             debug() << htt->getPosition()[i] << " ";
+//         }
+//             debug() << endl;
 
-        // std::cout << "K-1 = " << km1 ;
-        // std::cout << "; GEARlay = " << gearlayer;
-        // std::cout << "; m = " << m;
-        // std::cout << "; s = " << s;
-        // std::cout << "; i = " << i_index;
-        // std::cout << "; j = " << j_index << std::endl;
+//         // std::cout << "K-1 = " << km1 ;
+//         // std::cout << "; GEARlay = " << gearlayer;
+//         // std::cout << "; m = " << m;
+//         // std::cout << "; s = " << s;
+//         // std::cout << "; i = " << i_index;
+//         // std::cout << "; j = " << j_index << std::endl;
 
-        assert(0);
-      }
+//         assert(0);
+//       }
 
-      // set it to the existing one
-      newhit = htt;
+//       // set it to the existing one
+//       newhit = htt;
 
-    } else {  // it's the first hit from this strip
-      // create a new hit for the strip
-      newhit = &stripcol.create();
-      ;
-      newhits[cellid] = newhit;
-      newHit.setCellID(cellID);
-      newhit.setPosition(stripPos);
-      newhit.setEnergy(0);  // this is added when we add MC contributions
-    }
+//     } else {  // it's the first hit from this strip
+//       // create a new hit for the strip
+//       newhit = &stripcol.create();
+//       newhits[cellID] = newhit;
+//       newhit->setCellID(cellID);
+//       newhit->setPosition(stripPos);
+//       newhit->setEnergy(0);  // this is added when we add MC contributions
+//     }
 
-    // add the MC contriutions
-    float eadd(0);
-    auto  singleHit = hit.getContributions();
+//     // add the MC contriutions
+//     float eadd(0);
+//     auto  singleHit = hit.getContributions();
 
-    for (int ij = 0; ij < singleHit.size(); ij++) {
-      auto contrib = stripcol.create();
-      contrib.setParticle(hit.getParticle(ij));
-      contrib.setEnergy(hit.getEnergy(ij) * energyNonuniformityScaling);
-      contrib.setTime(hit.getTime(ij));
-      contrib.setPDG(hit.getPDG(ij));
-      newhit.addToContributions(contrib);
-      eadd += hit.getEnergy(ij) * energyNonuniformityScaling;
-    }
+//     for (int ij = 0; ij < singleHit.size(); ij++) {
+//       edm4hep::MutableSimCalorimeterHitCollection contrib = col.create();
+//       contrib.setParticle(hit.getParticle(ij));
+//       contrib.setEnergy(hit.getEnergy(ij) * energyNonuniformityScaling);
+//       contrib.setTime(hit.getTime(ij));
+//       contrib.setPDG(hit.getPDG(ij));
+//       newhit.addToContributions(contrib);
+//       eadd += hit.getEnergy(ij) * energyNonuniformityScaling;
+//     }
 
-    float esum(0);
-    auto  singlenewHit = newhit.getContributions();
-    for (int ij = 0; ij < singlenewHit.size(); ij++) {
-      esum += newhit.getEnergy(ij);
-    }
-  }  // loop over hits
+//     float esum(0);
+//     auto  singlenewHit = newhit.getContributions();
+//     for (int ij = 0; ij < singlenewHit.size(); ij++) {
+//       esum += newhit.getEnergy(ij);
+//     }
+//   }  // loop over hits
 
-  // move the hits from the temporary storage to the output collection
-  for (std::map<int, edm4hep::MutableSimCalorimeterHit*>::iterator itt = newhits.begin(); itt != newhits.end(); itt++) {
-    stripcol->addElement(itt->second);
-  }
+//   // move the hits from the temporary storage to the output collection
+//   for (std::map<int, edm4hep::MutableSimCalorimeterHit*>::iterator itt = newhits.begin(); itt != newhits.end(); itt++) {
+//     stripcol->addElement(itt->second);
+//   }
 
-  // return the new collection
-  return stripcol;
-}
+//   // return the new collection
+//   return stripcol;
+// }
 
-int DDCaloDigi::getNumberOfVirtualCells() {
+int DDCaloDigi::getNumberOfVirtualCells() const {
   // if ( _strip_virt_cells < 0 ) { // not yet set, try to get from gear file
   //   // number of virtual cells in scintillator strip
   //   try {
@@ -1599,10 +1579,11 @@ int DDCaloDigi::getNumberOfVirtualCells() {
   return _strip_virt_cells;
 }
 
-std::vector<std::pair<int, int>>& DDCaloDigi::getLayerConfig() {
+//FIXME should return a reference to somewhere else? or do this every event?
+std::vector<std::pair<int, int>> DDCaloDigi::getLayerConfig() const {
   // get the layer layout (silicon, scintillator)
   // first element of layerTypes is the preshower
-
+  std::vector < std::pair <int, int> > _layerTypes {};
   if (_layerTypes.size() == 0) {
     for (std::string::size_type i = 0; i < _ecalLayout.size(); ++i) {
       // convert each element of string to integer
@@ -1647,7 +1628,7 @@ std::vector<std::pair<int, int>>& DDCaloDigi::getLayerConfig() {
           _layerTypes.push_back(std::pair<int, int>(SIECAL, SQUARE));
           break;
         default:
-          streamlog_out(ERROR) << "ERROR, unknown layer type " << etype << endl;
+          error() << "ERROR, unknown layer type " << etype << endl;
       }
     }
   }
@@ -1655,48 +1636,48 @@ std::vector<std::pair<int, int>>& DDCaloDigi::getLayerConfig() {
   return _layerTypes;
 }
 
-void DDCaloDigi::checkConsistency(std::string colName, int layer) {
+void DDCaloDigi::checkConsistency(std::string colName, int layer) const{
   if (_applyEcalDigi == 0 || _countWarnings > 20)
     return;
 
   std::pair<int, int> thislayersetup = getLayerProperties(colName, layer);
 
   if (_applyEcalDigi == 1 && thislayersetup.first != SIECAL) {
-    streamlog_out(ERROR) << "collection: " << colName << endl;
-    streamlog_out(ERROR) << "you seem to be trying to apply ECAL silicon digitisation to scintillator? Refusing!"
-                         << endl;
-    streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
+    // streamlog_out(ERROR) << "collection: " << colName << endl;
+    // streamlog_out(ERROR) << "you seem to be trying to apply ECAL silicon digitisation to scintillator? Refusing!"
+    //                      << endl;
+    // streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
     assert(0);
     _countWarnings++;
   }
 
   if (_applyEcalDigi == 2 && thislayersetup.first != SCECAL) {
-    streamlog_out(ERROR) << "collection: " << colName << endl;
-    streamlog_out(ERROR) << "you seem to be trying to apply ECAL scintillator digitisation to silicon? Refusing!"
-                         << endl;
-    streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
+    // streamlog_out(ERROR) << "collection: " << colName << endl;
+    // streamlog_out(ERROR) << "you seem to be trying to apply ECAL scintillator digitisation to silicon? Refusing!"
+    //                      << endl;
+    // streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
     assert(0);
     _countWarnings++;
   }
 
   if (thislayersetup.second != getStripOrientationFromColName(colName)) {
-    streamlog_out(ERROR) << "collection: " << colName << endl;
-    streamlog_out(ERROR) << "some inconsistency in strip orientation?" << endl;
-    streamlog_out(ERROR) << " from collection name: " << getStripOrientationFromColName(colName) << endl;
-    streamlog_out(ERROR) << " from layer config string: " << thislayersetup.second << endl;
+    // streamlog_out(ERROR) << "collection: " << colName << endl;
+    // streamlog_out(ERROR) << "some inconsistency in strip orientation?" << endl;
+    // streamlog_out(ERROR) << " from collection name: " << getStripOrientationFromColName(colName) << endl;
+    // streamlog_out(ERROR) << " from layer config string: " << thislayersetup.second << endl;
     _countWarnings++;
   }
 
   return;
 }
 
-std::pair<int, int> DDCaloDigi::getLayerProperties(std::string colName, int layer) {
+std::pair<int, int> DDCaloDigi::getLayerProperties(std::string const& colName, int layer) const {
   std::pair<int, int> thislayersetup(-99, -99);
   std::string         colNameLow(colName);
   std::transform(colNameLow.begin(), colNameLow.end(), colNameLow.begin(), ::tolower);
   if (colNameLow.find("presh") != string::npos) {  // preshower
     if (layer != 0) {
-      streamlog_out(WARNING) << "preshower layer with layer index = " << layer << " ??? " << endl;
+      //streamlog_out(WARNING) << "preshower layer with layer index = " << layer << " ??? " << endl;
     } else {
       thislayersetup = getLayerConfig()[layer];
     }
@@ -1706,19 +1687,19 @@ std::pair<int, int> DDCaloDigi::getLayerProperties(std::string colName, int laye
       // thislayersetup = getLayerConfig()[layer];
       thislayersetup = std::pair<int, int>(SIECAL, SQUARE);
     } else {
-      streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
+      //streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
     }
   } else {  // endcap, barrel
     if (layer + 1 < int(getLayerConfig().size())) {
       thislayersetup = getLayerConfig()[layer + 1];
     } else {
-      streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
+      //streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
     }
   }
   return thislayersetup;
 }
 
-int DDCaloDigi::getStripOrientationFromColName(std::string colName) {
+int DDCaloDigi::getStripOrientationFromColName(std::string const& colName) const {
   int         orientation(-99);
   std::string colNameLow(colName);
   std::transform(colNameLow.begin(), colNameLow.end(), colNameLow.begin(), ::tolower);
