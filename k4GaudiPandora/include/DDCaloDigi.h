@@ -24,7 +24,6 @@
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
 #include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
-#include "k4FWCore/BaseClass.h"
 #include "k4FWCore/Transformer.h"
 #include "k4FWCore/MetaDataHandle.h"
 #include "k4FWCore/DataHandle.h"
@@ -131,7 +130,7 @@ struct DDCaloDigi final
   Gaudi::Property<std::vector<float>> _thresholdHcal{this, "HCALThreshold", {0.00004}, "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
   Gaudi::Property<std::string> _unitThresholdHcal{this, "HCALThresholdUnit", {"GeV"}, "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
   Gaudi::Property<std::vector<int>> _ecalLayer{this, "ECALLayers", {20, 100}, "Index of ECal Layers"};
-  Gaudi::Property<std::vector<int>> _hcalLayer{this, "ECALLayers", {100}, "Index of HCal Layers"};
+  Gaudi::Property<std::vector<int>> _hcalLayer{this, "HCALLayers", {100}, "Index of HCal Layers"};
   Gaudi::Property<std::vector<float>> _calibrCoeffEcal{this, "CalibrECAL", {40.91, 81.81}, "Calibration coefficients for ECAL"};
   Gaudi::Property<std::vector<float>> _calibrCoeffHcalBarrel{this, "CalibrHCALBarrel", {0.0}, "Calibration coefficients for Barrel HCAL"};
   Gaudi::Property<std::vector<float>> _calibrCoeffHcalEndCap{this, "CalibrHCALEndCap", {0.0}, "Calibration coefficients for EndCap HCAL"};
@@ -139,7 +138,7 @@ struct DDCaloDigi final
   Gaudi::Property<int> _digitalEcal{this, "IfDigitalEcal", {0}, "Digital Ecal"};
   Gaudi::Property<int> _mapsEcalCorrection{this, "MapsEcalCorrection", {0}, "Ecal correction for theta dependency of calibration for MAPS"};
   Gaudi::Property<int> _digitalHcal{this, "IfDigitalHcal", {0}, "Digital Hcal"};
-  Gaudi::Property<int> _ecalGapCorrection{this, "ECAconst float slop = 0.25; // (mm)LGapCorrection", {1}, "Correct for ECAL gaps"};
+  Gaudi::Property<int> _ecalGapCorrection{this, "ECALGapCorrection", {1}, "Correct for ECAL gaps"};
   Gaudi::Property<int> _hcalGapCorrection{this, "HCALGapCorrection", {1}, "Correct for HCAL gaps"};
   Gaudi::Property<float> _ecalEndcapCorrectionFactor{this, "ECALEndcapCorrectionFactor", {1.025}, "Energy correction for ECAL endcap"};
   Gaudi::Property<float> _hcalEndcapCorrectionFactor{this, "HCALEndcapCorrectionFactor", {1.025}, "Energy correction for HCAL endcap"};
