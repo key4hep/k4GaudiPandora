@@ -28,7 +28,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					# src/DDMCParticleCreator.cc
 					# src/DDPandoraPFANewProcessor.cc
 					# src/DDPfoCreator.cc
-					# src/DDScintillatorPpdDigi.cc
+					src/DDScintillatorPpdDigi.cc
 					# src/DDSimpleMuonDigi.cc
 					# src/DDTrackCreatorBase.cc
 					# src/DDTrackCreatorCLIC.cc
