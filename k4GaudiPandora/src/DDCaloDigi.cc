@@ -26,20 +26,18 @@
 #include <string>
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/Detector.h"
+#include "DD4hep/DetType.h"
+#include "DD4hep/Factories.h"
+#include "DDRec/MaterialManager.h"
 #include "DDRec/DetectorData.h"
 #include "GaudiKernel/MsgStream.h"
 #include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/Constants.h"
-#include "k4FWCore/BaseClass.h"
 
 #include "CLHEP/Random/RandFlat.h"
 #include "CLHEP/Random/RandGauss.h"
 #include "CLHEP/Random/RandPoisson.h"
-#include "DD4hep/DD4hepUnits.h"
-#include "DD4hep/DetType.h"
-#include "DD4hep/Factories.h"
-#include "DDRec/DetectorData.h"
-#include "DDRec/MaterialManager.h"
+
 
 using namespace std;
 using namespace dd4hep ;
@@ -529,7 +527,7 @@ retType DDCaloDigi::operator()(
       // add ECAL collection to event
       // ecalcol->parameters().setValue(LCIO::CellIDEncoding,initString);
       edm4hep::CaloHitSimCaloHitLinkCollection caloRelMap;
-      caloRelMap["newAssoc"] = std::move(Relcol);
+      caloRelMap = std::move(Relcol);
       return std::make_tuple(std::move(outputCollections), std::move(caloRelMap));
       //evt->addCollection(ecalcol,_outputEcalCollections[i].c_str());
 
@@ -561,7 +559,7 @@ retType DDCaloDigi::operator()(
 
 
     auto&       hcalCol                = outputCollections; //"new" + colName
-    auto const& inputCaloHitCollection = simCaloHitCollections;
+    //auto const& inputCaloHitCollection = simCaloHitCollections;
       debug() << "looking for collection: " << colName << endl;
 
     if (colName.find("dummy") != string::npos) {
@@ -570,10 +568,11 @@ retType DDCaloDigi::operator()(
 
     //fg: need to establish the subdetetcor part here
     //    use collection name as cellID does not seem to have that information
-    CHT::Layout caloLayout = layoutFromString(colName);
+    //CHT::Layout caloLayout = layoutFromString(colName); //FIXME: not sure if we need new layout for hcal
+
       //LCCollection * col = evt->getCollection( _hcalCollections[i].c_str() ) ;
       //std::string                           initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-      dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder("FIXME");  // check!
+      //dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder("FIXME");  // check! //FIXME: same as above
 
       //hcalCol.setFlag(_flag.getFlag());
       // for (int j(0); j < numElements; ++j) { //loop over all SimCalorimeterHits in this collection
