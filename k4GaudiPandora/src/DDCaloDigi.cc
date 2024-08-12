@@ -26,6 +26,7 @@
 #include <string>
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/Detector.h"
+#include "DD4hep/DetectorSelector.h"
 #include "DD4hep/DetType.h"
 #include "DD4hep/Factories.h"
 #include "DDRec/MaterialManager.h"
@@ -51,8 +52,33 @@ const float slop = 0.25;  // (mm)
 
 //DECLARE_COMPONENT(DDCaloDigi)
 
-// Forward Declaration, gets linked in from DDPandoraPFANewProcessor
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
+// Forward Declaration, gets linked in from DDPandoraPFANewProcessor --- FIXME
+                                                                    // now declare here, to be linked from DDPandoraPFANewProcessor
+dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) {
+  dd4hep::rec::LayeredCalorimeterData* theExtension = 0;
+
+    dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
+    const std::vector<dd4hep::DetElement>& theDetectors =
+        dd4hep::DetectorSelector(mainDetector).detectors(includeFlag, excludeFlag);
+
+  cout << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
+                        << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
+                        << "  - first det: " << theDetectors.at(0).name() << endmsg;
+
+  if (theDetectors.size() != 1) {
+    stringstream es;
+    es << " getExtension: selection is not unique (or empty)  includeFlag: " << dd4hep::DetType(includeFlag)
+       << " excludeFlag: " << dd4hep::DetType(excludeFlag) << " --- found detectors : ";
+    for (unsigned i = 0, N = theDetectors.size(); i < N; ++i) {
+      es << theDetectors.at(i).name() << ", ";
+    }
+    throw std::runtime_error(es.str());
+  }
+
+  theExtension = theDetectors.at(0).extension<dd4hep::rec::LayeredCalorimeterData>();
+
+  return theExtension;
+};
 
 DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
     : MultiTransformer(aName, aSvcLoc,
