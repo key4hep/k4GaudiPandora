@@ -37,6 +37,11 @@ geoservice.EnableGeant4Geo = False
 calodigi = DDCaloDigi()
 
 #FIXME: add properties
+calodigi.ECALCollection = "ECalBarrelCollection"    # "ECalBarrelCollection","ECalEndcapCollection"
+calodigi.HCALCollection = "HCalBarrelCollection"    # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
+calodigi.OutputECALCollection = "ECALCaloHitCollection"
+calodigi.OutputHCALCollection = "HCALCaloHitCollection"
+calodigi.OutputRelCollection = "RelCollection"
 
 iosvc = IOSvc()
 iosvc.input = "../simulation/sim_partgun_1000.root"
