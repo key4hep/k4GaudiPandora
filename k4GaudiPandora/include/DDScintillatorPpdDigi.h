@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef _DDScintillatorPpdDigi_h_
-#define _DDScintillatorPpdDigi_h_
+#ifndef DDSCINTILLATORPPDDIGI_H
+#define DDSCINTILLATORPPDDIGI_H
 
 class DDScintillatorPpdDigi {
 public:
@@ -25,38 +25,38 @@ public:
   ~DDScintillatorPpdDigi() {}
 
   // expected # photoelectrons / MIP
-  void setPEperMIP(float x) { _pe_per_mip = x; }
+  void setPEperMIP(float x) { m_PEperMIP = x; }
 
   // calibration factor from input hit energy to MIPs
-  void setCalibMIP(float x) { _calib_mip = x; }
+  void setCalibMIP(float x) { m_calibMIP = x; }
 
-  // #pixels of PPD
-  void setNPix(int x) { _npix = x; }
+  // # pixels of PPD
+  void setNPix(int x) { m_Npix = x; }
 
-  // random miscalibration of total #pixels (as a fraction of pixel number: 0.05 = 5% miscalibration)
-  void setRandomMisCalibNPix(float x) { _misCalibNpix = x; }
+  // random miscalibration of total # pixels (as a fraction of pixel number: 0.05 = 5% miscalibration)
+  void setRandomMisCalibNPix(float x) { m_misCalibNpix = x; }
 
   // spread in pixel capacitance (as a fraction: 0.05 = 5% spread)
-  void setPixSpread(float x) { _pixSpread = x; }
+  void setPixSpread(float x) { m_pixSpread = x; }
 
   // electronics noise (in MIP units)
-  void setElecNoise(float x) { _elecNoise = x; }
+  void setElecNoise(float x) { m_elecNoise = x; }
 
   // electronics dynamic range (in MIP units)
-  void setElecRange(float x) { _elecMaxDynRange_MIP = x; }
+  void setElecRange(float x) { m_elecMaxDynRange_MIP = x; }
 
   float getDigitisedEnergy(float energy);
 
   void printParameters();
 
 private:
-  float _pe_per_mip          = -99;
-  float _calib_mip           = -99;
-  float _npix                = -99;
-  float _misCalibNpix        = 0;
-  float _pixSpread           = 0;
-  float _elecNoise           = 0;
-  float _elecMaxDynRange_MIP = 0;
+  float m_PEperMIP          = -99;
+  float m_calibMIP           = -99;
+  float m_Npix                = -99;
+  float m_misCalibNpix        = 0;
+  float m_pixSpread           = 0;
+  float m_elecNoise           = 0;
+  float m_elecMaxDynRange_MIP = 0;
 };
 
 #endif

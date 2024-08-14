@@ -103,9 +103,11 @@ const int MAX_LAYERS = 200;
 const int MAX_STAVES =  16;
 
 using retType = std::tuple<edm4hep::CalorimeterHitCollection,
+                           edm4hep::CalorimeterHitCollection,
                            edm4hep::CaloHitSimCaloHitLinkCollection>;
 
 using DDCaloDigi_t = k4FWCore::MultiTransformer<retType(
+                              const edm4hep::SimCalorimeterHitCollection&,
                               const edm4hep::SimCalorimeterHitCollection&,
                               const edm4hep::EventHeaderCollection&)>;
 
@@ -117,17 +119,18 @@ struct DDCaloDigi final
   StatusCode finalize() override;
 
   retType operator()(
-        const edm4hep::SimCalorimeterHitCollection&,
-        const edm4hep::EventHeaderCollection&) const;
+        const edm4hep::SimCalorimeterHitCollection& ecalSimCaloHits,
+        const edm4hep::SimCalorimeterHitCollection& hcalSimCaloHits,
+        const edm4hep::EventHeaderCollection& headers) const;
 
   private:
 
   // collections
-  Gaudi::Property<std::string> m_ecalCollection{this, "ECALCollection", {"ecalCollection"}, "The input collection for ECAL"};
-  Gaudi::Property<std::string> m_hcalCollection{this, "HCALCollection", {"hcalCollection"}, "The input collection for HCAL"};
-  Gaudi::Property<std::string> m_outputEcalCollection{this, "OutputECALCollection", {"outputEcalCollection"}, "The output collection for ECAL"};
-  Gaudi::Property<std::string> m_outputHcalCollection{this, "OutputHCALCollection", {"outputHcalCollection"}, "The output collection for HCAL"};
-  Gaudi::Property<std::string> m_outputRelCollection{this, "OutputRelCollection", {"outputRelCollection"}, "The output relation collection"};
+  Gaudi::Property<std::string> m_ecalCollection{this, "ECALCollection", "ecalCollection", "The input collection for ECAL"};
+  Gaudi::Property<std::string> m_hcalCollection{this, "HCALCollection", "hcalCollection", "The input collection for HCAL"};
+  Gaudi::Property<std::string> m_outputEcalCollection{this, "OutputECALCollection", "outputEcalCollection", "The output collection for ECAL"};
+  Gaudi::Property<std::string> m_outputHcalCollection{this, "OutputHCALCollection", "outputHcalCollection", "The output collection for HCAL"};
+  Gaudi::Property<std::string> m_outputRelCollection{this, "OutputRelCollection", "outputRelCollection", "The output relation collection"};
 
   // digitazing parameters for ECAL and HCAL
   Gaudi::Property<float> m_thresholdEcal{this, "ECALThreshold", {5.0e-5}, "Threshold for ECAL Hits in GeV"};
