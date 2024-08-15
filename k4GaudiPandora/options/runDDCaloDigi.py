@@ -37,14 +37,14 @@ geoservice.EnableGeant4Geo = False
 calodigi = DDCaloDigi()
 
 #FIXME: add properties
-calodigi.ECALCollection = "ECalBarrelCollection"    # "ECalBarrelCollection","ECalEndcapCollection"
-calodigi.HCALCollection = "HCalBarrelCollection"    # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
-calodigi.OutputECALCollection = "ECALCaloHitCollection"
-calodigi.OutputHCALCollection = "HCALCaloHitCollection"
-calodigi.OutputRelCollection = "RelCollection"
+calodigi.inputCollection = "ECalBarrelCollection"    # "ECalBarrelCollection","ECalEndcapCollection"
+                                                    # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
+calodigi.outputCollection = "ECALCaloHitCollection"
+#calodigi.OutputHCALCollection = "HCALCaloHitCollection"
+calodigi.outputRelCollection = "RelCollection"
 
 iosvc = IOSvc()
-iosvc.input = "../simulation/sim_partgun_1000.root"
+iosvc.input = "../simulation/sim_edm4hep.root"
 iosvc.output = "../outputfiles/outputCaloDigi_Gaudi.root"
 
 hps = RootHistSvc("HistogramPersistencySvc")
