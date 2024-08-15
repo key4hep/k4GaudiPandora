@@ -82,21 +82,20 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
     : MultiTransformer(aName, aSvcLoc,
           {
-            KeyValues("ECALCollection", {"ECalBarrelCollection"}),
-            KeyValues("HCALCollection", {"HCalBarrelCollection"}),
+            KeyValues("inputCollection", {"ECalBarrelCollection"}),
             KeyValues("HeaderName", {"EventHeader"}),
           },
           {
-            KeyValues("OutputECALCollection", {"ECalorimeterHit1"}), //, "ECalorimeterHit2", "ECalorimeterHit3"}),
-            KeyValues("OutputHCALCollection", {"HCalorimeterHit1"}), //, "HCalorimeterHit2", "HCalorimeterHit3"}),
-            KeyValues("OutputRelCollection", {"RelationSimCaloHit"})
+            KeyValues("outputECALCollection", {"ECalorimeterHit1"}), //, "ECalorimeterHit2", "ECalorimeterHit3"}),
+            //KeyValues("OutputHCALCollection", {"HCalorimeterHit1"}), //, "HCalorimeterHit2", "HCalorimeterHit3"}),
+            KeyValues("outputRelCollection", {"RelationCaloHit"})
           })
 {
   m_uidSvc = service<IUniqueIDGenSvc>("UniqueIDGenSvc", true);
     if (!m_uidSvc) {
       error() << "Unable to get UniqueIDGenSvc" << endmsg;
     }
-  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
+  //m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
 
 
 // // helper struct for string comparision --- Is needed???
@@ -275,15 +274,14 @@ StatusCode DDCaloDigi::initialize() {
 }
 
 retType DDCaloDigi::operator()(
-    const edm4hep::SimCalorimeterHitCollection& ecalSimCaloHitCollection,
-    const edm4hep::SimCalorimeterHitCollection& hcalSimCaloHitCollection,
+    const edm4hep::SimCalorimeterHitCollection& simCaloHitCollection,
     const edm4hep::EventHeaderCollection& eventHeaders) const {
     auto const& headers = eventHeaders.at(nRun); //FIXME maybe
   debug() << " process event : " << headers.getEventNumber() << " - run  " << headers.getRunNumber()
           << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
 
   auto ecalcol = edm4hep::CalorimeterHitCollection(); // create output collection for ECAL
-  auto hcalcol = edm4hep::CalorimeterHitCollection(); // create output collection for HCAL
+  //auto hcalcol = edm4hep::CalorimeterHitCollection(); // create output collection for HCAL
   //edm4hep::CaloHitSimCaloHitLinkCollection outputRelation;
   auto Relcol = edm4hep::CaloHitSimCaloHitLinkCollection();  // create relation collection CalorimeterHit-SimCalorimeterHit
 
@@ -299,7 +297,7 @@ retType DDCaloDigi::operator()(
   //
   // * Reading Collections of ECAL Simulated Hits *
   //
-  std::string ecalColName = m_ecalCollection; // The input collection for ECAL
+  std::string ecalColName = m_inputCollection; // The input collection for ECAL
   cout << "looking for collection: " << ecalColName << endl;
 
   if (ecalColName.find("dummy") != string::npos) {
@@ -335,7 +333,7 @@ retType DDCaloDigi::operator()(
       }
 
 
-  for (const auto& hit : ecalSimCaloHitCollection) {
+  for (const auto& hit : simCaloHitCollection) {
     //  SimCalorimeterHit * hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt( j ) ) ;
     const int cellID = hit.getCellID();
     float energy = hit.getEnergy();
@@ -576,7 +574,7 @@ retType DDCaloDigi::operator()(
     // ecalcol->parameters().setValue(LCIO::CellIDEncoding,initString);
   }
 
-  //return std::make_tuple(std::move(ecalcol), std::move(Relcol));
+  return std::make_tuple(std::move(ecalcol), std::move(Relcol));
 
 
   if (m_histograms) {
@@ -603,6 +601,7 @@ retType DDCaloDigi::operator()(
   //
   // * Reading HCAL Collections of Simulated Hits *
   //
+  /*
   std::string hcalColName = m_hcalCollection; // The input collection for HCAL
   cout << "looking for collection: " << hcalColName << endl;
 
@@ -621,7 +620,7 @@ retType DDCaloDigi::operator()(
     // for (int j(0); j < numElements; ++j) { //loop over all SimCalorimeterHits in this collection
 
   //auto hcaloRel = Relcol.create();
-  for (const auto& hit : hcalSimCaloHitCollection) {
+  for (const auto& hit : simCaloHitCollection) {
     float energy = hit.getEnergy();
     //preselect for SimHits with energySum>threshold. Doubtful at least, as lower energy hit might fluctuate up and still be counted
     if (energy > m_thresholdHcal[0] / 2) {
@@ -800,8 +799,10 @@ retType DDCaloDigi::operator()(
 // evt->addCollection(chschcol,_outputRelCollection.c_str());
 
 // _nEvt++;
-return std::make_tuple(std::move(ecalcol), std::move(hcalcol), std::move(Relcol));
+return std::make_tuple(std::move(hcalcol), std::move(Relcol));
+*/
 }
+
 
 StatusCode DDCaloDigi::finalize() { return StatusCode::SUCCESS; }  //fix
 
