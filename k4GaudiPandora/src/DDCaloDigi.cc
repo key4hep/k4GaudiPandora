@@ -82,20 +82,20 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
     : MultiTransformer(aName, aSvcLoc,
           {
-            KeyValues("inputCollection", {"ECalBarrelCollection"}),
+            KeyValues("InputCaloHitCollection", {"ECalBarrelCollection"}),
             KeyValues("HeaderName", {"EventHeader"}),
           },
           {
-            KeyValues("outputECALCollection", {"ECalorimeterHit1"}), //, "ECalorimeterHit2", "ECalorimeterHit3"}),
+            KeyValues("OutputCaloHitCollection", {"ECalorimeterHit1"}), //, "ECalorimeterHit2", "ECalorimeterHit3"}),
             //KeyValues("OutputHCALCollection", {"HCalorimeterHit1"}), //, "HCalorimeterHit2", "HCalorimeterHit3"}),
-            KeyValues("outputRelCollection", {"RelationCaloHit"})
+            KeyValues("RelCollection", {"RelationCaloHit"})
           })
 {
   m_uidSvc = service<IUniqueIDGenSvc>("UniqueIDGenSvc", true);
     if (!m_uidSvc) {
       error() << "Unable to get UniqueIDGenSvc" << endmsg;
     }
-  //m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
+  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
 
 
 // // helper struct for string comparision --- Is needed???
@@ -280,8 +280,7 @@ retType DDCaloDigi::operator()(
   debug() << " process event : " << headers.getEventNumber() << " - run  " << headers.getRunNumber()
           << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
 
-  auto ecalcol = edm4hep::CalorimeterHitCollection(); // create output collection for ECAL
-  //auto hcalcol = edm4hep::CalorimeterHitCollection(); // create output collection for HCAL
+  auto col = edm4hep::CalorimeterHitCollection(); // create output collection
   //edm4hep::CaloHitSimCaloHitLinkCollection outputRelation;
   auto Relcol = edm4hep::CaloHitSimCaloHitLinkCollection();  // create relation collection CalorimeterHit-SimCalorimeterHit
 
@@ -294,24 +293,25 @@ retType DDCaloDigi::operator()(
   //_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot( 1.0, _misCalibHcal_correl );
 
 
-  //
-  // * Reading Collections of ECAL Simulated Hits *
-  //
-  std::string ecalColName = m_inputCollection; // The input collection for ECAL
-  cout << "looking for collection: " << ecalColName << endl;
+  std::string colName = m_inputLocations[0][0].key(); // take input collection name
+  cout << "looking for collection: " << colName << endl;
 
-  if (ecalColName.find("dummy") != string::npos) {
-    debug() << "Ignoring input ECAL collection name (looks like dummy name)" << ecalColName << endmsg;
+  if (colName.find("dummy") != string::npos) {
+    debug() << "Ignoring input ECAL collection name (looks like dummy name)" << colName << endmsg;
   }
 
   //fg: need to establish the subdetetcor part here
   //    use collection name as cellID does not seem to have that information
 
-  CHT::Layout caloLayout = layoutFromString(ecalColName);
+  CHT::Layout caloLayout = layoutFromString(colName);
 
-    // auto col = evt->getCollection( colName.c_str() ) ;
-    //std::string initString; // = "FIXME"; // cellIDHandle.get();
-  std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+  // auto col = evt->getCollection( colName.c_str() ) ;
+  //std::string initString; // = "FIXME"; // cellIDHandle.get();
+  //std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+
+  //FIXME: take this from the metadata
+  std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
+
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
                                                                     // check if decoder contains "layer"
     //CellIDDecoder<SimCalorimeterHit> idDecoder( col ); --- ???
@@ -327,480 +327,481 @@ retType DDCaloDigi::operator()(
 
       // deal with strips split into virtual cells
       //  if this collection is a strip which has been split into virtual cells, they need to be recombined
-      int orientation = getStripOrientationFromColName(ecalColName);
+      int orientation = getStripOrientationFromColName(colName);
       if (orientation != SQUARE && getNumberOfVirtualCells() > 1) {
         //auto fixmeCollectionUnused = combineVirtualStripCells(inputCaloHitCollection, caloLayout == CHT::barrel, orientation);
       }
 
 
-  for (const auto& hit : simCaloHitCollection) {
-    //  SimCalorimeterHit * hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt( j ) ) ;
-    const int cellID = hit.getCellID();
-    float energy = hit.getEnergy();
+  //
+  // * Reading Collections of ECAL Simulated Hits *
+  //
+  if(m_inputColIsECAL) {
+    //auto ecalcol = edm4hep::CalorimeterHitCollection(); // create output collection for ECAL
 
-    // apply threshold cut
-    if (energy > m_thresholdEcal) {
-      unsigned int layer  = bitFieldCoder.get(cellID, "layer");
-      unsigned int stave  = bitFieldCoder.get(cellID, "stave");
-      unsigned int module = bitFieldCoder.get(cellID, "module");
+    for (const auto& hit : simCaloHitCollection) {
+      //  SimCalorimeterHit * hit = dynamic_cast<SimCalorimeterHit*>( col->getElementAt( j ) ) ;
+      const int cellID = hit.getCellID();
+      float energy = hit.getEnergy();
 
-      // check that layer and assumed layer type are compatible
-      checkConsistency(ecalColName, layer);
+      // apply threshold cut
+      if (energy > m_thresholdEcal) {
+        unsigned int layer  = bitFieldCoder.get(cellID, "layer");
+        unsigned int stave  = bitFieldCoder.get(cellID, "stave");
+        unsigned int module = bitFieldCoder.get(cellID, "module");
 
-      // save hits by module/stave/layer if required later
+        // check that layer and assumed layer type are compatible
+        checkConsistency(colName, layer);
 
-      float calibr_coeff = 1.;
-      float x    = hit.getPosition()[0];
-      float y    = hit.getPosition()[1];
-      float z    = hit.getPosition()[2];
-      float r    = sqrt(x * x + y * y + z * z);
-      float rxy  = sqrt(x * x + y * y);
-      float cost = fabs(z) / r;
+        // save hits by module/stave/layer if required later
 
-      if (z > 0 && m_histograms) {
-        if (layer == 1)
-          fEcalLayer1->Fill(x, y);
-        if (layer == 11)
-          fEcalLayer11->Fill(x, y);
-        if (layer == 21)
-          fEcalLayer21->Fill(x, y);
-        if (layer == 1)
-          fEcalRLayer1->Fill(rxy);
-        if (layer == 11)
-          fEcalRLayer11->Fill(rxy);
-        if (layer == 21)
-          fEcalRLayer21->Fill(rxy);
-      }
-      if (m_digitalEcal) {
-        calibr_coeff = this->digitalEcalCalibCoeff(layer);
-        if (m_mapsEcalCorrection) {
-          if (caloLayout == CHT::barrel) {
-            float correction = 1.1387 - 0.068 * cost - 0.191 * cost * cost;
-            calibr_coeff /= correction;
-          } else {
-            float correction = 0.592 + 0.590 * cost;
-            calibr_coeff /= correction;
-          }
+        float calibr_coeff = 1.;
+        float x    = hit.getPosition()[0];
+        float y    = hit.getPosition()[1];
+        float z    = hit.getPosition()[2];
+        float r    = sqrt(x * x + y * y + z * z);
+        float rxy  = sqrt(x * x + y * y);
+        float cost = fabs(z) / r;
+
+        if (z > 0 && m_histograms) {
+          if (layer == 1)
+            fEcalLayer1->Fill(x, y);
+          if (layer == 11)
+            fEcalLayer11->Fill(x, y);
+          if (layer == 21)
+            fEcalLayer21->Fill(x, y);
+          if (layer == 1)
+            fEcalRLayer1->Fill(rxy);
+          if (layer == 11)
+            fEcalRLayer11->Fill(rxy);
+          if (layer == 21)
+            fEcalRLayer21->Fill(rxy);
         }
-      } else {
-      calibr_coeff = this->analogueEcalCalibCoeff(layer);
-      }
-      // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= m_ecalEndcapCorrectionFactor;
-      if (caloLayout != CHT::endcap) {
-        calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
-      }
-
-      // if you want to understand the timing cut code, please refer to the hcal timing cut further below.
-      // it is functionally identical, but has comments, explanations and excuses.
-      if (m_useEcalTiming) {
-        float ecalTimeWindowMax;
-        if (caloLayout == CHT::barrel) {                // current SimHit is in barrel, use barrel timing cut
-          ecalTimeWindowMax = m_ecalBarrelTimeWindowMax;
-        } else {                                        // current simhit is not in barrel, use endcap timing cut
-          ecalTimeWindowMax = m_ecalEndcapTimeWindowMax;
-        }
-
-        float dt = r / 300. - 0.1;
-        auto  ecalSingleHit  = hit.getContributions();
-        int   count       = 0; // count of what???
-        float eCellInTime = 0.;
-        float eCellOutput = 0.;
-        const unsigned int n = ecalSingleHit.size();
-        std::vector<bool> used(n, false);
-
-        for (unsigned int i_t = 0; i_t < n; i_t++) {        // loop over all subhits
-          float timei = ecalSingleHit[i_t].getTime();       // absolute hit timing of current subhit
-          float energyi = ecalSingleHit[i_t].getEnergy(); // energy of current subhit
-          float energySum = 0;
-
-          float deltat = 0;
-          if (m_ecalCorrectTimesForPropagation) {
-            deltat = dt; //deltat now carries hit timing correction.
-          }
-          if (timei - deltat > m_ecalTimeWindowMin.value() && timei - deltat < ecalTimeWindowMax) {
-            float ecor = energyi * calibr_coeff;
-            eCellInTime += ecor;
-          }
-
-          if (!used[i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
-            // merge with other hits?
-            used[i_t] = true;
-            for (unsigned int j_t = i_t + 1; j_t < n; j_t++) { //loop through all hits after current hit
-              if (!used[j_t]) {
-                float timej   = ecalSingleHit[j_t].getTime();
-                float energyj = ecalSingleHit[j_t].getEnergy();
-                if (m_ecalSimpleTimingCut) {
-                  float deltat_ij = m_ecalCorrectTimesForPropagation ? dt : 0;
-                  if (timej - deltat_ij > m_ecalTimeWindowMin && timej - deltat_ij < ecalTimeWindowMax) {
-                    energySum += energyj;
-                    if (timej < timei) {
-                      timei = timej;     //use earliest hit time for simpletimingcut
-                    }
-                  }
-                } else {
-                    float deltat_ij = fabs(timei - timej);
-                    //if this subhit is close to current subhit, add this hit's energy to
-                    if (deltat_ij < m_ecalDeltaTimeHitResolution) {
-                      if (energyj > energyi) {
-                        timei = timej;
-                      }
-                        energyi += energyj;
-                        used[j_t] = true;
-                    }
-                }
-              }
-            }
-            if (m_ecalSimpleTimingCut) {
-              used = vector<bool>(n, true);  // mark everything as used to terminate for loop on next run
-              energyi += energySum;          // fill energySum back into energyi to have rest of loop behave the same.
-            }
-
-            // variables and their behaviour at this point:
-            // if SimpleTimingCut == false
-            // energyi carries the sum of subhit energies within +- one hcal time resolution - the timecluster energy.
-            // timei carries something vaguely similar to the central hit time of the merged subhits
-
-            // if SimpleTimingCut == true
-            // energyi carries the sum of subhit energies within timeWindowMin and timeWindowMax
-            // timei carries the time of the earliest hit within this window
-
-            if (m_digitalEcal) {
-              calibr_coeff = this->digitalEcalCalibCoeff(layer);
-              if (m_mapsEcalCorrection) {
-                if (caloLayout == CHT::barrel) {
-                  float correction = 1.1387 - 0.068 * cost - 0.191 * cost * cost;
-                  calibr_coeff /= correction;
-                } else {
-                  float correction = 0.592 + 0.590 * cost;
-                  calibr_coeff /= correction;
-                }
-              }
-            } else {
-              calibr_coeff = this->analogueEcalCalibCoeff(layer);
-            }
-            // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= _ecalEndcapCorrectionFactor;
-            if (caloLayout != CHT::barrel)
-              calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
-
-            if (m_histograms) {
-            fEcal->Fill(timei, energyi * calibr_coeff);
-            fEcalC->Fill(timei - dt, energyi * calibr_coeff);
-            fEcalC1->Fill(timei - dt, energyi * calibr_coeff);
-            fEcalC2->Fill(timei - dt, energyi * calibr_coeff);
-            }
-
-            // apply extra energy digitisation effects
-            energyi = ecalEnergyDigi(energyi, cellID); // this only uses the current subhit "timecluster"!
-
-            if (energyi > m_thresholdEcal) { // now would be the correct time to do threshold comparison
-              float timeCor = 0;
-              if (m_ecalCorrectTimesForPropagation) {
-                timeCor = dt;
-              }
-              timei = timei - timeCor;
-              if (timei > m_ecalTimeWindowMin && timei < ecalTimeWindowMax) { // if current subhit timecluster is within specified timing window,
-                                                                              // create new CalorimeterHit and add to collections etc.
-                count++;
-                // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
-                edm4hep::MutableCalorimeterHit calHit = ecalcol.create();
-                if (m_ecalGapCorrection != 0) {
-                  m_calHitsByStaveLayer[stave][layer].push_back(&calHit);
-                  m_calHitsByStaveLayerModule[stave][layer].push_back(module);
-                }
-                calHit.setCellID(cellID);
-
-                if (m_digitalEcal) {
-                  calHit.setEnergy(calibr_coeff);
-                } else {
-                  calHit.setEnergy(calibr_coeff * energyi);
-                }
-
-                eCellOutput += energyi * calibr_coeff;
-
-                calHit.setTime(timei);
-                calHit.setPosition(hit.getPosition());
-                calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
-                //calHit.setRawHit(hit);
-
-                // set relation with CaloHitSimCaloHitLinkCollection
-                auto ecaloRel = Relcol.create();
-                ecaloRel.setFrom(calHit);
-                ecaloRel.setTo(hit);
-
-              } else {
-                // if(caloLayout==CHT::barrel)std::cout << " Drop ECAL Barrel hit : " << timei << " " << calibr_coeff*energyi << std::endl;
-                }
-            }
-          }
-        }
-      }
-      else {  // if timing cut is not used
-        // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
-        edm4hep::MutableCalorimeterHit calHit = ecalcol.create();
-        if (m_ecalGapCorrection != 0) {
-          m_calHitsByStaveLayer[stave][layer].push_back(&calHit);
-          m_calHitsByStaveLayerModule[stave][layer].push_back(module);
-        }
-        float energyi = hit.getEnergy();
-
-        // apply extra energy digitisation effects
-        energyi = ecalEnergyDigi(energyi, cellID);
-
-        calHit.setCellID(cellID);
         if (m_digitalEcal) {
-          calHit.setEnergy(calibr_coeff);
+          calibr_coeff = this->digitalEcalCalibCoeff(layer);
+          if (m_mapsEcalCorrection) {
+            if (caloLayout == CHT::barrel) {
+              float correction = 1.1387 - 0.068 * cost - 0.191 * cost * cost;
+              calibr_coeff /= correction;
+            } else {
+              float correction = 0.592 + 0.590 * cost;
+              calibr_coeff /= correction;
+            }
+          }
         } else {
-          calHit.setEnergy(calibr_coeff * energyi);
+        calibr_coeff = this->analogueEcalCalibCoeff(layer);
         }
-        calHit.setTime(0);
-        calHit.setPosition(hit.getPosition());
-        calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
-        //calHit.setRawHit(hit);
+        // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= m_ecalEndcapCorrectionFactor;
+        if (caloLayout != CHT::endcap) {
+          calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
+        }
 
-        // set relation with CaloHitSimCaloHitLinkCollection
-        auto ecaloRel = Relcol.create();
-        ecaloRel.setFrom(calHit);
-        ecaloRel.setTo(hit);
-      }  // timing if...else end
+        // if you want to understand the timing cut code, please refer to the hcal timing cut further below.
+        // it is functionally identical, but has comments, explanations and excuses.
+        if (m_useEcalTiming) {
+          float ecalTimeWindowMax;
+          if (caloLayout == CHT::barrel) {                // current SimHit is in barrel, use barrel timing cut
+            ecalTimeWindowMax = m_ecalBarrelTimeWindowMax;
+          } else {                                        // current simhit is not in barrel, use endcap timing cut
+            ecalTimeWindowMax = m_ecalEndcapTimeWindowMax;
+          }
 
-      //std::cout << hit->getTimeCont(0) << " count = " << count <<  " E ECAL = " << energyCal << " - " << eCellInTime << " - " << eCellOutput << std::endl;
-    }  // energy threshold end
-  } // hits loop end
+          float dt = r / 300. - 0.1;
+          auto  ecalSingleHit  = hit.getContributions();
+          int   count       = 0; // count of what???
+          float eCellInTime = 0.;
+          float eCellOutput = 0.;
+          const unsigned int n = ecalSingleHit.size();
+          std::vector<bool> used(n, false);
 
-  // if requested apply gap corrections in ECAL ?
-  if (m_ecalGapCorrection != 0) {
-    this->fillECALGaps(m_calHitsByStaveLayer, m_calHitsByStaveLayerModule);
-    // add ECAL collection to event
-    // ecalcol->parameters().setValue(LCIO::CellIDEncoding,initString);
-  }
+          for (unsigned int i_t = 0; i_t < n; i_t++) {        // loop over all subhits
+            float timei = ecalSingleHit[i_t].getTime();       // absolute hit timing of current subhit
+            float energyi = ecalSingleHit[i_t].getEnergy(); // energy of current subhit
+            float energySum = 0;
 
-  return std::make_tuple(std::move(ecalcol), std::move(Relcol));
+            float deltat = 0;
+            if (m_ecalCorrectTimesForPropagation) {
+              deltat = dt; //deltat now carries hit timing correction.
+            }
+            if (timei - deltat > m_ecalTimeWindowMin.value() && timei - deltat < ecalTimeWindowMax) {
+              float ecor = energyi * calibr_coeff;
+              eCellInTime += ecor;
+            }
+
+            if (!used[i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
+              // merge with other hits?
+              used[i_t] = true;
+              for (unsigned int j_t = i_t + 1; j_t < n; j_t++) { //loop through all hits after current hit
+                if (!used[j_t]) {
+                  float timej   = ecalSingleHit[j_t].getTime();
+                  float energyj = ecalSingleHit[j_t].getEnergy();
+                  if (m_ecalSimpleTimingCut) {
+                    float deltat_ij = m_ecalCorrectTimesForPropagation ? dt : 0;
+                    if (timej - deltat_ij > m_ecalTimeWindowMin && timej - deltat_ij < ecalTimeWindowMax) {
+                      energySum += energyj;
+                      if (timej < timei) {
+                        timei = timej;     //use earliest hit time for simpletimingcut
+                      }
+                    }
+                  } else {
+                      float deltat_ij = fabs(timei - timej);
+                      //if this subhit is close to current subhit, add this hit's energy to
+                      if (deltat_ij < m_ecalDeltaTimeHitResolution) {
+                        if (energyj > energyi) {
+                          timei = timej;
+                        }
+                          energyi += energyj;
+                          used[j_t] = true;
+                      }
+                  }
+                }
+              }
+              if (m_ecalSimpleTimingCut) {
+                used = vector<bool>(n, true);  // mark everything as used to terminate for loop on next run
+                energyi += energySum;          // fill energySum back into energyi to have rest of loop behave the same.
+              }
+
+              // variables and their behaviour at this point:
+              // if SimpleTimingCut == false
+              // energyi carries the sum of subhit energies within +- one hcal time resolution - the timecluster energy.
+              // timei carries something vaguely similar to the central hit time of the merged subhits
+
+              // if SimpleTimingCut == true
+              // energyi carries the sum of subhit energies within timeWindowMin and timeWindowMax
+              // timei carries the time of the earliest hit within this window
+
+              if (m_digitalEcal) {
+                calibr_coeff = this->digitalEcalCalibCoeff(layer);
+                if (m_mapsEcalCorrection) {
+                  if (caloLayout == CHT::barrel) {
+                    float correction = 1.1387 - 0.068 * cost - 0.191 * cost * cost;
+                    calibr_coeff /= correction;
+                  } else {
+                    float correction = 0.592 + 0.590 * cost;
+                    calibr_coeff /= correction;
+                  }
+                }
+              } else {
+                calibr_coeff = this->analogueEcalCalibCoeff(layer);
+              }
+              // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= _ecalEndcapCorrectionFactor;
+              if (caloLayout != CHT::barrel)
+                calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
+
+              if (m_histograms) {
+              fEcal->Fill(timei, energyi * calibr_coeff);
+              fEcalC->Fill(timei - dt, energyi * calibr_coeff);
+              fEcalC1->Fill(timei - dt, energyi * calibr_coeff);
+              fEcalC2->Fill(timei - dt, energyi * calibr_coeff);
+              }
+
+              // apply extra energy digitisation effects
+              energyi = ecalEnergyDigi(energyi, cellID); // this only uses the current subhit "timecluster"!
+
+              if (energyi > m_thresholdEcal) { // now would be the correct time to do threshold comparison
+                float timeCor = 0;
+                if (m_ecalCorrectTimesForPropagation) {
+                  timeCor = dt;
+                }
+                timei = timei - timeCor;
+                if (timei > m_ecalTimeWindowMin && timei < ecalTimeWindowMax) { // if current subhit timecluster is within specified timing window,
+                                                                                // create new CalorimeterHit and add to collections etc.
+                  count++;
+                  // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
+                  edm4hep::MutableCalorimeterHit calHit = col.create();
+                  if (m_ecalGapCorrection != 0) {
+                    m_calHitsByStaveLayer[stave][layer].push_back(&calHit);
+                    m_calHitsByStaveLayerModule[stave][layer].push_back(module);
+                  }
+                  calHit.setCellID(cellID);
+
+                  if (m_digitalEcal) {
+                    calHit.setEnergy(calibr_coeff);
+                  } else {
+                    calHit.setEnergy(calibr_coeff * energyi);
+                  }
+
+                  eCellOutput += energyi * calibr_coeff;
+
+                  calHit.setTime(timei);
+                  calHit.setPosition(hit.getPosition());
+                  calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
+                  //calHit.setRawHit(hit);
+
+                  // set relation with CaloHitSimCaloHitLinkCollection
+                  auto ecaloRel = Relcol.create();
+                  ecaloRel.setFrom(calHit);
+                  ecaloRel.setTo(hit);
+
+                } else {
+                  // if(caloLayout==CHT::barrel)std::cout << " Drop ECAL Barrel hit : " << timei << " " << calibr_coeff*energyi << std::endl;
+                  }
+              }
+            }
+          }
+        }
+        else {  // if timing cut is not used
+          // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
+          edm4hep::MutableCalorimeterHit calHit = col.create();
+          if (m_ecalGapCorrection != 0) {
+            m_calHitsByStaveLayer[stave][layer].push_back(&calHit);
+            m_calHitsByStaveLayerModule[stave][layer].push_back(module);
+          }
+          float energyi = hit.getEnergy();
+
+          // apply extra energy digitisation effects
+          energyi = ecalEnergyDigi(energyi, cellID);
+
+          calHit.setCellID(cellID);
+          if (m_digitalEcal) {
+            calHit.setEnergy(calibr_coeff);
+          } else {
+            calHit.setEnergy(calibr_coeff * energyi);
+          }
+          calHit.setTime(0);
+          calHit.setPosition(hit.getPosition());
+          calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
+          //calHit.setRawHit(hit);
+
+          // set relation with CaloHitSimCaloHitLinkCollection
+          auto ecaloRel = Relcol.create();
+          ecaloRel.setFrom(calHit);
+          ecaloRel.setTo(hit);
+        }  // timing if...else end
+
+        //std::cout << hit->getTimeCont(0) << " count = " << count <<  " E ECAL = " << energyCal << " - " << eCellInTime << " - " << eCellOutput << std::endl;
+      }  // energy threshold end
+    } // hits loop end
+
+    // if requested apply gap corrections in ECAL ?
+    if (m_ecalGapCorrection != 0) {
+      this->fillECALGaps(m_calHitsByStaveLayer, m_calHitsByStaveLayerModule);
+      // add ECAL collection to event
+      // ecalcol->parameters().setValue(LCIO::CellIDEncoding,initString);
+    }
 
 
-  if (m_histograms) {
-    // fill normalisation of HCAL occupancy plots
-    for (float x = 15; x < 3000; x += 30) {
-      for (float y = 15; y < 3000; y += 30) {
-        if (x > 430 || y > 430) {
+    if (m_histograms) {
+      // fill normalisation of HCAL occupancy plots
+      for (float x = 15; x < 3000; x += 30) {
+        for (float y = 15; y < 3000; y += 30) {
+          if (x > 430 || y > 430) {
+            float r = sqrt(x * x + y * y);
+            fHcalRLayerNorm->Fill(r, 4.);
+          }
+        }
+      }
+
+      // fill normalisation of ECAL occupancy plots
+      for (float x = 2.5; x < 3000; x += 5) {
+        for (float y = 2.5; y < 3000; y += 5) {
           float r = sqrt(x * x + y * y);
-          fHcalRLayerNorm->Fill(r, 4.);
+          if (r > 235)
+            fEcalRLayerNorm->Fill(r, 4.);
         }
       }
     }
 
-    // fill normalisation of ECAL occupancy plots
-    for (float x = 2.5; x < 3000; x += 5) {
-      for (float y = 2.5; y < 3000; y += 5) {
-        float r = sqrt(x * x + y * y);
-        if (r > 235)
-          fEcalRLayerNorm->Fill(r, 4.);
-      }
-    }
-  }
+    //return std::make_tuple(std::move(ecalcol), std::move(Relcol)); // FIXME: put in the end
+
+  } // end of ECAL digitization
 
   //
   // * Reading HCAL Collections of Simulated Hits *
   //
-  /*
-  std::string hcalColName = m_hcalCollection; // The input collection for HCAL
-  cout << "looking for collection: " << hcalColName << endl;
+  else {
+    //auto hcalcol = edm4hep::CalorimeterHitCollection();
 
-  if (hcalColName.find("dummy") != string::npos) {
-    debug() << "Ignoring input HCAL collection name (looks like dummy name)" << hcalColName << endmsg;
-  }
+    //CHT::Layout caloLayout = layoutFromString(hcalColName); // FIXME: not sure if we need new layout for hcal
 
-  //fg: need to establish the subdetetcor part here
-  //    use collection name as cellID does not seem to have that information
+    // initString is needed for hcal???
 
-  //CHT::Layout caloLayout = layoutFromString(hcalColName); // FIXME: not sure if we need new layout for hcal
+      //hcalCol.setFlag(_flag.getFlag());
+      // for (int j(0); j < numElements; ++j) { //loop over all SimCalorimeterHits in this collection
 
-  // initString is needed for hcal???
+    for (const auto& hit : simCaloHitCollection) {
+      float energy = hit.getEnergy();
+      //preselect for SimHits with energySum>threshold. Doubtful at least, as lower energy hit might fluctuate up and still be counted
+      if (energy > m_thresholdHcal[0] / 2) {
+        int   cellID = hit.getCellID();
+        float calibr_coeff = 1.0;
+        unsigned int layer  = bitFieldCoder.get(cellID, "layer");
 
-    //hcalCol.setFlag(_flag.getFlag());
-    // for (int j(0); j < numElements; ++j) { //loop over all SimCalorimeterHits in this collection
-
-  //auto hcaloRel = Relcol.create();
-  for (const auto& hit : simCaloHitCollection) {
-    float energy = hit.getEnergy();
-    //preselect for SimHits with energySum>threshold. Doubtful at least, as lower energy hit might fluctuate up and still be counted
-    if (energy > m_thresholdHcal[0] / 2) {
-      int   cellID = hit.getCellID();
-      float calibr_coeff = 1.0;
-      unsigned int layer  = bitFieldCoder.get(cellID, "layer");
-
-      // NOTE : for a digital HCAL this does not allow for varying layer thickness
-      // with depth - would need a simple mod to make response proportional to layer thickness
-      if (m_digitalHcal) {
-        calibr_coeff = this->digitalHcalCalibCoeff(caloLayout, energy);
-      } else {
-        calibr_coeff = this->analogueHcalCalibCoeff(caloLayout, layer);
-      }
-      // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff*=_hcalEndcapCorrectionFactor;
-      if (caloLayout != CHT::endcap)
-        calibr_coeff *= m_hcalEndcapCorrectionFactor;  // more robust, is applied to ALL hits outside of barrel.
-
-      //float energyCal = energy*calibr_coeff
-      float x = hit.getPosition()[0];
-      float y = hit.getPosition()[1];
-      float z = hit.getPosition()[2];
-      //float r = sqrt(x*x+y*y);
-      if (m_useHcalTiming) {
-        float hcalTimeWindowMax;
-        if (caloLayout == CHT::barrel) {                //current SimHit is in barrel, use barrel timing cut
-          hcalTimeWindowMax = m_hcalBarrelTimeWindowMax;
-        } else {                                        //current SimHit is not in barrel, use endcap timing cut
-          hcalTimeWindowMax = m_hcalEndcapTimeWindowMax;
+        // NOTE : for a digital HCAL this does not allow for varying layer thickness
+        // with depth - would need a simple mod to make response proportional to layer thickness
+        if (m_digitalHcal) {
+          calibr_coeff = this->digitalHcalCalibCoeff(caloLayout, energy);
+        } else {
+          calibr_coeff = this->analogueHcalCalibCoeff(caloLayout, layer);
         }
+        // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff*=_hcalEndcapCorrectionFactor;
+        if (caloLayout != CHT::endcap)
+          calibr_coeff *= m_hcalEndcapCorrectionFactor;  // more robust, is applied to ALL hits outside of barrel.
 
-        float r = sqrt(x * x + y * y + z * z);  //this is a crude approximation. assumes initial particle originated at the very center of the detector.
-        float dt         = r / 300 - 0.1;  //magic numbers! ~
-        auto  hcalSingleHit = hit.getContributions();
-        const unsigned int n          = hcalSingleHit.size();
+        //float energyCal = energy*calibr_coeff
+        float x = hit.getPosition()[0];
+        float y = hit.getPosition()[1];
+        float z = hit.getPosition()[2];
+        //float r = sqrt(x*x+y*y);
+        if (m_useHcalTiming) {
+          float hcalTimeWindowMax;
+          if (caloLayout == CHT::barrel) {                //current SimHit is in barrel, use barrel timing cut
+            hcalTimeWindowMax = m_hcalBarrelTimeWindowMax;
+          } else {                                        //current SimHit is not in barrel, use endcap timing cut
+            hcalTimeWindowMax = m_hcalEndcapTimeWindowMax;
+          }
 
-        std::vector<bool> used(n, false);
+          float r = sqrt(x * x + y * y + z * z);  //this is a crude approximation. assumes initial particle originated at the very center of the detector.
+          float dt         = r / 300 - 0.1;  //magic numbers! ~
+          auto  hcalSingleHit = hit.getContributions();
+          const unsigned int n          = hcalSingleHit.size();
 
-        int count = 0;
+          std::vector<bool> used(n, false);
 
-        for (unsigned int i_t = 0; i_t < n; i_t++) {      // loop over all subhits
-          float timei     = hcalSingleHit[i_t].getTime();    //absolute hit timing of current subhit
-          float energyi   = hcalSingleHit[i_t].getEnergy();  //energy of current subhit
-          float energySum = 0;
-          //float deltat = 0;
-          //if(_hcalCorrectTimesForPropagation)deltat=dt;
-          //deltat now carries hit timing correction.
-          //std::cout <<"outer:" << i << " " << n << std::endl;
+          int count = 0;
 
-          //idea of the following section:
-          //if simpletimingcut == false
-          //sum up hit energies which lie within one calo timing resolution to "timecluster" of current subhit
-          //then treat each single timecluster as one hit over threshold and digitise separately. this means there can be more than one CalorimeterHit with the same cellIDs, but different hit times (!)
-          //
-          //if simpletimingcut == true
-          //i'm very sorry. this is the worst code you will ever see.
-          //sum up hit energies within timeWindowMin and timeWindowMax, use earliest subhit in this window as hit time for resulting calohit.
-          //only one calorimeterhit will be generated from this.
+          for (unsigned int i_t = 0; i_t < n; i_t++) {      // loop over all subhits
+            float timei     = hcalSingleHit[i_t].getTime();    //absolute hit timing of current subhit
+            float energyi   = hcalSingleHit[i_t].getEnergy();  //energy of current subhit
+            float energySum = 0;
+            //float deltat = 0;
+            //if(_hcalCorrectTimesForPropagation)deltat=dt;
+            //deltat now carries hit timing correction.
+            //std::cout <<"outer:" << i << " " << n << std::endl;
 
-          if (!used[i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
-            // merge with other hits?
-            used[i_t] = true;
-            for (unsigned int j_t = i_t; j_t < n; j_t++) {  //loop through all hits after current hit
-              //std::cout << "inner:" << i << " " << j << " " << n << std::endl;
-              if (!used[j_t]) {
-                float timej   = hcalSingleHit[j_t].getTime();
-                float energyj = hcalSingleHit[j_t].getEnergy();
-                //              std::cout << " HCAL  deltat_ij : " << deltat_ij << std::endl;
-                if (m_hcalSimpleTimingCut) {
-                  float deltat_ij = m_hcalCorrectTimesForPropagation ? dt : 0;
-                  if (timej - deltat_ij > m_hcalTimeWindowMin.value() && timej - deltat_ij < hcalTimeWindowMax) {
-                      energySum += energyj;
-                      if (timej < timei) {
-                        timei = timej;  //use earliest hit time for simpletimingcut
+            //idea of the following section:
+            //if simpletimingcut == false
+            //sum up hit energies which lie within one calo timing resolution to "timecluster" of current subhit
+            //then treat each single timecluster as one hit over threshold and digitise separately. this means there can be more than one CalorimeterHit with the same cellIDs, but different hit times (!)
+            //
+            //if simpletimingcut == true
+            //i'm very sorry. this is the worst code you will ever see.
+            //sum up hit energies within timeWindowMin and timeWindowMax, use earliest subhit in this window as hit time for resulting calohit.
+            //only one calorimeterhit will be generated from this.
+
+            if (!used[i_t]) {  //if current subhit has not been merged with previous hits already, take current hit as starting point to merge hits
+              // merge with other hits?
+              used[i_t] = true;
+              for (unsigned int j_t = i_t; j_t < n; j_t++) {  //loop through all hits after current hit
+                //std::cout << "inner:" << i << " " << j << " " << n << std::endl;
+                if (!used[j_t]) {
+                  float timej   = hcalSingleHit[j_t].getTime();
+                  float energyj = hcalSingleHit[j_t].getEnergy();
+                  //              std::cout << " HCAL  deltat_ij : " << deltat_ij << std::endl;
+                  if (m_hcalSimpleTimingCut) {
+                    float deltat_ij = m_hcalCorrectTimesForPropagation ? dt : 0;
+                    if (timej - deltat_ij > m_hcalTimeWindowMin.value() && timej - deltat_ij < hcalTimeWindowMax) {
+                        energySum += energyj;
+                        if (timej < timei) {
+                          timei = timej;  //use earliest hit time for simpletimingcut
+                        }
                       }
+                    } else {
+                      float deltat_ij = fabs(timei - timej);
+                      //if this subhit is close to current subhit, add this hit's energy to timecluster
+                      if (deltat_ij < m_hcalDeltaTimeHitResolution) {
+                        if (energyj > energyi) {
+                          //this is probably not what was intended. i guess this should find the largest hit of one timecluster and use its hittime for the cluster, but instead it compares the current hit energy to the sum of already found hit energies
+                          timei = timej;
+                        }
+                        //std::cout << timei << " - " << timej << std::endl;
+                        //std::cout << energyi << " - " << energyj << std::endl;
+                        energyi += energyj;
+                        used[j_t] = true;
+                        //std::cout << timei << " " << energyi << std::endl;
                     }
-                  } else {
-                    float deltat_ij = fabs(timei - timej);
-                    //if this subhit is close to current subhit, add this hit's energy to timecluster
-                    if (deltat_ij < m_hcalDeltaTimeHitResolution) {
-                      if (energyj > energyi) {
-                        //this is probably not what was intended. i guess this should find the largest hit of one timecluster and use its hittime for the cluster, but instead it compares the current hit energy to the sum of already found hit energies
-                        timei = timej;
-                      }
-                      //std::cout << timei << " - " << timej << std::endl;
-                      //std::cout << energyi << " - " << energyj << std::endl;
-                      energyi += energyj;
-                      used[j_t] = true;
-                      //std::cout << timei << " " << energyi << std::endl;
                   }
                 }
               }
-            }
-            if (m_hcalSimpleTimingCut) {
-              used = vector<bool>(n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
-              energyi += energySum;  //fill energySum back into energyi to have rest of loop behave the same.
-            }
+              if (m_hcalSimpleTimingCut) {
+                used = vector<bool>(n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
+                energyi += energySum;  //fill energySum back into energyi to have rest of loop behave the same.
+              }
 
-            //variables and their behaviour at this point:
-            //if SimpleTimingCut == false
-            //energyi carries the sum of subhit energies within +- one hcal time resolution - the timecluster energy.
-            //timei carries something vaguely similar to the central hit time of the merged subhits
+              //variables and their behaviour at this point:
+              //if SimpleTimingCut == false
+              //energyi carries the sum of subhit energies within +- one hcal time resolution - the timecluster energy.
+              //timei carries something vaguely similar to the central hit time of the merged subhits
 
-            //if SimpleTimingCut == true
-            //energyi carries the sum of subhit energies within timeWindowMin and timeWindowMax
-            //timei carries the time of the earliest hit within this window
+              //if SimpleTimingCut == true
+              //energyi carries the sum of subhit energies within timeWindowMin and timeWindowMax
+              //timei carries the time of the earliest hit within this window
 
-            // apply extra energy digitisation effects
-            energyi = hcalEnergyDigi(energyi, cellID);  //this only uses the current subhit "timecluster"!
+              // apply extra energy digitisation effects
+              energyi = hcalEnergyDigi(energyi, cellID);  //this only uses the current subhit "timecluster"!
 
-            if (energyi > m_thresholdHcal[0]) {  //now would be the correct time to do threshold comparison
-              float timeCor = 0;
-              if (m_hcalCorrectTimesForPropagation)
-                timeCor = dt;
-              timei = timei - timeCor;
-              if (timei > m_hcalTimeWindowMin &&
-                  timei < hcalTimeWindowMax) {  //if current subhit timecluster is within specified timing window, create new CalorimeterHit and add to collections etc.
-                count++;
-                edm4hep::MutableCalorimeterHit calHit = hcalcol.create();
-                calHit.setCellID(cellID);
-                if (m_digitalHcal) {
-                  calHit.setEnergy(calibr_coeff);
-                  //eCellOutput+= calibr_coeff;
+              if (energyi > m_thresholdHcal[0]) {  //now would be the correct time to do threshold comparison
+                float timeCor = 0;
+                if (m_hcalCorrectTimesForPropagation)
+                  timeCor = dt;
+                timei = timei - timeCor;
+                if (timei > m_hcalTimeWindowMin &&
+                    timei < hcalTimeWindowMax) {  //if current subhit timecluster is within specified timing window, create new CalorimeterHit and add to collections etc.
+                  count++;
+                  edm4hep::MutableCalorimeterHit calHit = col.create();
+                  calHit.setCellID(cellID);
+                  if (m_digitalHcal) {
+                    calHit.setEnergy(calibr_coeff);
+                    //eCellOutput+= calibr_coeff;
+                  } else {
+                    calHit.setEnergy(calibr_coeff * energyi);
+                    //eCellOutput+= energyi*calibr_coeff;
+                  }
+                  calHit.setTime(timei);
+                  calHit.setPosition(hit.getPosition());
+                  calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
+                  // Set relation with CaloHitSimCaloHitLinkCollection
+                  auto hcaloRel = Relcol.create();
+                  hcaloRel.setFrom(calHit);
+                  hcaloRel.setTo(hit);
                 } else {
-                  calHit.setEnergy(calibr_coeff * energyi);
-                  //eCellOutput+= energyi*calibr_coeff;
+                  //std::cout << "Drop HCAL hit : " << timei << " " << calibr_coeff*energyi << std::endl;
                 }
-                calHit.setTime(timei);
-                calHit.setPosition(hit.getPosition());
-                calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
-                // Set relation with CaloHitSimCaloHitLinkCollection
-                auto hcaloRel = Relcol.create();
-                hcaloRel.setFrom(calHit);
-                hcaloRel.setTo(hit);
-              } else {
-                //std::cout << "Drop HCAL hit : " << timei << " " << calibr_coeff*energyi << std::endl;
               }
             }
+          } // end loop over all subhits
+        }
+        else {  // if timing cuo is not used
+                // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
+          edm4hep::MutableCalorimeterHit calHit = col.create();
+          calHit.setCellID(cellID);
+          float energyi = hit.getEnergy();
+
+          // apply realistic digitisation
+          energyi = hcalEnergyDigi(energyi, cellID);
+
+          if (m_digitalHcal) {
+            calHit.setEnergy(calibr_coeff);
+          } else {
+            calHit.setEnergy(calibr_coeff * energyi);
           }
-        } // end loop over all subhits
-      }
-      else {  // if timing cuo is not used
-              // CalorimeterHitImpl * calhit = new CalorimeterHitImpl();
-        edm4hep::MutableCalorimeterHit calHit = hcalcol.create();
-        calHit.setCellID(cellID);
-        float energyi = hit.getEnergy();
+          //eCellOutput+= energyi*calibr_coeff;
+          calHit.setTime(0);
+          calHit.setPosition(hit.getPosition());
+          calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
+          //calHit.setRawHit(hit);
 
-        // apply realistic digitisation
-        energyi = hcalEnergyDigi(energyi, cellID);
+          auto hcaloRel = Relcol.create();
+          hcaloRel.setFrom(calHit);
+          hcaloRel.setTo(hit);
+          }
 
-        if (m_digitalHcal) {
-          calHit.setEnergy(calibr_coeff);
-        } else {
-          calHit.setEnergy(calibr_coeff * energyi);
+          // std::cout << hit->getTimeCont(0) << " count = " << count <<  " EHCAL = " << energyCal << " - " << eCellInTime << " - " << eCellOutput << std::endl;
         }
-        //eCellOutput+= energyi*calibr_coeff;
-        calHit.setTime(0);
-        calHit.setPosition(hit.getPosition());
-        calHit.setType(CHT(CHT::had, CHT::hcal, caloLayout, layer));
-        //calHit.setRawHit(hit);
-
-        auto hcaloRel = Relcol.create();
-        hcaloRel.setFrom(calHit);
-        hcaloRel.setTo(hit);
-        }
-
-        // std::cout << hit->getTimeCont(0) << " count = " << count <<  " EHCAL = " << energyCal << " - " << eCellInTime << " - " << eCellOutput << std::endl;
       }
-    }
-    // add HCAL collection to event
-    // hcalcolparameters().setValue(LCIO::CellIDEncoding,initString);
-    // evt->addCollection(hcalcol,_outputHcalCollections[i].c_str());
+      // add HCAL collection to event
+      // hcalcolparameters().setValue(LCIO::CellIDEncoding,initString);
+      // evt->addCollection(hcalcol,_outputHcalCollections[i].c_str());
 
-// Create and add relation collection for ECAL/HCAL to event
-//chschcol = calohitNav.createLCCollection();
-// evt->addCollection(chschcol,_outputRelCollection.c_str());
+  // Create and add relation collection for ECAL/HCAL to event
+  //chschcol = calohitNav.createLCCollection();
+  // evt->addCollection(chschcol,_outputRelCollection.c_str());
 
-// _nEvt++;
-return std::make_tuple(std::move(hcalcol), std::move(Relcol));
-*/
+  // _nEvt++;
+
+  } // end of HCAL digitization
+
+return std::make_tuple(std::move(col), std::move(Relcol));
 }
 
 
