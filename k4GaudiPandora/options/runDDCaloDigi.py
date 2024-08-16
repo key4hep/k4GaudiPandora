@@ -36,20 +36,20 @@ geoservice.EnableGeant4Geo = False
 
 calodigi = DDCaloDigi()
 
-#FIXME: add properties
-calodigi.inputCollection = "ECalBarrelCollection"    # "ECalBarrelCollection","ECalEndcapCollection"
-                                                    # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
-calodigi.outputCollection = "ECALCaloHitCollection"
-#calodigi.OutputHCALCollection = "HCALCaloHitCollection"
-calodigi.outputRelCollection = "RelCollection"
+#set properties
+calodigi.InputColIsECAL = True                              # True -- ECAL // False -- HCAL
+calodigi.InputCaloHitCollection = ["ECalBarrelCollection"]  # "ECalBarrelCollection","ECalEndcapCollection"
+                                                            # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
+calodigi.OutputCaloHitCollection = ["CaloHitCollection"]
+calodigi.RelCollection = ["RelCollection"]
 
 iosvc = IOSvc()
-iosvc.input = "../simulation/sim_edm4hep.root"
-iosvc.output = "../outputfiles/outputCaloDigi_Gaudi.root"
+iosvc.input = "../simulation/sim_partgun_1000.root"
+iosvc.output = "../outputfiles/DDCaloDigi/outputCaloDigi_Gaudi.root"
 
 hps = RootHistSvc("HistogramPersistencySvc")
 root_hist_svc = RootHistoSink("RootHistoSink")
-root_hist_svc.FileName = "../outputfiles/ddcalodigi_hist.root"
+root_hist_svc.FileName = "../outputfiles/DDCaloDigi/ddcalodigi_hist.root"
 
 ApplicationMgr(TopAlg=[calodigi],
                EvtSel="NONE",

@@ -121,15 +121,8 @@ struct DDCaloDigi final
         const edm4hep::EventHeaderCollection& headers) const;
 
   private:
-
-  // collections
-  Gaudi::Property<std::string> m_inputCollection{this, "inputCaloCollection", {"inputCollection"}, "The input SimCalorimeterHitCollection"};
-  //Gaudi::Property<std::string> m_ecalCollection{this, "ECALCollection", "ecalCollection", "The input collection for ECAL"};
-  //Gaudi::Property<std::string> m_hcalCollection{this, "HCALCollection", "hcalCollection", "The input collection for HCAL"};
-  //Gaudi::Property<std::string> m_outputEcalCollection{this, "OutputECALCollection", "outputEcalCollection", "The output collection for ECAL"};
-  //Gaudi::Property<std::string> m_outputHcalCollection{this, "OutputHCALCollection", "outputHcalCollection", "The output collection for HCAL"};
-  Gaudi::Property<std::string> m_outputCollection{this, "outputCollection", {"outputCollection"}, "The output CalorimeterHitCollection"};
-  Gaudi::Property<std::string> m_RelCollection{this, "RelCollection", {"outputRelCollection"}, "The output relation collection"};
+  // check if input collection is ECAL or HCAL
+  Gaudi::Property<bool> m_inputColIsECAL{this, "InputColIsECAL", {true}, "Input SimCalorimeterHit collection is ECAL? If false, then is HCAL."};
 
   // digitazing parameters for ECAL and HCAL
   Gaudi::Property<float> m_thresholdEcal{this, "ECALThreshold", {5.0e-5}, "Threshold for ECAL Hits in GeV"};
@@ -210,9 +203,8 @@ struct DDCaloDigi final
   Gaudi::Property<float> m_hcalMaxDynMip{this, "HCAL_maxDynamicRange_MIP", {2500.}, "Maximum of electronis dynamic range for HCAL (in MIPs)"};
   //Gaudi::Property<int> m_hcalStrip_default_nVirt{this, "StripHcal_default_nVirtualCells", {9}, "Default number of virtual cells (used if not found in gear file)"};
   //Gaudi::Property<std::string> m_hcal_deafult_layer_config{this, "HCAL_default_layerConfig", {"000000000000000"}, "Default HCAL layer configuration (used if not found in gear file"};
-  Gaudi::Property<std::string> m_encodingStringVariable{
-      this, "EncodingStringParameterName", "GlobalTrackerReadoutID",
-      "The name of the DD4hep constant that contains the Encoding string for tracking detectors"};
+  //Gaudi::Property<std::string> m_encodingStringVariable{this, "EncodingStringParameterName", "GlobalTrackerReadoutID",
+      //"The name of the DD4hep constant that contains the Encoding string for tracking detectors"};
 
   SmartIF<IGeoSvc>         m_geoSvc;
   SmartIF<IUniqueIDGenSvc> m_uidSvc;
