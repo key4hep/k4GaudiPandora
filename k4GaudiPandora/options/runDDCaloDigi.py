@@ -43,6 +43,85 @@ calodigi.InputCaloHitCollection = ["ECalBarrelCollection"]  # "ECalBarrelCollect
 calodigi.OutputCaloHitCollection = ["CaloHitCollection"]
 calodigi.RelCollection = ["RelCollection"]
 
+# digitazing parameters for ECAL and HCAL
+calodigi.ECALThreshold = 5.0e-5
+calodigi.ECALThresholdUnit = "GeV"
+calodigi.HCALThreshold = [0.00004]
+calodigi.HCALThresholdUnit = "GeV"
+calodigi.ECALLayers = [20,100]
+calodigi.HCALLayers = [100]
+calodigi.CalibrECAL = [40.91, 81.81]
+calodigi.CalibrHCALBarrel = [0.0]
+calodigi.CalibrHCALEndcap = [0.0]
+calodigi.CalibrHCALOther = [0.0]
+calodigi.IfDigitalEcal = 0
+calodigi.MapsEcalCorrection = 0
+calodigi.IfDigitalHcal = 0
+calodigi.ECALGapCorrection = 1
+calodigi.ECALGapCorrection = 1
+calodigi.ECALEndcapCorrectionFactor = 1.025
+calodigi.HCALEndcapCorrectionFactor = 1.025
+calodigi.ECALGapCorrectionFactor = 1.0
+calodigi.ECALModuleGapCorrectionFactor = 0.5
+calodigi.HCALModuleGapCorrectionFactor = 0.5
+
+calodigi.Histograms = 0
+
+# timing parameters for ECAL
+calodigi.UseEcalTiming = 0
+calodigi.ECALCorrectTimesForPropagation = 0
+calodigi.ECALTimeWindowMin = -10.0
+calodigi.ECALEndcapTimeWindowMax = 100.0
+calodigi.ECALBarrelTimeWindowMax = 100.0
+calodigi.ECALDeltaTimeHitResolution = 10.0
+calodigi.ECALTimeResolution = 10.0
+calodigi.ECALSimpleTimingCut = True
+
+# timing parameters for HCAL
+calodigi.UseHcalTiming = 1
+calodigi.HCALCorrectTimesForPropagation = 0
+calodigi.HCALTimeWindowMin = -10.0
+calodigi.HCALEndcapTimeWindowMax = 100.0
+calodigi.HCALBarrelTimeWindowMax = 100.0
+calodigi.HCALDeltaTimeHitResolution = 10.0
+calodigi.HCALTimeResolution = 10.0
+calodigi.HCALSimpleTimingCut = True
+
+# parameters for extra ECAL digitization effects
+calodigi.CalibECALMIP = 1.0e-4
+calodigi.ECALApplyRealisticDigi = 0
+calodigi.ECAL_PPD_PE_per_MIP = 7.0
+calodigi.ECAL_PPD_N_Pixels = 10000
+calodigi.ECAL_PPD_N_Pixels_uncertainty = 0.05
+calodigi.ECAL_miscalibration_uncorrel = 0.0
+calodigi.ECAL_miscalibration_uncorrel_memorise = False
+calodigi.ECAL_miscalibration_correl = 0.0
+calodigi.ECAL_deadCellRate = 0.0
+calodigi.ECAL_deadCell_memorise = False
+calodigi.ECAL_strip_absorbtionLength = 1000000.0
+calodigi.ECAL_pixel_spread = 0.05
+calodigi.ECAL_elec_noise_mips = 0.0
+calodigi.energyPerEHpair = 3.6
+calodigi.ECAL_maxDynamicRange_MIP = 2500.0
+calodigi.StripEcal_default_nVirtualCells = 9
+calodigi.ECAL_default_layerConfig = "000000000000000"
+
+# parameters for extra HCAL digitization effects
+calodigi.CalibHCALMIP = 1.0e-4
+calodigi.HCALApplyRealisticDigi = 0
+calodigi.HCAL_PPD_PE_per_MIP = 7.0
+calodigi.HCAL_PPD_N_Pixels = 10000
+calodigi.HCAL_PPD_N_Pixels_uncertainty = 0.05
+calodigi.HCAL_miscalibration_uncorrel = 0.0
+calodigi.HCAL_miscalibration_uncorrel_memorise = False
+calodigi.HCAL_miscalibration_correl = 0.0
+calodigi.HCAL_deadCellRate = 0.0
+calodigi.HCAL_deadCell_memorise = False
+calodigi.HCAL_pixel_spread = 0.05
+calodigi.HCAL_elec_noise_mips = 0.0
+calodigi.HCAL_maxDynamicRange_MIP = 2500.0
+
+
 iosvc = IOSvc()
 iosvc.input = "../simulation/sim_partgun_1000.root"
 iosvc.output = "../outputfiles/DDCaloDigi/outputCaloDigi_Gaudi.root"
