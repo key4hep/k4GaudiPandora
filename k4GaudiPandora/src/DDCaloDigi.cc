@@ -49,8 +49,6 @@ const float slop = 0.25;  // (mm)
 //const float pi = acos(-1.0); ///FIXME
 //const float twopi = 2.0*pi;  ///FIXME: DD4HEP INTERFERES WITH THESE
 
-DECLARE_COMPONENT(DDCaloDigi) // Is needed???
-
 // Forward Declaration, gets linked in from DDPandoraPFANewProcessor --- FIXME
                                                                     // now declare here, to be linked from DDPandoraPFANewProcessor
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) {
@@ -452,11 +450,11 @@ retType DDCaloDigi::operator()(
                 calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
               }
 
-              // fill the hit time - energy histograms
-              ++fEcal[{timei, energyi * calibr_coeff}];
-              ++fEcalC[{timei - dt, energyi * calibr_coeff}];
-              ++fEcalC1[{timei - dt, energyi * calibr_coeff}];
-              ++fEcalC2[{timei - dt, energyi * calibr_coeff}];
+              // fill the ECAL time profile histograms (weighted by the energy)
+              fEcal[timei] += energyi * calibr_coeff;
+              fEcalC[timei - dt] += energyi * calibr_coeff;
+              fEcalC1[timei - dt] += energyi * calibr_coeff;
+              fEcalC2[timei - dt] += energyi * calibr_coeff;
 
               // apply extra energy digitisation effects
               energyi = ecalEnergyDigi(energyi, cellID); // this only uses the current subhit "timecluster"!
@@ -549,7 +547,7 @@ retType DDCaloDigi::operator()(
       for (float y = 15; y < 3000; y += 30) {
         if (x > 430 || y > 430) {
           float r = sqrt(x * x + y * y);
-          ++fHcalRLayerNorm[{r, 4.}];
+          fHcalRLayerNorm[r] += 4.;
         }
       }
     }
@@ -559,7 +557,7 @@ retType DDCaloDigi::operator()(
       for (float y = 2.5; y < 3000; y += 5) {
         float r = sqrt(x * x + y * y);
         if (r > 235) {
-          ++fEcalRLayerNorm[{r, 4.}];
+          fEcalRLayerNorm[r] += 4.;
         }
       }
     }
@@ -1669,7 +1667,7 @@ int DDCaloDigi::getStripOrientationFromColName(std::string const& colName) const
     orientation = STRIP_ALIGN_ALONG_SLAB;
   } else {  // assume square...
     orientation = SQUARE;
-    cout << "WARNING, cannot guess strip orientation! for collection " << colName << endl;
+    //cout << "WARNING, cannot guess strip orientation! for collection " << colName << endl;
   }
   return orientation;
 }

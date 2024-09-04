@@ -21,10 +21,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					# src/components/*.cpp
 					src/CalorimeterHitType.cc
 					# src/DDBFieldPlugin.cc
-					# src/DDCaloDigi.cc
-					src/DDBaseCaloDigi.cc
-					src/DDECalDigi.cc
-					src/DDHCalDigi.cc
+					src/DDCaloDigi.cc
 					# src/DDCaloHitCreator.cc
 					# src/DDExternalClusteringAlgorithm.cc
 					# src/DDGeometryCreator.cc
