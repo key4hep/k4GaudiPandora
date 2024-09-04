@@ -40,8 +40,8 @@
 #include "CLHEP/Random/RandPoisson.h"
 
 using namespace std;
-using namespace dd4hep ;
-using namespace DDSegmentation ;
+using namespace dd4hep;
+using namespace DDSegmentation;
 
 // protect against rounding errors
 // will not find caps smaller than this
@@ -105,51 +105,13 @@ DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
 //   }
 // }
 
-// if (m_histograms) {
-//   fEcal = new TH1F("fEcal", "Ecal time profile", 1000, 0., 1000.0);
-//   fHcal = new TH1F("fHcal", "Hcal time profile", 1000, 0., 1000.0);
 
-//   fEcalC = new TH1F("fEcalC", "Ecal time profile cor", 1000, 0., 1000.0);
-//   fHcalC = new TH1F("fHcalC", "Hcal time profile cor", 1000, 0., 1000.0);
-
-//   fEcalC1 = new TH1F("fEcalC1", "Ecal time profile cor", 100, 0., 1000.0);
-//   fHcalC1 = new TH1F("fHcalC1", "Hcal time profile cor", 100, 0., 1000.0);
-
-//   fEcalC2 = new TH1F("fEcalC2", "Ecal time profile cor", 10, 0., 1000.0);
-//   fHcalC2 = new TH1F("fHcalC2", "Hcal time profile cor", 10, 0., 1000.0);
-
-//   fHcalLayer1     = new TH2F("fHcalLayer1", "Hcal layer 1 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer11    = new TH2F("fHcalLayer11", "Hcal layer 11 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer21    = new TH2F("fHcalLayer21", "Hcal layer 21 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer31    = new TH2F("fHcalLayer31", "Hcal layer 31 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer41    = new TH2F("fHcalLayer41", "Hcal layer 41 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer51    = new TH2F("fHcalLayer51", "Hcal layer 51 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer61    = new TH2F("fHcalLayer61", "Hcal layer 61 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalLayer71    = new TH2F("fHcalLayer71", "Hcal layer 71 map", 300, -4500., 4500.0, 300, -4500, 4500.);
-//   fHcalRLayer1    = new TH1F("fHcalRLayer1", "Hcal R layer 1", 50, 0., 5000.0);
-//   fHcalRLayer11   = new TH1F("fHcalRLayer11", "Hcal R layer 11", 50, 0., 5000.0);
-//   fHcalRLayer21   = new TH1F("fHcalRLayer21", "Hcal R layer 21", 50, 0., 5000.0);
-//   fHcalRLayer31   = new TH1F("fHcalRLayer31", "Hcal R layer 31", 50, 0., 5000.0);
-//   fHcalRLayer41   = new TH1F("fHcalRLayer41", "Hcal R layer 41", 50, 0., 5000.0);
-//   fHcalRLayer51   = new TH1F("fHcalRLayer51", "Hcal R layer 51", 50, 0., 5000.0);
-//   fHcalRLayer61   = new TH1F("fHcalRLayer61", "Hcal R layer 61", 50, 0., 5000.0);
-//   fHcalRLayer71   = new TH1F("fHcalRLayer71", "Hcal R layer 71", 50, 0., 5000.0);
-//   fHcalRLayerNorm = new TH1F("fHcalRLayerNorm", "Hcal R layer Norm", 50, 0., 5000.0);
-
-//   fEcalLayer1     = new TH2F("fEcalLayer1", "Ecal layer 1 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-//   fEcalLayer11    = new TH2F("fEcalLayer11", "Ecal layer 11 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-//   fEcalLayer21    = new TH2F("fEcalLayer21", "Ecal layer 21 map", 1800, -4500., 4500.0, 1800, -4500, 4500.);
-//   fEcalRLayer1    = new TH1F("fEcalRLayer1", "Ecal R layer 1", 100, 0., 5000.0);
-//   fEcalRLayer11   = new TH1F("fEcalRLayer11", "Ecal R layer 11", 100, 0., 5000.0);
-//   fEcalRLayer21   = new TH1F("fEcalRLayer21", "Ecal R layer 21", 100, 0., 5000.0);
-//   fEcalRLayerNorm = new TH1F("fEcalRLayerNorm", "Ecal R layer Norm", 100, 0., 5000.0);
-//   m_geoSvc        = aSvcLoc->service(m_geoSvcName);
-// }
+//m_geoSvc = aSvcLoc->service(m_geoSvcName); // ???
 
 }
 
 StatusCode DDCaloDigi::initialize() {
-  //fHcalCvsE = new TH2F("fHcalCvsE", "Hcal time profile cor",100, 0., 500.0,100,0.,10.)
+
   m_strip_virt_cells = -999;
   m_countWarnings    = 0;
 
@@ -236,7 +198,7 @@ StatusCode DDCaloDigi::initialize() {
   }
 
   // Set up the scintillator/MPPC digitizer
-  m_scEcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi()); //see DDScintillatorPpdDigi!!!
+  m_scEcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi());
   m_scEcalDigi->setPEperMIP(m_ecal_PPD_pe_per_mip);
   m_scEcalDigi->setCalibMIP(m_calibEcalMip);
   m_scEcalDigi->setNPix(m_ecal_PPD_n_pixels);
@@ -280,9 +242,8 @@ retType DDCaloDigi::operator()(
   debug() << " process event : " << headers.getEventNumber() << " - run  " << headers.getRunNumber()
           << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
 
-  auto col = edm4hep::CalorimeterHitCollection(); // create output collection
-  //edm4hep::CaloHitSimCaloHitLinkCollection outputRelation;
-  auto Relcol = edm4hep::CaloHitSimCaloHitLinkCollection();  // create relation collection CalorimeterHit-SimCalorimeterHit
+  auto col = edm4hep::CalorimeterHitCollection();           // create output CalorimeterHit collection
+  auto Relcol = edm4hep::CaloHitSimCaloHitLinkCollection(); // create relation collection CalorimeterHit-SimCalorimeterHit
 
   // copy the flags from the input collection
   //_flag.setBit(LCIO::CHBIT_LONG);
@@ -293,11 +254,11 @@ retType DDCaloDigi::operator()(
   //_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot( 1.0, _misCalibHcal_correl );
 
 
-  std::string colName = m_inputLocations[0][0].key(); // take input collection name
+  std::string colName = m_inputLocations[0][0].key();       // take input collection name
   cout << "looking for collection: " << colName << endl;
 
   if (colName.find("dummy") != string::npos) {
-    debug() << "Ignoring input ECAL collection name (looks like dummy name)" << colName << endmsg;
+    debug() << "Ignoring input collection name (looks like dummy name)" << colName << endmsg;
   }
 
   //fg: need to establish the subdetetcor part here
@@ -353,9 +314,8 @@ retType DDCaloDigi::operator()(
         // check that layer and assumed layer type are compatible
         checkConsistency(colName, layer);
 
-        // save hits by module/stave/layer if required later
+        // save hits by module/stave/layer if required later ???
 
-        float calibr_coeff = 1.;
         float x    = hit.getPosition()[0];
         float y    = hit.getPosition()[1];
         float z    = hit.getPosition()[2];
@@ -363,20 +323,24 @@ retType DDCaloDigi::operator()(
         float rxy  = sqrt(x * x + y * y);
         float cost = fabs(z) / r;
 
-        if (z > 0 && m_histograms) {
+        // fill ECAL Layer histograms
+        if (z > 0) {
           if (layer == 1)
-            fEcalLayer1->Fill(x, y);
+            ++fEcalLayer1[{x, y}];
           if (layer == 11)
-            fEcalLayer11->Fill(x, y);
+            ++fEcalLayer11[{x, y}];
           if (layer == 21)
-            fEcalLayer21->Fill(x, y);
+            ++fEcalLayer21[{x, y}];
           if (layer == 1)
-            fEcalRLayer1->Fill(rxy);
+            ++fEcalRLayer1[rxy];
           if (layer == 11)
-            fEcalRLayer11->Fill(rxy);
+            ++fEcalRLayer11[rxy];
           if (layer == 21)
-            fEcalRLayer21->Fill(rxy);
+            ++fEcalRLayer21[rxy];
         }
+
+        // evaluate the ECAL calibration coefficient
+        float calibr_coeff = 1.;
         if (m_digitalEcal) {
           calibr_coeff = this->digitalEcalCalibCoeff(layer);
           if (m_mapsEcalCorrection) {
@@ -396,8 +360,7 @@ retType DDCaloDigi::operator()(
           calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
         }
 
-        // if you want to understand the timing cut code, please refer to the hcal timing cut further below.
-        // it is functionally identical, but has comments, explanations and excuses.
+        // apply timing cut for ECAL
         if (m_useEcalTiming) {
           float ecalTimeWindowMax;
           if (caloLayout == CHT::barrel) {                // current SimHit is in barrel, use barrel timing cut
@@ -408,7 +371,7 @@ retType DDCaloDigi::operator()(
 
           float dt = r / 300. - 0.1;
           auto  ecalSingleHit  = hit.getContributions();
-          int   count       = 0; // count of what???
+          int   count       = 0;
           float eCellInTime = 0.;
           float eCellOutput = 0.;
           const unsigned int n = ecalSingleHit.size();
@@ -416,7 +379,7 @@ retType DDCaloDigi::operator()(
 
           for (unsigned int i_t = 0; i_t < n; i_t++) {        // loop over all subhits
             float timei = ecalSingleHit[i_t].getTime();       // absolute hit timing of current subhit
-            float energyi = ecalSingleHit[i_t].getEnergy(); // energy of current subhit
+            float energyi = ecalSingleHit[i_t].getEnergy();   // energy of current subhit
             float energySum = 0;
 
             float deltat = 0;
@@ -485,15 +448,15 @@ retType DDCaloDigi::operator()(
                 calibr_coeff = this->analogueEcalCalibCoeff(layer);
               }
               // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= _ecalEndcapCorrectionFactor;
-              if (caloLayout != CHT::barrel)
+              if (caloLayout != CHT::barrel) {
                 calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
-
-              if (m_histograms) {
-              fEcal->Fill(timei, energyi * calibr_coeff);
-              fEcalC->Fill(timei - dt, energyi * calibr_coeff);
-              fEcalC1->Fill(timei - dt, energyi * calibr_coeff);
-              fEcalC2->Fill(timei - dt, energyi * calibr_coeff);
               }
+
+              // fill the hit time - energy histograms
+              ++fEcal[{timei, energyi * calibr_coeff}];
+              ++fEcalC[{timei - dt, energyi * calibr_coeff}];
+              ++fEcalC1[{timei - dt, energyi * calibr_coeff}];
+              ++fEcalC2[{timei - dt, energyi * calibr_coeff}];
 
               // apply extra energy digitisation effects
               energyi = ecalEnergyDigi(energyi, cellID); // this only uses the current subhit "timecluster"!
@@ -526,7 +489,6 @@ retType DDCaloDigi::operator()(
                   calHit.setTime(timei);
                   calHit.setPosition(hit.getPosition());
                   calHit.setType(CHT(CHT::em, CHT::ecal, caloLayout, layer));
-                  //calHit.setRawHit(hit);
 
                   // set relation with CaloHitSimCaloHitLinkCollection
                   auto ecaloRel = Relcol.create();
@@ -581,36 +543,32 @@ retType DDCaloDigi::operator()(
     }
 
 
-    if (m_histograms) {
-      // fill normalisation of HCAL occupancy plots
-      for (float x = 15; x < 3000; x += 30) {
-        for (float y = 15; y < 3000; y += 30) {
-          if (x > 430 || y > 430) {
-            float r = sqrt(x * x + y * y);
-            fHcalRLayerNorm->Fill(r, 4.);
-          }
-        }
-      }
 
-      // fill normalisation of ECAL occupancy plots
-      for (float x = 2.5; x < 3000; x += 5) {
-        for (float y = 2.5; y < 3000; y += 5) {
+    // fill normalisation of HCAL occupancy plots
+    for (float x = 15; x < 3000; x += 30) {
+      for (float y = 15; y < 3000; y += 30) {
+        if (x > 430 || y > 430) {
           float r = sqrt(x * x + y * y);
-          if (r > 235)
-            fEcalRLayerNorm->Fill(r, 4.);
+          ++fHcalRLayerNorm[{r, 4.}];
         }
       }
     }
 
-    //return std::make_tuple(std::move(ecalcol), std::move(Relcol)); // FIXME: put in the end
-
+    // fill normalisation of ECAL occupancy plots
+    for (float x = 2.5; x < 3000; x += 5) {
+      for (float y = 2.5; y < 3000; y += 5) {
+        float r = sqrt(x * x + y * y);
+        if (r > 235) {
+          ++fEcalRLayerNorm[{r, 4.}];
+        }
+      }
+    }
   } // end of ECAL digitization
 
   //
   // * Reading HCAL Collections of Simulated Hits *
   //
   else {
-    //auto hcalcol = edm4hep::CalorimeterHitCollection();
 
     //CHT::Layout caloLayout = layoutFromString(hcalColName); // FIXME: not sure if we need new layout for hcal
 
@@ -805,56 +763,19 @@ return std::make_tuple(std::move(col), std::move(Relcol));
 }
 
 
-StatusCode DDCaloDigi::finalize() { return StatusCode::SUCCESS; }  //fix
+StatusCode DDCaloDigi::finalize() {
 
-// if (_histograms) {
-//   TFile* hfile = new TFile("calTiming.root", "recreate");
-//   fEcal->TH1F::Write();
-//   fHcal->TH1F::Write();
-//   fEcalC->TH1F::Write();
-//   fHcalC->TH1F::Write();
-//   fEcalC1->TH1F::Write();
-//   fHcalC1->TH1F::Write();
-//   fEcalC2->TH1F::Write();
-//   fHcalC2->TH1F::Write();
-//   //fHcalCvsE->TH2F::Write();
-//   fHcalLayer1->TH2F::Write();
-//   fHcalLayer11->TH2F::Write();
-//   fHcalLayer21->TH2F::Write();
-//   fHcalLayer31->TH2F::Write();
-//   fHcalLayer41->TH2F::Write();
-//   fHcalLayer51->TH2F::Write();
-//   fHcalLayer61->TH2F::Write();
-//   fHcalLayer71->TH2F::Write();
-//   fHcalRLayer1->TH1F::Write();
-//   fHcalRLayer11->TH1F::Write();
-//   fHcalRLayer21->TH1F::Write();
-//   fHcalRLayer31->TH1F::Write();
-//   fHcalRLayer41->TH1F::Write();
-//   fHcalRLayer51->TH1F::Write();
-//   fHcalRLayer61->TH1F::Write();
-//   fHcalRLayer71->TH1F::Write();
-//   fHcalRLayerNorm->TH1F::Write();
-//   fEcalLayer1->TH2F::Write();
-//   fEcalLayer11->TH2F::Write();
-//   fEcalLayer21->TH2F::Write();
-//   fEcalRLayer1->TH1F::Write();
-//   fEcalRLayer11->TH1F::Write();
-//   fEcalRLayer21->TH1F::Write();
-//   fEcalRLayerNorm->TH1F::Write();
+  //delete randomengines if needed
+  if (m_randomEngineDeadCellHcal != 0) {
+    delete m_randomEngineDeadCellHcal;
+  }
 
-//   hfile->Close();
-//   delete hfile;
-// }
+  if (m_randomEngineDeadCellEcal != 0) {
+    delete m_randomEngineDeadCellEcal;
+  }
 
-// //delete randomengines if needed
-// if (_randomEngineDeadCellHcal != 0) {
-//   delete _randomEngineDeadCellHcal;
-// }
-
-// if (_randomEngineDeadCellEcal != 0) {
-//   delete _randomEngineDeadCellEcal;
-// }
+return StatusCode::SUCCESS;
+}
 
 void DDCaloDigi::fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS],
 			      std::vector<int> m_calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS]
@@ -1684,28 +1605,26 @@ void DDCaloDigi::checkConsistency(std::string colName, int layer) const{
   std::pair<int, int> thislayersetup = getLayerProperties(colName, layer);
 
   if (m_applyEcalDigi == 1 && thislayersetup.first != SIECAL) {
-    // streamlog_out(ERROR) << "collection: " << colName << endl;
-    // streamlog_out(ERROR) << "you seem to be trying to apply ECAL silicon digitisation to scintillator? Refusing!"
-    //                      << endl;
-    // streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
+    error() << "collection: " << colName << endmsg;
+    error() << "You seem to be trying to apply ECAL silicon digitisation to scintillator? Refusing!" << endmsg;
+    error() << "Check setting of ECAL_apply_realistic_digi: " << m_applyEcalDigi << endmsg;
     assert(0);
     m_countWarnings++;
   }
 
   if (m_applyEcalDigi == 2 && thislayersetup.first != SCECAL) {
-    // streamlog_out(ERROR) << "collection: " << colName << endl;
-    // streamlog_out(ERROR) << "you seem to be trying to apply ECAL scintillator digitisation to silicon? Refusing!"
-    //                      << endl;
-    // streamlog_out(ERROR) << "check setting of ECAL_apply_realistic_digi: " << _applyEcalDigi << endl;
+    error() << "collection: " << colName << endmsg;
+    error() << "You seem to be trying to apply ECAL scintillator digitisation to silicon? Refusing!" << endmsg;
+    error() << "Check setting of ECAL_apply_realistic_digi: " << m_applyEcalDigi << endmsg;
     assert(0);
     m_countWarnings++;
   }
 
   if (thislayersetup.second != getStripOrientationFromColName(colName)) {
-    // streamlog_out(ERROR) << "collection: " << colName << endl;
-    // streamlog_out(ERROR) << "some inconsistency in strip orientation?" << endl;
-    // streamlog_out(ERROR) << " from collection name: " << getStripOrientationFromColName(colName) << endl;
-    // streamlog_out(ERROR) << " from layer config string: " << thislayersetup.second << endl;
+    error() << "collection: " << colName << endmsg;
+    error() << "Some inconsistency in strip orientation?" << endmsg;
+    error() << " from collection name: " << getStripOrientationFromColName(colName) << endmsg;
+    error() << " from layer config string: " << thislayersetup.second << endmsg;
     m_countWarnings++;
   }
 
@@ -1718,7 +1637,7 @@ std::pair<int, int> DDCaloDigi::getLayerProperties(std::string const& colName, i
   std::transform(colNameLow.begin(), colNameLow.end(), colNameLow.begin(), ::tolower);
   if (colNameLow.find("presh") != string::npos) {  // preshower
     if (layer != 0) {
-      //streamlog_out(WARNING) << "preshower layer with layer index = " << layer << " ??? " << endl;
+      warning() << "preshower layer with layer index = " << layer << " ??? " << endmsg;
     } else {
       thislayersetup = getLayerConfig()[layer];
     }
@@ -1728,13 +1647,13 @@ std::pair<int, int> DDCaloDigi::getLayerProperties(std::string const& colName, i
       // thislayersetup = getLayerConfig()[layer];
       thislayersetup = std::pair<int, int>(SIECAL, SQUARE);
     } else {
-      //streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
+      warning() << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endmsg;
     }
   } else {  // endcap, barrel
     if (layer + 1 < int(getLayerConfig().size())) {
       thislayersetup = getLayerConfig()[layer + 1];
     } else {
-      //streamlog_out(WARNING) << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endl;
+      warning() << "unphysical layer number? " << layer << " " << getLayerConfig().size() << endmsg;
     }
   }
   return thislayersetup;
@@ -1750,7 +1669,7 @@ int DDCaloDigi::getStripOrientationFromColName(std::string const& colName) const
     orientation = STRIP_ALIGN_ALONG_SLAB;
   } else {  // assume square...
     orientation = SQUARE;
-    // cout << "WARNING, cannot guess strip orientation! for collection " << colName << endl;
+    cout << "WARNING, cannot guess strip orientation! for collection " << colName << endl;
   }
   return orientation;
 }
