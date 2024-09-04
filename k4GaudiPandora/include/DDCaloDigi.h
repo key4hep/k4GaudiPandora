@@ -16,10 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DDCCALODIGI_H
-#define DDCCALODIGI_H 1
+#ifndef DDCALODIGI_H
+#define DDCALODIGI_H 1
 
 #include "Gaudi/Property.h"
+#include "Gaudi/Accumulators/RootHistogram.h"
 #include "edm4hep/SimCalorimeterHitCollection.h"
 #include "edm4hep/CalorimeterHitCollection.h"
 #include "edm4hep/EventHeaderCollection.h"
@@ -146,7 +147,49 @@ struct DDCaloDigi final
   Gaudi::Property<float> m_ecalModuleGapCorrectionFactor{this, "ECALModuleGapCorrectionFactor", {0.5}, "Factor applied to module gap correction ECAL"};
   Gaudi::Property<float> m_hcalModuleGapCorrectionFactor{this, "HCALModuleGapCorrectionFactor", {0.5}, "Factor applied to module gap correction HCAL"};
 
-  Gaudi::Property<int> m_histograms{this, "Histograms", {0}, "Hit times histograms"};
+
+  // histograms that will be filled --- <1> or <2> is the number of dimensions of the histogram (1D or 2D)
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcal{this, "fEcal", "Ecal time profile", {1000, 0., 1000.0}, {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcal{this, "fHcal", "Hcal time profile", {1000, 0., 1000.0}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC{this, "fEcalC", "Ecal time profile cor", {1000, 0., 1000.0}, {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC{this, "fHcalC", "Hcal time profile cor", {1000, 0., 1000.0}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC1{this, "fEcalC1", "Ecal time profile cor", {100, 0., 1000.0}, {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC1{this, "fHcalC1", "Hcal time profile cor", {100, 0., 1000.0}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC2{this, "fEcalC2", "Ecal time profile cor", {10, 0., 1000.0}, {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC2{this, "fHcalC2", "Hcal time profile cor", {10, 0., 1000.0}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalCvsE{this, "fHcalCvsE", "Hcal time profile cor", {{100, 0., 500.0}, {100,0.,10.}}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer1 {this, "fHcalLayer1", "Hcal layer 1 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer11{this, "fHcalLayer11", "Hcal layer 11 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer21{this, "fHcalLayer21", "Hcal layer 21 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer31{this, "fHcalLayer31", "Hcal layer 31 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer41{this, "fHcalLayer41", "Hcal layer 41 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer51{this, "fHcalLayer51", "Hcal layer 51 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer61{this, "fHcalLayer61", "Hcal layer 61 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer71{this, "fHcalLayer71", "Hcal layer 71 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
+
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer1   {this,  "fHcalRLayer1", "Hcal R layer 1", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer11  {this, "fHcalRLayer11", "Hcal R layer 11", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer21  {this, "fHcalRLayer21", "Hcal R layer 21", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer31  {this, "fHcalRLayer31", "Hcal R layer 31", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer41  {this, "fHcalRLayer41", "Hcal R layer 41", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer51  {this, "fHcalRLayer51", "Hcal R layer 51", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer61  {this, "fHcalRLayer61", "Hcal R layer 61", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer71  {this, "fHcalRLayer71", "Hcal R layer 71", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fHcalRLayerNorm{this, "fHcalRLayerNorm", "Hcal R layer Norm", {50, 0., 5000.0}, {50, 0., 5000.0}};
+
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer1 {this, "fEcalLayer1", "Ecal layer 1 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer11{this, "fEcalLayer11", "Ecal layer 11 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer21{this, "fEcalLayer21", "Ecal layer 21 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
+
+  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer1   {this, "fEcalRLayer1", "Ecal R layer 1", {100, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer11  {this, "fEcalRLayer11", "Ecal R layer 11", {100, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer21  {this, "fEcalRLayer21", "Ecal R layer 21", {100, 0., 5000.0}};
+  mutable Gaudi::Accumulators::RootHistogram<2> fEcalRLayerNorm{this, "fEcalRLayerNorm", "Ecal R layer Norm", {100, 0., 5000.0}, {100, 0., 5000.0}};
 
   // timing parameters for ECAL
   Gaudi::Property<int> m_useEcalTiming{this, "UseEcalTiming", {0}, "Use ECAL hit times"};
@@ -273,7 +316,7 @@ struct DDCaloDigi final
   };
 
 
-
+/*
   TH1F* fEcal = NULL;
   TH1F* fHcal = NULL;
   TH1F* fEcalC = NULL;
@@ -308,50 +351,8 @@ struct DDCaloDigi final
   TH1F* fEcalRLayer1 = NULL;
   TH1F* fEcalRLayer11 = NULL;
   TH1F* fEcalRLayer21 = NULL;
-
+*/
 };
 
 DECLARE_COMPONENT(DDCaloDigi)
 #endif
-
-
-
-
-
-
-
-
-
-
-//  ecalCollections.push_back(std::string("EcalRingCollection"));
-  // std::vector<std::string> _ecalCollections; // this is for silicon
-  // _ecalCollections.push_back(std::string("EcalBarrelCollection"));
-  // _ecalCollections.push_back(std::string("EcalEndcapCollection"));
-  //Gaudi::Property<std::vector<std::string>> _ecalCollections{this, "ECALCollections", {_ecalCollections}, "ECAL Collection Names"};
-
-  //  std::vector<std::string> _hcalCollections;
-  // _hcalCollections.push_back(std::string("HcalBarrelRegCollection"));
-  // _hcalCollections.push_back(std::string("HcalEndcapRingsCollection"));
-  // _hcalCollections.push_back(std::string("HcalEndcapsCollection"));
- //Gaudi::Property<std::vector<std::string>> _hcalCollections{this, "HCALCollections", {_hcalCollections}, "HCAL Collection Names"};
-
-  //  std::vector<std::string> _outputEcalCollections{};
-  // _outputEcalCollections.push_back(std::string("ECALBarrel"));
-  // _outputEcalCollections.push_back(std::string("ECALEndcap"));
-  // _outputEcalCollections.push_back(std::string("ECALOther"));
-
-  //  std::vector<std::string> _outputHcalCollections{};
-  // _outputHcalCollections.push_back(std::string("HCALBarrel"));
-  // _outputHcalCollections.push_back(std::string("HCALEndcap"));
-  // _outputHcalCollections.push_back(std::string("HCALOther"));
-
-  // Gaudi::Property<std::string> _outputEcalCollections[0]{this, "output_ECALCollections0", {"ECALBarrel"}, "ECAL Collection of real Hits in Barrel"};
-  // Gaudi::Property<std::string> _outputEcalCollections[1]{this, "output_ECALCollections1", {"ECALEndcap"}, "ECAL Collection of real Hits in Endcap"};
-  // Gaudi::Property<std::string> _outputEcalCollections[2]{this, "output_ECALCollections2", {"ECALOther"}, "ECAL Collection of real Hits other"};
-
-  // Gaudi::Property<std::string> _outputHcalCollections[0]{this, "output_HCALCollections0", {"HCALBarrel"}, "HCAL Collection of real Hits in Barrel"};
-  // Gaudi::Property<std::string> _outputHcalCollections[1]{this, "output_HCALCollections1", {"HCALEndcap"}, "HCAL Collection of real Hits in Endcap"};
-  // Gaudi::Property<std::string> _outputHcalCollections[2]{this, "output_HCALCollections2", {"HCALOther"}, "HCAL Collection of real Hits other"};
-  // Gaudi::Property<std::string> _outputRelCollection{this, "RelationOutputCollection", {"RelationCaloHit"}, "CaloHit Relation Collection"};
-
-
