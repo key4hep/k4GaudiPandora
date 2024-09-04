@@ -128,15 +128,15 @@ struct DDCaloDigi final
   // digitazing parameters for ECAL and HCAL
   Gaudi::Property<float> m_thresholdEcal{this, "ECALThreshold", {5.0e-5}, "Threshold for ECAL Hits in GeV"};
   Gaudi::Property<std::string> m_unitThresholdEcal{this, "ECALThresholdUnit", {"GeV"}, "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
-  Gaudi::Property<std::vector<float>> m_thresholdHcal{this, "HCALThreshold", {0.00004}, "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
+  Gaudi::Property<std::vector<float>> m_thresholdHcal{this, "HCALThreshold", {0.00004}, "Threshold for ECAL Hits in GeV"};
   Gaudi::Property<std::string> m_unitThresholdHcal{this, "HCALThresholdUnit", {"GeV"}, "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
-  Gaudi::Property<std::vector<int>> m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECal Layers"};
-  Gaudi::Property<std::vector<int>> m_hcalLayers{this, "HCALLayers", {100}, "Index of HCal Layers"};
+  Gaudi::Property<std::vector<int>> m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECAL Layers"};
+  Gaudi::Property<std::vector<int>> m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
   Gaudi::Property<std::vector<float>> m_calibrCoeffEcal{this, "CalibrECAL", {40.91, 81.81}, "Calibration coefficients for ECAL"};
   Gaudi::Property<std::vector<float>> m_calibrCoeffHcalBarrel{this, "CalibrHCALBarrel", {0.0}, "Calibration coefficients for Barrel HCAL"};
   Gaudi::Property<std::vector<float>> m_calibrCoeffHcalEndcap{this, "CalibrHCALEndcap", {0.0}, "Calibration coefficients for Endcap HCAL"};
   Gaudi::Property<std::vector<float>> m_calibrCoeffHcalOther{this, "CalibrHCALOther", {0.0}, "Calibration coefficients for Other HCAL"};
-  Gaudi::Property<int> m_digitalEcal{this, "IfDigitalEcal", {0}, "Digital Ecal"};
+  Gaudi::Property<int> m_digitalEcal{this, "IfDigitalEcal", {0}, "Digital ECAL"};
   Gaudi::Property<int> m_mapsEcalCorrection{this, "MapsEcalCorrection", {0}, "Ecal correction for theta dependency of calibration for MAPS"};
   Gaudi::Property<int> m_digitalHcal{this, "IfDigitalHcal", {0}, "Digital Hcal"};
   Gaudi::Property<int> m_ecalGapCorrection{this, "ECALGapCorrection", {1}, "Correct for ECAL gaps"};
@@ -149,17 +149,17 @@ struct DDCaloDigi final
 
 
   // histograms that will be filled --- <1> or <2> is the number of dimensions of the histogram (1D or 2D)
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcal{this, "fEcal", "Ecal time profile", {1000, 0., 1000.0}, {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcal{this, "fHcal", "Hcal time profile", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcal{this, "fEcal", "Ecal time profile", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcal{this, "fHcal", "Hcal time profile", {1000, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC{this, "fEcalC", "Ecal time profile cor", {1000, 0., 1000.0}, {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC{this, "fHcalC", "Hcal time profile cor", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC{this, "fEcalC", "Ecal time profile cor", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC{this, "fHcalC", "Hcal time profile cor", {1000, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC1{this, "fEcalC1", "Ecal time profile cor", {100, 0., 1000.0}, {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC1{this, "fHcalC1", "Hcal time profile cor", {100, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC1{this, "fEcalC1", "Ecal time profile cor", {100, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC1{this, "fHcalC1", "Hcal time profile cor", {100, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalC2{this, "fEcalC2", "Ecal time profile cor", {10, 0., 1000.0}, {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalC2{this, "fHcalC2", "Hcal time profile cor", {10, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC2{this, "fEcalC2", "Ecal time profile cor", {10, 0., 1000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC2{this, "fHcalC2", "Hcal time profile cor", {10, 0., 1000.0}};
 
   mutable Gaudi::Accumulators::RootHistogram<2> fHcalCvsE{this, "fHcalCvsE", "Hcal time profile cor", {{100, 0., 500.0}, {100,0.,10.}}};
 
@@ -180,7 +180,7 @@ struct DDCaloDigi final
   mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer51  {this, "fHcalRLayer51", "Hcal R layer 51", {50, 0., 5000.0}};
   mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer61  {this, "fHcalRLayer61", "Hcal R layer 61", {50, 0., 5000.0}};
   mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer71  {this, "fHcalRLayer71", "Hcal R layer 71", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalRLayerNorm{this, "fHcalRLayerNorm", "Hcal R layer Norm", {50, 0., 5000.0}, {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalRLayerNorm{this, "fHcalRLayerNorm", "Hcal R layer Norm", {50, 0., 5000.0}};
 
   mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer1 {this, "fEcalLayer1", "Ecal layer 1 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
   mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer11{this, "fEcalLayer11", "Ecal layer 11 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
@@ -189,7 +189,7 @@ struct DDCaloDigi final
   mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer1   {this, "fEcalRLayer1", "Ecal R layer 1", {100, 0., 5000.0}};
   mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer11  {this, "fEcalRLayer11", "Ecal R layer 11", {100, 0., 5000.0}};
   mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer21  {this, "fEcalRLayer21", "Ecal R layer 21", {100, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalRLayerNorm{this, "fEcalRLayerNorm", "Ecal R layer Norm", {100, 0., 5000.0}, {100, 0., 5000.0}};
+  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalRLayerNorm{this, "fEcalRLayerNorm", "Ecal R layer Norm", {100, 0., 5000.0}};
 
   // timing parameters for ECAL
   Gaudi::Property<int> m_useEcalTiming{this, "UseEcalTiming", {0}, "Use ECAL hit times"};
@@ -314,44 +314,6 @@ struct DDCaloDigi final
     SIECAL=0,
     SCECAL
   };
-
-
-/*
-  TH1F* fEcal = NULL;
-  TH1F* fHcal = NULL;
-  TH1F* fEcalC = NULL;
-  TH1F* fHcalC = NULL;
-  TH1F* fEcalC1 = NULL;
-  TH1F* fHcalC1 = NULL;
-  TH1F* fEcalC2 = NULL;
-  TH1F* fHcalC2 = NULL;
-  TH2F* fHcalCvsE = NULL;
-  TH2F* fHcalLayer1 = NULL;
-  TH2F* fHcalLayer11 = NULL;
-  TH2F* fHcalLayer21 = NULL;
-  TH2F* fHcalLayer31 = NULL;
-  TH2F* fHcalLayer41 = NULL;
-  TH2F* fHcalLayer51 = NULL;
-  TH2F* fHcalLayer61 = NULL;
-  TH2F* fHcalLayer71 = NULL;
-  TH1F* fHcalRLayer1 = NULL;
-  TH1F* fHcalRLayer11 = NULL;
-  TH1F* fHcalRLayer21 = NULL;
-  TH1F* fHcalRLayer31 = NULL;
-  TH1F* fHcalRLayer41 = NULL;
-  TH1F* fHcalRLayer51 = NULL;
-  TH1F* fHcalRLayer61 = NULL;
-  TH1F* fHcalRLayer71 = NULL;
-  TH1F* fHcalRLayerNorm = NULL;
-
-  TH1F* fEcalRLayerNorm = NULL;
-  TH2F* fEcalLayer1 = NULL;
-  TH2F* fEcalLayer11 = NULL;
-  TH2F* fEcalLayer21 = NULL;
-  TH1F* fEcalRLayer1 = NULL;
-  TH1F* fEcalRLayer11 = NULL;
-  TH1F* fEcalRLayer21 = NULL;
-*/
 };
 
 DECLARE_COMPONENT(DDCaloDigi)
