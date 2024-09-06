@@ -148,8 +148,8 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(calodigi, ECALor
 
 #
 iosvc = IOSvc()
-iosvc.input = "../simulation/sim_partgun_1000.root"
-iosvc.output = "../outputfiles/DDCaloDigi/outputCaloDigi_Gaudi.root"
+iosvc.Input = "../simulation/sim_partgun_1000.root"
+iosvc.Output = "../outputfiles/DDCaloDigi/outputCaloDigi_Gaudi.root"
 
 hps = RootHistSvc("HistogramPersistencySvc")
 root_hist_svc = RootHistoSink("RootHistoSink")
