@@ -39,7 +39,6 @@
 #include "CLHEP/Random/RandGauss.h"
 #include "CLHEP/Random/RandPoisson.h"
 
-using namespace std;
 using namespace dd4hep;
 using namespace DDSegmentation;
 
@@ -58,12 +57,12 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
   const std::vector<dd4hep::DetElement>& theDetectors =
       dd4hep::DetectorSelector(mainDetector).detectors(includeFlag, excludeFlag);
 
-  cout << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
+  std::cout << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
                         << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
-                        << "  - first det: " << theDetectors.at(0).name() << endl;
+                        << "  - first det: " << theDetectors.at(0).name() << std::endl;
 
   if (theDetectors.size() != 1) {
-    stringstream es;
+    std::stringstream es;
     es << " getExtension: selection is not unique (or empty)  includeFlag: " << dd4hep::DetType(includeFlag)
        << " excludeFlag: " << dd4hep::DetType(excludeFlag) << " --- found detectors : ";
     for (unsigned i = 0, N = theDetectors.size(); i < N; ++i) {
@@ -145,19 +144,19 @@ StatusCode DDCaloDigi::initialize() {
     for (unsigned int i = 0; i < ecalBarrelLayers.size(); ++i) {
       m_barrelPixelSizeT[i] = ecalBarrelLayers[i].cellSize0;
       m_barrelPixelSizeZ[i] = ecalBarrelLayers[i].cellSize1;
-      debug() << "barrel pixel size " << i << " " << m_barrelPixelSizeT[i] << " " << m_barrelPixelSizeZ[i] << endl;
+      debug() << "barrel pixel size " << i << " " << m_barrelPixelSizeT[i] << " " << m_barrelPixelSizeZ[i] << std::endl;
     }
 
     for (unsigned int i = 0; i < ecalEndcapLayers.size(); ++i) {
       m_endcapPixelSizeX[i] = ecalEndcapLayers[i].cellSize0;
       m_endcapPixelSizeY[i] = ecalEndcapLayers[i].cellSize1;
-      debug() << "endcap pixel size " << i << " " << m_endcapPixelSizeX[i] << " " << m_endcapPixelSizeY[i] << endl;
+      debug() << "endcap pixel size " << i << " " << m_endcapPixelSizeX[i] << " " << m_endcapPixelSizeY[i] << std::endl;
     }
 
     m_strip_virt_cells = m_ecalStrip_default_nVirt;
-       warning() << "taking number of virtual cells from steering file (FIXME!): " << m_strip_virt_cells << endl;
+       warning() << "taking number of virtual cells from steering file (FIXME!): " << m_strip_virt_cells << std::endl;
     m_ecalLayout = m_ecal_deafult_layer_config;
-       warning() << "taking layer layout from steering file (FIXME): " << m_ecalLayout << endl;
+       warning() << "taking layer layout from steering file (FIXME): " << m_ecalLayout << std::endl;
 
   } catch (std::exception& e) {
       error() << "Could not get ECAL parameters from DD4hep!" << endmsg;
@@ -204,7 +203,7 @@ StatusCode DDCaloDigi::initialize() {
   m_scEcalDigi->setPixSpread(m_ecal_pixSpread);
   m_scEcalDigi->setElecNoise(m_ecal_elec_noise);
   m_scEcalDigi->setElecRange(m_ecalMaxDynMip);
-  cout << "ECAL sc digi:" << endl;
+  std::cout << "ECAL sc digi:" << std::endl;
   m_scEcalDigi->printParameters();
 
   m_scHcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi());
@@ -215,7 +214,7 @@ StatusCode DDCaloDigi::initialize() {
   m_scHcalDigi->setPixSpread(m_hcal_pixSpread);
   m_scHcalDigi->setElecNoise(m_hcal_elec_noise);
   m_scHcalDigi->setElecRange(m_hcalMaxDynMip);
-  cout << "HCAL sc digi:" << endl;
+  std::cout << "HCAL sc digi:" << std::endl;
   m_scHcalDigi->printParameters();
 
   // Set up the random engines for ECAL and HCAL dead cells: (could use a steering parameter though)
@@ -253,9 +252,9 @@ retType DDCaloDigi::operator()(
 
 
   std::string colName = m_inputLocations[0][0].key();       // take input collection name
-  cout << "looking for collection: " << colName << endl;
+  std::cout << "looking for collection: " << colName << std::endl;
 
-  if (colName.find("dummy") != string::npos) {
+  if (colName.find("dummy") != std::string::npos) {
     debug() << "Ignoring input collection name (looks like dummy name)" << colName << endmsg;
   }
 
@@ -418,7 +417,7 @@ retType DDCaloDigi::operator()(
                 }
               }
               if (m_ecalSimpleTimingCut) {
-                used = vector<bool>(n, true);  // mark everything as used to terminate for loop on next run
+                used = std::vector<bool>(n, true);  // mark everything as used to terminate for loop on next run
                 energyi += energySum;          // fill energySum back into energyi to have rest of loop behave the same.
               }
 
@@ -494,7 +493,7 @@ retType DDCaloDigi::operator()(
                   ecaloRel.setTo(hit);
 
                 } else {
-                  // if(caloLayout==CHT::barrel)std::cout << " Drop ECAL Barrel hit : " << timei << " " << calibr_coeff*energyi << std::endl;
+                  // if(caloLayout==CHT::barrel) std::cout << " Drop ECAL Barrel hit : " << timei << " " << calibr_coeff*energyi << std::endl;
                   }
               }
             }
@@ -670,7 +669,7 @@ retType DDCaloDigi::operator()(
                 }
               }
               if (m_hcalSimpleTimingCut) {
-                used = vector<bool>(n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
+                used = std::vector<bool>(n, true);  //mark everything as used to terminate loop. this is worse than goto. i'm sorry.
                 energyi += energySum;  //fill energySum back into energyi to have rest of loop behave the same.
               }
 
@@ -891,10 +890,10 @@ void DDCaloDigi::fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> m_cal
                 xygap = true;
 
               if (xgap || ygap || xygap) {
-                // cout <<"NewLDCCaloDigi found endcap gap, adjusting energy! " << xgap << " " << ygap << " " << xygap << " , " << il << endl;
-                // cout << "stave " << is <<  " layer " << il << endl;
-                // cout << "  dx, dy " << dx<< " " << dy << " , sizes = " << pixsizex << " " << pixsizey << endl;
-                // cout << " xmin... " << xmin << " " << xminm << " " << xmax << " ymin... " << ymin << " " << yminm << " " << ymax << endl;
+                // std::cout <<"NewLDCCaloDigi found endcap gap, adjusting energy! " << xgap << " " << ygap << " " << xygap << " , " << il << std::endl;
+                // std::cout << "stave " << is <<  " layer " << il << std::endl;
+                // std::cout << "  dx, dy " << dx<< " " << dy << " , sizes = " << pixsizex << " " << pixsizey << std::endl;
+                // std::cout << " xmin... " << xmin << " " << xminm << " " << xmax << " ymin... " << ymin << " " << yminm << " " << ymax << std::endl;
 
                 // found a gap make correction
                 float ecor = 1.;
@@ -906,7 +905,7 @@ void DDCaloDigi::fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> m_cal
                 if (xygap)
                   ecor = 1. + f * (dx - pixsizex) * (dy - pixsizey) / 4. / pixsizex / pixsizey;
 
-                // cout << "correction factor = " << ecor << endl;
+                // std::cout << "correction factor = " << ecor << std::endl;
 
                 hiti->setEnergy(hiti->getEnergy() * ecor);
                 hitj->setEnergy(hitj->getEnergy() * ecor);
@@ -1524,16 +1523,16 @@ float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) const {
 // }
 
 int DDCaloDigi::getNumberOfVirtualCells() const {
-  // if ( _strip_virt_cells < 0 ) { // not yet set, try to get from gear file
+  // if ( m_strip_virt_cells < 0 ) { // not yet set, try to get from gear file
   //   // number of virtual cells in scintillator strip
   //   try {
   //     const gear::GearParameters& pMokka = Global::GEAR->getGearParameters("MokkaParameters");
   //     std::string nVirtualMokkaS = pMokka.getStringVal("Ecal_Sc_number_of_virtual_cells");
-  //     _strip_virt_cells = std::atoi( nVirtualMokkaS.c_str() );
-  //     streamlog_out (MESSAGE) << "INFO: got number of virtual cells from gear file: " << _strip_virt_cells << endl;
+  //     m_strip_virt_cells = std::atoi( nVirtualMokkaS.c_str() );
+  //     info() << "INFO: got number of virtual cells from gear file: " << m_strip_virt_cells << std::endl;
   //   } catch(gear::UnknownParameterException &e) { // not found in gear file, get from steering file parameter...
-  //     streamlog_out (MESSAGE) << "INFO: taking number of virtual cells from steering file (not found in gear file): " << _ecalStrip_default_nVirt << endl;
-  //     _strip_virt_cells = _ecalStrip_default_nVirt;
+  //     info() << "INFO: taking number of virtual cells from steering file (not found in gear file): " << m_ecalStrip_default_nVirt << std::endl;
+  //     m_strip_virt_cells = m_ecalStrip_default_nVirt;
   //   }
   // }
   return m_strip_virt_cells;
@@ -1588,7 +1587,7 @@ std::vector<std::pair<int, int>> DDCaloDigi::getLayerConfig() const {
           m_layerTypes.push_back(std::pair<int, int>(SIECAL, SQUARE));
           break;
         default:
-          error() << "ERROR, unknown layer type " << etype << endl;
+          error() << "ERROR, unknown layer type " << etype << std::endl;
       }
     }
   }
@@ -1633,14 +1632,13 @@ std::pair<int, int> DDCaloDigi::getLayerProperties(std::string const& colName, i
   std::pair<int, int> thislayersetup(-99, -99);
   std::string         colNameLow(colName);
   std::transform(colNameLow.begin(), colNameLow.end(), colNameLow.begin(), ::tolower);
-  if (colNameLow.find("presh") != string::npos) {  // preshower
+  if (colNameLow.find("presh") != std::string::npos) {  // preshower
     if (layer != 0) {
       warning() << "preshower layer with layer index = " << layer << " ??? " << endmsg;
     } else {
       thislayersetup = getLayerConfig()[layer];
     }
-  } else if (colNameLow.find("ring") !=
-             string::npos) {  // ecal ring (has no preshower), and is actually always all silicon
+  } else if (colNameLow.find("ring") != std::string::npos) {  // ecal ring (has no preshower), and is actually always all silicon
     if (layer < int(getLayerConfig().size())) {
       // thislayersetup = getLayerConfig()[layer];
       thislayersetup = std::pair<int, int>(SIECAL, SQUARE);
@@ -1661,13 +1659,13 @@ int DDCaloDigi::getStripOrientationFromColName(std::string const& colName) const
   int         orientation(-99);
   std::string colNameLow(colName);
   std::transform(colNameLow.begin(), colNameLow.end(), colNameLow.begin(), ::tolower);
-  if (colNameLow.find("trans") != string::npos) {
+  if (colNameLow.find("trans") != std::string::npos) {
     orientation = STRIP_ALIGN_ACROSS_SLAB;
-  } else if (colNameLow.find("long") != string::npos) {
+  } else if (colNameLow.find("long") != std::string::npos) {
     orientation = STRIP_ALIGN_ALONG_SLAB;
   } else {  // assume square...
     orientation = SQUARE;
-    //cout << "WARNING, cannot guess strip orientation! for collection " << colName << endl;
+    //std::cout << "WARNING, cannot guess strip orientation! for collection " << colName << std::endl;
   }
   return orientation;
 }
