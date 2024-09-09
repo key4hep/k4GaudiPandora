@@ -35,7 +35,6 @@ find_package(ROOT COMPONENTS RIO Tree)
 find_package(EDM4HEP)
 find_package(k4FWCore)
 find_package(PandoraSDK)
-find_package(LCContent)
 find_package(Gaudi)
 find_package(DD4hep)
 
