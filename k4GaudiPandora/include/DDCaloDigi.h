@@ -268,18 +268,11 @@ struct DDCaloDigi final
 
   float siliconDigi(float energy) const;
   float scintillatorDigi(float energy, bool isEcal) const;
-  //edm4hep::SimCalorimeterHitCollection combineVirtualStripCells(edm4hep::SimCalorimeterHitCollection const& col, bool isBarrel, int stripOrientation ) const;
 
-  int getNumberOfVirtualCells() const;
   std::vector<std::pair <int, int>> getLayerConfig() const;
   void checkConsistency(std::string colName, int layer) const;
   std::pair<int, int> getLayerProperties(std::string const& colName, int layer) const;
   int getStripOrientationFromColName(std::string const& colName) const;
-
-
-  int nRun = 0;
-  int nEvt = 0;
-
 
   float m_zOfEcalEndcap = 0.0;
   float m_barrelPixelSizeT[MAX_LAYERS];
@@ -292,7 +285,6 @@ struct DDCaloDigi final
   std::unique_ptr<DDScintillatorPpdDigi> m_scHcalDigi{};
 
   // internal variables
-  int m_strip_virt_cells = 999;
   mutable int m_countWarnings = 0;
   std::string m_ecalLayout = "";
 
