@@ -50,8 +50,8 @@ public:
   void printParameters();
 
 private:
-  float m_PEperMIP          = -99;
-  float m_calibMIP           = -99;
+  float m_PEperMIP            = -99;
+  float m_calibMIP            = -99;
   float m_Npix                = -99;
   float m_misCalibNpix        = 0;
   float m_pixSpread           = 0;
