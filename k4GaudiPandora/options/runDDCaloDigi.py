@@ -84,7 +84,7 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(calodigi, ECALor
     calodigicol.MapsEcalCorrection = 0
     calodigicol.IfDigitalHcal = 0
     calodigicol.ECALGapCorrection = 1
-    calodigicol.ECALGapCorrection = 1
+    calodigicol.HCALGapCorrection = 1
     calodigicol.ECALEndcapCorrectionFactor = 1.03245503522
     calodigicol.HCALEndcapCorrectionFactor = 1.000
     calodigicol.ECALGapCorrectionFactor = 1.0

@@ -51,14 +51,14 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
   float correctedEnergy(energy);
 
   if (m_PEperMIP <= 0 || m_calibMIP <= 0 || m_Npix <= 0) {
-    cout << "ERROR, crazy parameters for DDScintillatorPpdDigi: PE/MIP = " << m_PEperMIP << ", MIP calibration = " << m_calibMIP
-         << ", # pixels = " << m_Npix << endl;
-    cout << "You must specify at least the #PE/MIP, MIP calibration, and #pixels for realistic scintillator digitisation!!"
+    cout << "ERROR, crazy parameters for DDScintillatorPpdDigi: PE/MIP = " << m_PEperMIP
+         << ", MIP calibration = " << m_calibMIP << ", # pixels = " << m_Npix << endl;
+    cout << "You must specify at least the #PE/MIP, MIP calibration, and #pixels for realistic scintillator "
+            "digitisation!!"
          << endl;
     cout << "Refusing to proceed!" << endl;
     assert(0);
-  }
-  else {
+  } else {
     // 1. convert energy to expected # photoelectrons (via MIPs)
     float Npe = m_PEperMIP * energy / m_calibMIP;
 
@@ -88,7 +88,7 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
 
     if (m_Npix > 0) {
       // apply average SiPM saturation behaviour
-      Npe = m_Npix * (1.0 - exp(- Npe / m_Npix));
+      Npe = m_Npix * (1.0 - exp(-Npe / m_Npix));
 
       //apply binomial smearing
       float p = Npe / m_Npix;                           // fraction of hit pixels on SiPM
@@ -116,8 +116,8 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
       // - miscalibration of Npix
       float smearedNpix = m_misCalibNpix > 0 ? m_Npix * CLHEP::RandGauss::shoot(1.0, m_misCalibNpix) : m_Npix;
 
-    //oh: commented out daniel's implmentation of dealing with hits>smearedNpix. using linearisation of saturation-reconstruction for high amplitude hits instead.
-    /*
+      //oh: commented out daniel's implmentation of dealing with hits>smearedNpix. using linearisation of saturation-reconstruction for high amplitude hits instead.
+      /*
     // - this is to deal with case when #pe is larger than #pixels (would mean taking log of negative number)
     float epsilon=1; // any small number...
     if ( npe>smearedNpix-epsilon ) npe=smearedNpix-epsilon;
@@ -125,19 +125,18 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
     npe = -smearedNpix * std::log ( 1. - ( npe / smearedNpix ) );
     */
 
-    const float r =
-        0.95;  //this is the fraction of SiPM pixels fired above which a linear continuation of the saturation-reconstruction function is used. 0.95 of nPixel corresponds to a energy correction of factor ~3.
+      const float r =
+          0.95;  //this is the fraction of SiPM pixels fired above which a linear continuation of the saturation-reconstruction function is used. 0.95 of nPixel corresponds to a energy correction of factor ~3.
 
-    if (Npe < r * smearedNpix) {  //current hit below linearisation threshold, reconstruct energy normally:
-      Npe = -smearedNpix * std::log(1. - (Npe / smearedNpix));
+      if (Npe < r * smearedNpix) {  //current hit below linearisation threshold, reconstruct energy normally:
+        Npe = -smearedNpix * std::log(1. - (Npe / smearedNpix));
+      } else {  //current hit is aove linearisation threshold, reconstruct using linear continuation function:
+        Npe = 1 / (1 - r) * (Npe - r * smearedNpix) - smearedNpix * std::log(1 - r);
+      }
     }
-    else {  //current hit is aove linearisation threshold, reconstruct using linear continuation function:
-      Npe = 1 / (1 - r) * (Npe - r * smearedNpix) - smearedNpix * std::log(1 - r);
-    }
-  }
 
-  // convert back to energy
-  correctedEnergy = m_calibMIP * Npe / m_PEperMIP;
+    // convert back to energy
+    correctedEnergy = m_calibMIP * Npe / m_PEperMIP;
   }
   return correctedEnergy;
 }
