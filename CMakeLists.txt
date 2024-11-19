@@ -32,12 +32,12 @@ list(APPEND CMAKE_MODULE_PATH $ENV{PANDORAPFA}/cmakemodules)
 
 # dependencies are declared like this
 find_package(ROOT COMPONENTS RIO Tree)
+find_package(DD4hep)
 find_package(EDM4HEP)
 find_package(k4FWCore)
 find_package(PandoraSDK)
 find_package(LCContent)
 find_package(Gaudi)
-find_package(DD4hep)
 
 #---------------------------------------------------------------
 
