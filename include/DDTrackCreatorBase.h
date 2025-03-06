@@ -152,7 +152,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
 
   /**
      *  @brief  Destructor
@@ -207,6 +207,8 @@ protected:
   std::shared_ptr<UTIL::BitField64>            m_encoder        = {};  ///< cell ID encoder
   std::shared_ptr<lc_content::LCTrackFactory>  m_lcTrackFactory = {};  ///< LCTrackFactor for creating LCTracks
 
+  MsgStream m_log;
+
   ///Nikiforos: Need to implement following abstract functions according to detector model
 
   /**
@@ -245,7 +247,7 @@ protected:
      *
      *  @param  pLCEvent the lcio event
      */
-  pandora::StatusCode ExtractKinks(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractKinks(std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
      *  @brief  Extract prong and split information from specified lcio collections
@@ -266,7 +268,7 @@ protected:
      *
      *  @param  trackVec the vector of tracks associated with the vertex
      */
-  bool IsConflictingRelationship(const EVENT::TrackVec& trackVec) const;
+  bool IsConflictingRelationship(const edm4hep::ReconstructedParticle pReconstructedParticle) const;
 
   /**
      *  @brief  Whether a track is a v0 track

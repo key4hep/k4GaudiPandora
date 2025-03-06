@@ -39,9 +39,6 @@
 #include "edm4hep/Vector3f.h"
 #include "edm4hep/Vertex.h"
 #include "edm4hep/VertexCollection.h"
-#include "k4FWCore/DataHandle.h"
-#include "marlin/Global.h"
-#include "marlin/Processor.h"
 
 #include "Objects/Cluster.h"
 #include "Objects/ParticleFlowObject.h"
@@ -52,8 +49,8 @@
 #include <algorithm>
 #include <cmath>
 
-DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pandora(*pPandora) {}
+DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+    : m_settings(settings), m_pandora(*pPandora), m_log(log) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -62,14 +59,9 @@ DDPfoCreator::~DDPfoCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
-    CollectionMaps& collectionMaps, DataHandle<edm4hep::ClusterCollection>& _pClusterCollection,
-    DataHandle<edm4hep::ReconstructedParticleCollection>& _pReconstructedParticleCollection,
-    DataHandle<edm4hep::VertexCollection>&                _pStartVertexCollection) {
-  m_collectionMaps                                             = &collectionMaps;
-  edm4hep::ClusterCollection*               pClusterCollection = _pClusterCollection.createAndPut();
-  edm4hep::ReconstructedParticleCollection* pReconstructedParticleCollection =
-      _pReconstructedParticleCollection.createAndPut();
-  edm4hep::VertexCollection* pStartVertexCollection = _pStartVertexCollection.createAndPut();
+    edm4hep::ClusterCollection>&              pClusterCollection,
+    edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
+    edm4hep::VertexCollection&                pStartVertexCollection) {
 
   const pandora::PfoList* pPandoraPfoList = NULL;
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList));
@@ -79,14 +71,14 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
 
   pandora::StringVector subDetectorNames;
   this->InitialiseSubDetectorNames(subDetectorNames);
-  pClusterCollection->parameters().setValues("ClusterSubdetectorNames", subDetectorNames);
+  pClusterCollection.parameters().setValues("ClusterSubdetectorNames", subDetectorNames);
 
   // Create lcio "reconstructed particles" from the pandora "particle flow objects"
   for (pandora::PfoList::const_iterator pIter = pPandoraPfoList->begin(), pIterEnd = pPandoraPfoList->end();
        pIter != pIterEnd; ++pIter) {
     const pandora::ParticleFlowObject* const pPandoraPfo(*pIter);
-    edm4hep::ReconstructedParticle           pReconstructedParticle0 = pReconstructedParticleCollection->create();
-    edm4hep::ReconstructedParticle*          pReconstructedParticle  = &pReconstructedParticle0;
+    edm4hep::MutableReconstructedParticle  pReconstructedParticle0 = pReconstructedParticleCollection.create();
+    edm4hep::MutableReconstructedParticle* pReconstructedParticle  = &pReconstructedParticle0;
 
     const bool                  hasTrack(!pPandoraPfo->GetTrackList().empty());
     const pandora::ClusterList& clusterList(pPandoraPfo->GetClusterList());
@@ -102,8 +94,8 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
                                 pPandoraCluster->GetIsolatedCaloHitList().end());
 
       pandora::FloatVector hitE, hitX, hitY, hitZ;
-      edm4hep::Cluster     p_Cluster0 = pClusterCollection->create();
-      edm4hep::Cluster*    p_Cluster  = &p_Cluster0;
+      edm4hep::MutableCluster     p_Cluster0 = pClusterCollection.create();
+      edm4hep::MutableCluster*    p_Cluster  = &p_Cluster0;
       this->SetClusterSubDetectorEnergies(subDetectorNames, p_Cluster, pandoraCaloHitList, hitE, hitX, hitY, hitZ);
 
       float clusterCorrectEnergy(0.f);
@@ -118,14 +110,14 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
         clustersTotalEnergy += clusterCorrectEnergy;
       }
 
-      edm4hep::ConstCluster p_ClusterCon = *p_Cluster;
-      pReconstructedParticle->addCluster(p_Cluster);
+      edm4hep::Cluster p_ClusterCon = *p_Cluster;
+      pReconstructedParticle->addToClusters(p_Cluster);
     }
 
     if (!hasTrack) {
       if (clustersTotalEnergy < std::numeric_limits<float>::epsilon()) {
-        streamlog_out(WARNING) << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
-                               << clustersTotalEnergy << std::endl;
+        m_log << MSG::WARNING << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
+                               << clustersTotalEnergy << endmsg;
         throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
       } else {
         referencePoint = clustersWeightedPosition * (1.f / clustersTotalEnergy);
@@ -138,14 +130,14 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
     this->SetRecoParticleReferencePoint(referencePoint, pReconstructedParticle);
     this->AddTracksToRecoParticle(pPandoraPfo, pReconstructedParticle);
     this->SetRecoParticlePropertiesFromPFO(pPandoraPfo, pReconstructedParticle);
-    pReconstructedParticleCollection->addElement(pReconstructedParticle);
+    pReconstructedParticleCollection.push_back(pReconstructedParticle);
 
-    edm4hep::Vertex  pStartVertex0 = pStartVertexCollection->create();
-    edm4hep::Vertex* pStartVertex  = &pStartVertex0;
+    edm4hep::MutableVertex  pStartVertex0 = pStartVertexCollection.create();
+    edm4hep::MutableVertex* pStartVertex  = &pStartVertex0;
     pStartVertex->setAlgorithmType(0);
     const float ref_value[3] = {referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()};
     pStartVertex->setPosition(edm4hep::Vector3f(ref_value));
-    pStartVertex->setAssociatedParticle(*pReconstructedParticle);
+    pStartVertex->addToParticles(*pReconstructedParticle);
   }
 
   return pandora::STATUS_CODE_SUCCESS;
@@ -164,28 +156,28 @@ void DDPfoCreator::InitialiseSubDetectorNames(pandora::StringVector& subDetector
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames,
-                                                 edm4hep::Cluster* const      p_Cluster,
-                                                 const pandora::CaloHitList&  pandoraCaloHitList,
+void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   subDetectorNames,
+                                                 const edm4hep::MutableCluster* pCluster,
+                                                 const pandora::CaloHitList&    pandoraCaloHitList,
                                                  pandora::FloatVector& hitE, pandora::FloatVector& hitX,
                                                  pandora::FloatVector& hitY, pandora::FloatVector& hitZ) const {
   for (pandora::CaloHitList::const_iterator hIter = pandoraCaloHitList.begin(), hIterEnd = pandoraCaloHitList.end();
        hIter != hIterEnd; ++hIter) {
-    edm4hep::CalorimeterHit* const pCalorimeterHit0 = (edm4hep::CalorimeterHit*)(pPandoraCaloHit->GetParentAddress());
+    const edm4hep::CalorimeterHit* pCalorimeterHit0 = (edm4hep::CalorimeterHit*)(pPandoraCaloHit->GetParentAddress());
     const edm4hep::CalorimeterHit  pCalorimeterHit  = *pCalorimeterHit0;
 
     p_Cluster->addToHits(pCalorimeterHit);
 
-    const float caloHitEnergy(pCalorimeterHit->getEnergy());
+    const float caloHitEnergy(pCalorimeterHit.getEnergy());
     hitE.push_back(caloHitEnergy);
-    hitX.push_back(pCalorimeterHit->getPosition()[0]);
-    hitY.push_back(pCalorimeterHit->getPosition()[1]);
-    hitZ.push_back(pCalorimeterHit->getPosition()[2]);
+    hitX.push_back(pCalorimeterHit.getPosition().x);
+    hitY.push_back(pCalorimeterHit.getPosition().y);
+    hitZ.push_back(pCalorimeterHit.getPosition().z);
 
-    std::vector<float>& subDetectorEnergies = pLcioCluster->subdetectorEnergies();
+    std::vector<float>& subDetectorEnergies = pCluster->getSubdetectorEnergies();
     subDetectorEnergies.resize(subDetectorNames.size());
 
-    switch (CHT(pCalorimeterHit->getType()).caloID()) {
+    switch (CHT(pCalorimeterHit.getType()).caloID()) {
       case CHT::ecal:
         subDetectorEnergies[ECAL_INDEX] += caloHitEnergy;
         break;
@@ -205,9 +197,9 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector& su
         subDetectorEnergies[BCAL_INDEX] += caloHitEnergy;
         break;
       default:
-        streamlog_out(WARNING)
+        m_log << MSG::WARNING
             << "DDPfoCreator::SetClusterSubDetectorEnergies: no subdetector found for hit with type: "
-            << pCalorimeterHit->getType() << std::endl;
+            << pCalorimeterHit->getType() << endmsg;
     }
   }
 }
@@ -216,7 +208,7 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector& su
 
 void DDPfoCreator::SetClusterEnergyAndError(const pandora::ParticleFlowObject* const pPandoraPfo,
                                             const pandora::Cluster* const            pPandoraCluster,
-                                            edm4hep::Cluster* const pLcioCluster, float& clusterCorrectEnergy) const {
+                                            const edm4hep::MutableCluster* pCluster, float& clusterCorrectEnergy) const {
   const bool isEmShower((pandora::PHOTON == pPandoraPfo->GetParticleId()) ||
                         (pandora::E_MINUS == std::abs(pPandoraPfo->GetParticleId())));
   clusterCorrectEnergy = (isEmShower ? pPandoraCluster->GetCorrectedElectromagneticEnergy(m_pandora)
@@ -231,30 +223,30 @@ void DDPfoCreator::SetClusterEnergyAndError(const pandora::ParticleFlowObject* c
       std::sqrt(stochasticTerm * stochasticTerm / clusterCorrectEnergy + constantTerm * constantTerm) *
       clusterCorrectEnergy);
 
-  p_Cluster->setEnergy(clusterCorrectEnergy);
-  p_Cluster->setEnergyError(energyError);
+  pCluster->setEnergy(clusterCorrectEnergy);
+  pCluster->setEnergyError(energyError);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPfoCreator::SetClusterPositionAndError(const unsigned int nHitsInCluster, pandora::FloatVector& hitE,
                                               pandora::FloatVector& hitX, pandora::FloatVector& hitY,
-                                              pandora::FloatVector& hitZ, IMPL::edm4hep::Cluster* const pLcioCluster,
+                                              pandora::FloatVector& hitZ, const edm4hep::MutableCluster* pCluster,
                                               pandora::CartesianVector& clusterPositionVec) const {
   ClusterShapes* const pClusterShapes(
       new ClusterShapes(nHitsInCluster, hitE.data(), hitX.data(), hitY.data(), hitZ.data()));
 
   try {
-    p_Cluster->setIPhi(std::atan2(pClusterShapes->getEigenVecInertia()[1], pClusterShapes->getEigenVecInertia()[0]));
-    p_Cluster->setITheta(std::acos(pClusterShapes->getEigenVecInertia()[2]));
-    p_Cluster->setPosition(pClusterShapes->getCentreOfGravity());
+    pCluster->setIPhi(std::atan2(pClusterShapes->getEigenVecInertia()[1], pClusterShapes->getEigenVecInertia()[0]));
+    pCluster->setITheta(std::acos(pClusterShapes->getEigenVecInertia()[2]));
+    pCluster->setPosition(pClusterShapes->getCentreOfGravity());
     //ATTN these two lines below would only compile with ilcsoft HEAD V2015-10-13 and above
     //pLcioCluster->setPositionError(pClusterShapes->getCenterOfGravityErrors());
     //pLcioCluster->setDirectionError(pClusterShapes->getEigenVecInertiaErrors());
     clusterPositionVec.SetValues(pClusterShapes->getCentreOfGravity()[0], pClusterShapes->getCentreOfGravity()[1],
                                  pClusterShapes->getCentreOfGravity()[2]);
   } catch (...) {
-    streamlog_out(WARNING) << "DDPfoCreator::SetClusterPositionAndError: unidentified exception caught." << std::endl;
+    m_log << MSG::WARNING << "DDPfoCreator::SetClusterPositionAndError: unidentified exception caught." << endmsg;
   }
 
   delete pClusterShapes;
@@ -286,14 +278,14 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
       totalTrackMomentumAtStart += trackStartMomentum;
       hasSiblings = true;
     } else {
-      const edm4hep::Track* const pLcioTrack0 = (edm4hep::Track*)(pPandoraTrack->GetParentAddress());
-      const edm4hep::Track        pLcioTrack  = *pLcioTrack0;
+      const edm4hep::Track* const pTrack0 = (edm4hep::Track*)(pPandoraTrack->GetParentAddress());
+      const edm4hep::Track        pTrack  = *pTrack0;
 
       const float              z0(pPandoraTrack->GetZ0());
       pandora::CartesianVector intersectionPoint(0.f, 0.f, 0.f);
 
-      intersectionPoint.SetValues(pLcioTrack->getD0() * std::cos(pLcioTrack->getPhi()),
-                                  pLcioTrack->getD0() * std::sin(pLcioTrack->getPhi()), z0);
+      intersectionPoint.SetValues(pTrack.getD0() * std::cos(pTrack.getPhi()),
+                                  pTrack.getD0() * std::sin(pTrack.getPhi()), z0);
       const float trackMomentumAtDca((pPandoraTrack->GetMomentumAtDca()).GetMagnitude());
       referencePointAtDCAWeighted += intersectionPoint * trackMomentumAtDca;
       totalTrackMomentumAtDca += trackMomentumAtDca;
@@ -302,16 +294,16 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
 
   if (hasSiblings) {
     if (totalTrackMomentumAtStart < std::numeric_limits<float>::epsilon()) {
-      streamlog_out(WARNING) << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
-                             << totalTrackMomentumAtStart << std::endl;
+      m_log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
+                             << totalTrackMomentumAtStart << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
       referencePoint = referencePointAtStartWeighted * (1.f / totalTrackMomentumAtStart);
     }
   } else {
     if (totalTrackMomentumAtDca < std::numeric_limits<float>::epsilon()) {
-      streamlog_out(WARNING) << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
-                             << totalTrackMomentumAtDca << std::endl;
+      m_log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
+                             << totalTrackMomentumAtDca << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
       referencePoint = referencePointAtDCAWeighted * (1.f / totalTrackMomentumAtDca);
@@ -333,9 +325,9 @@ bool DDPfoCreator::IsValidParentTrack(const pandora::Track* const pPandoraTrack,
       continue;
 
     // ATTN This track must have a parent not in the all track list; still use it if it is the closest to the ip
-    streamlog_out(WARNING)
+    m_log << MSG::WARNING
         << "DDPfoCreator::IsValidParentTrack: mismatch in track relationship information, use information as available "
-        << std::endl;
+        << endmsg;
 
     if (this->IsClosestTrackToIP(pPandoraTrack, allTrackList))
       return true;
@@ -359,9 +351,9 @@ bool DDPfoCreator::HasValidSiblingTrack(const pandora::Track* const pPandoraTrac
       continue;
 
     // ATTN This track must have a sibling not in the all track list; still use it if it has a second sibling that is in the list
-    streamlog_out(WARNING) << "DDPfoCreator::HasValidSiblingTrack: mismatch in track relationship information, use "
+    m_log << MSG::WARNING << "DDPfoCreator::HasValidSiblingTrack: mismatch in track relationship information, use "
                               "information as available "
-                           << std::endl;
+                           << endmsg;
 
     if (this->AreAnyOtherSiblingsInList(pPandoraTrack, allTrackList))
       return true;
@@ -411,32 +403,32 @@ bool DDPfoCreator::AreAnyOtherSiblingsInList(const pandora::Track* const pPandor
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPfoCreator::SetRecoParticleReferencePoint(const pandora::CartesianVector&       referencePoint,
-                                                 edm4hep::ReconstructedParticle* const pReconstructedParticle) const {
+void DDPfoCreator::SetRecoParticleReferencePoint(const pandora::CartesianVector&              referencePoint,
+                                                 const edm4hep::MutableReconstructedParticle* pReconstructedParticle) const {
   const float referencePointArray[3] = {referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()};
   pReconstructedParticle->setReferencePoint(referencePointArray);
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPfoCreator::AddTracksToRecoParticle(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                           edm4hep::ReconstructedParticle* const    pReconstructedParticle) const {
+void DDPfoCreator::AddTracksToRecoParticle(const pandora::ParticleFlowObject* const     pPandoraPfo,
+                                           const edm4hep::MutableReconstructedParticle* pReconstructedParticle) const {
   const pandora::TrackList& trackList(pPandoraPfo->GetTrackList());
 
   for (pandora::TrackList::const_iterator tIter = trackList.begin(), tIterEnd = trackList.end(); tIter != tIterEnd;
        ++tIter) {
     const pandora::Track* const pTrack(*tIter);
-    const edm4hep::Track* const pLcioTrack0 = (edm4hep::Track*)(pTrack->GetParentAddress());
-    const edm4hep::Track        pLcioTrack  = *pLcioTrack0;
-    pReconstructedParticle->addToTracks(pLcioTrack);
+    const edm4hep::Track* const pTrack0 = (edm4hep::Track*)(pTrack->GetParentAddress());
+    const edm4hep::Track        pTrack  = *pTrack0;
+    pReconstructedParticle->addToTracks(pTrack);
   }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
-    const pandora::ParticleFlowObject* const pPandoraPfo,
-    edm4hep::ReconstructedParticle* const    pReconstructedParticle) const {
+    const pandora::ParticleFlowObject* const    pPandoraPfo,
+    const edm4hep::MutableReconstructedParticle pReconstructedParticle) const {
   const float momentum[3] = {pPandoraPfo->GetMomentum().GetX(), pPandoraPfo->GetMomentum().GetY(),
                              pPandoraPfo->GetMomentum().GetZ()};
   pReconstructedParticle->setMomentum(momentum);

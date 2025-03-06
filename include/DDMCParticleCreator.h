@@ -29,7 +29,10 @@
 #define DDMCPARTICLECREATOR_H 1
 
 #include "Api/PandoraApi.h"
-#include "edm4hep/MCParticle.h"
+
+#include <edm4hep/TrackerHitSimTrackerHitLinkCollection.h>
+#include <edm4hep/MCParticle.h>
+#include <edm4hep/CaloHitMCParticleLinkCollection.h>
 
 #include "DDCaloHitCreator.h"
 #include "DDTrackCreatorBase.h"
@@ -63,7 +66,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
 
   /**
      *  @brief  Destructor
@@ -75,20 +78,20 @@ public:
      *
      *  @param  pLCEvent the lcio event
      */
-  pandora::StatusCode CreateMCParticles(const CollectionMaps& collectionMaps) const;
+  pandora::StatusCode CreateMCParticles(std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const;
 
   /**
      *  @brief  Create Track to mc particle relationships
      *
      */
-  pandora::StatusCode CreateTrackToMCParticleRelationships(const CollectionMaps& collectionMaps,
+  pandora::StatusCode CreateTrackToMCParticleRelationships(std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
                                                            const TrackVector&    trackVector) const;
 
   /**
      *  @brief  Create calo hit to mc particle relationships
      *
      */
-  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const CollectionMaps&       collectionMaps,
+  pandora::StatusCode CreateCaloHitToMCParticleRelationships(std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections,
                                                              const CalorimeterHitVector& calorimeterHitVector) const;
 
 private:
@@ -96,6 +99,7 @@ private:
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
   const float             m_bField;    ///< The bfield
   std::map<unsigned int, const edm4hep::MCParticle*>* m_id_pMC_map;
+  MsgStream m_log;
 };
 
 inline void MCParticleCreator::Reset() { m_id_pMC_map->clear(); }

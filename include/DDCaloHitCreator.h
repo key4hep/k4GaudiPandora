@@ -28,10 +28,11 @@
 #ifndef DDCALO_HIT_CREATOR_H
 #define DDCALO_HIT_CREATOR_H 1
 
-#include "EVENT/CalorimeterHit.h"
-#include "EVENT/LCEvent.h"
+#include <edm4hep/CalorimeterHit.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+#include <edm4hep/MutableCalorimeterHit.h>
 
-#include <IMPL/CalorimeterHitImpl.h>
+#include "BitField64.hxx"
 
 #include "Api/PandoraApi.h"
 
@@ -39,7 +40,7 @@
 #include <DD4hep/Detector.h>
 #include <DDRec/DetectorData.h>
 
-typedef std::vector<EVENT::CalorimeterHit*> CalorimeterHitVector;
+typedef std::vector<edm4hep::CalorimeterHit> CalorimeterHitVector;
 
 /**
  *  @brief  DDCaloHitCreator class
@@ -138,7 +139,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDCaloHitCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDCaloHitCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
 
   /**
      *  @brief  Destructor
@@ -157,7 +158,13 @@ public:
      *
      *  @return The calorimeter hit vector
      */
-  const CalorimeterHitVector& GetCalorimeterHitVector() const;
+  const CalorimeterHitVector& GetCalorimeterHitVector(
+   std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections
+   std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections
+   std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections
+   std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections
+   std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections
+  ) const;
 
   /**
      *  @brief  Reset the calo hit creator
@@ -168,37 +175,37 @@ private:
   /**
      *  @brief  Create ecal calo hits
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  eCalCollections the eCal collections
      */
-  pandora::StatusCode CreateECalCaloHits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateECalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections);
 
   /**
      *  @brief  Create hcal calo hits
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  hCalCollections the hCal collections
      */
-  pandora::StatusCode CreateHCalCaloHits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections);
 
   /**
      *  @brief  Create muon calo hits
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  mCalCollections the mCal collections
      */
-  pandora::StatusCode CreateMuonCaloHits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateMuonCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
 
   /**
      *  @brief  Create lcal calo hits
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  lCalCollections the lCal collections
      */
-  pandora::StatusCode CreateLCalCaloHits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateLCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
 
   /**
      *  @brief  Create lhcal calo hits
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  lhCalCollections the lhCal collections
      */
-  pandora::StatusCode CreateLHCalCaloHits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateLHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections);
 
   /**
      *  @brief  Get common calo hit properties: position, parent address, input energy and time
@@ -206,32 +213,32 @@ private:
      *  @param  pCaloHit the lcio calorimeter hit
      *  @param  caloHitParameters the calo hit parameters to populate
      */
-  void GetCommonCaloHitProperties(const EVENT::CalorimeterHit* const pCaloHit,
+  void GetCommonCaloHitProperties(const edm4hep::CalorimeterHit pCaloHit,
                                   PandoraApi::CaloHit::Parameters&   caloHitParameters) const;
 
   /**
      *  @brief  Get end cap specific calo hit properties: cell size, absorber radiation and interaction lengths, normal vector
      *
-     *  @param  pCaloHit the lcio calorimeter hit
+     *  @param  pCaloHit the edm4hep calorimeter hit
      *  @param  layers the vector of layers from DDRec extensions
      *  @param  caloHitParameters the calo hit parameters to populate
      *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
      */
-  void GetEndCapCaloHitProperties(const EVENT::CalorimeterHit* const                               pCaloHit,
+  void GetEndCapCaloHitProperties(const edm4hep::CalorimeterHit pCaloHit,
                                   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
                                   PandoraApi::CaloHit::Parameters& caloHitParameters, float& absorberCorrection) const;
 
   /**
      *  @brief  Get barrel specific calo hit properties: cell size, absorber radiation and interaction lengths, normal vector
      *
-     *  @param  pCaloHit the lcio calorimeter hit
+     *  @param  pCaloHit the edm4hep calorimeter hit
      *  @param  layers the vector of layers from DDRec extensions
      *  @param  barrelSymmetryOrder the barrel order of symmetry
      *  @param  caloHitParameters the calo hit parameters to populate
      *  @param  normalVector is the normalVector to the sensitive layers in local coordinates
      *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
      */
-  void GetBarrelCaloHitProperties(const EVENT::CalorimeterHit* const                               pCaloHit,
+  void GetBarrelCaloHitProperties(const edm4hep::CalorimeterHit pCaloHit,
                                   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
                                   unsigned int barrelSymmetryOrder, PandoraApi::CaloHit::Parameters& caloHitParameters,
                                   FloatVector const& normalVector, float& absorberCorrection) const;
@@ -239,20 +246,20 @@ private:
   /**
      *  @brief  Get number of active layers from position of a calo hit to the edge of the detector
      *
-     *  @param  pCaloHit the lcio calorimeter hit
+     *  @param  pCaloHit the edm4hep calorimeter hit
      */
-  int GetNLayersFromEdge(const EVENT::CalorimeterHit* const pCaloHit) const;
+  int GetNLayersFromEdge(const edm4hep::CalorimeterHit pCaloHit) const;
 
   /**
      *  @brief  Get the maximum radius of a calo hit in a polygonal detector structure
      *
-     *  @param  pCaloHit the lcio calorimeter hit
+     *  @param  pCaloHit the edm4hep calorimeter hit
      *  @param  symmetryOrder the symmetry order
      *  @param  phi0 the angular orientation
      *
      *  @return the maximum radius
      */
-  float GetMaximumRadius(const EVENT::CalorimeterHit* const pCaloHit, const unsigned int symmetryOrder,
+  float GetMaximumRadius(const edm4hep::CalorimeterHit pCaloHit, const unsigned int symmetryOrder,
                          const float phi0) const;
 
   const Settings m_settings;  ///< The calo hit creator settings
@@ -265,6 +272,9 @@ private:
   CalorimeterHitVector m_calorimeterHitVector;  ///< The calorimeter hit vector
 
   dd4hep::VolumeManager m_volumeManager;  ///< DD4hep volume manager
+
+  BitField64 m_cell_encoder;
+  MsgStream m_log;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

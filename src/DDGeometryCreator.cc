@@ -44,8 +44,8 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 
 std::vector<double> getTrackingRegionExtent();
 
-DDGeometryCreator::DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pPandora(*pPandora) {}
+DDGeometryCreator::DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+    : m_settings(settings), m_pPandora(*pPandora), m_log(log) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ pandora::StatusCode DDGeometryCreator::CreateGeometry() const {
 
     std::string detectorName = mainDetector.header().name();
 
-    streamlog_out(DEBUG) << "Creating geometry for detector " << detectorName << std::endl;
+    m_log << MSG::DEBUG << "Creating geometry for detector " << detectorName << endmsg;
 
     //Before it was checking the detector name for the "ILD" substring
     if (m_settings.m_createGaps)
@@ -78,13 +78,13 @@ pandora::StatusCode DDGeometryCreator::CreateGeometry() const {
 
     for (SubDetectorNameMap::const_iterator iter = subDetectorNameMap.begin(), iterEnd = subDetectorNameMap.end();
          iter != iterEnd; ++iter) {
-      streamlog_out(DEBUG) << "Creating geometry for additional subdetector " << iter->first << std::endl;
+          m_log << MSG::DEBUG << "Creating geometry for additional subdetector " << iter->first << endmsg;
 
       PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                                PandoraApi::Geometry::SubDetector::Create(m_pPandora, iter->second));
     }
   } catch (std::exception& exception) {
-    streamlog_out(ERROR) << "Failure in marlin pandora geometry creator, exception: " << exception.what() << std::endl;
+    m_log << MSG::ERROR << "Failure in marlin pandora geometry creator, exception: " << exception.what() << endmsg;
     throw exception;
   }
 
@@ -172,7 +172,7 @@ void DDGeometryCreator::SetMandatorySubDetectorParameters(SubDetectorTypeMap& su
     coilParameters.m_nLayers            = 0;
     subDetectorTypeMap[pandora::COIL]   = coilParameters;
   } catch (std::exception& e) {
-    streamlog_out(ERROR) << "Failed to access COIL parameters: " << e.what() << std::endl;
+    m_log << MSG::ERROR << "Failed to access COIL parameters: " << e.what() << endmsg;
   }
 }
 
@@ -196,8 +196,8 @@ void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& s
                                             theDetector.name(), pandora::SUB_DETECTOR_OTHER, parameters);
       subDetectorNameMap[parameters.m_subDetectorName.Get()] = parameters;
     } catch (std::runtime_error& exception) {
-      streamlog_out(WARNING) << "Marlin pandora geometry creator during Other ECal construction: " << exception.what()
-                             << std::endl;
+      m_log << MSG::WARNING << "Marlin pandora geometry creator during Other ECal construction: " << exception.what()
+                             << endmsg;
     }
   }
 
@@ -217,8 +217,8 @@ void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& s
                                             theDetector.name(), pandora::SUB_DETECTOR_OTHER, parameters);
       subDetectorNameMap[parameters.m_subDetectorName.Get()] = parameters;
     } catch (std::runtime_error& exception) {
-      streamlog_out(WARNING) << "Marlin pandora geometry creator during Other HCal construction: " << exception.what()
-                             << std::endl;
+      m_log << MSG::WARNING << "Marlin pandora geometry creator during Other HCal construction: " << exception.what()
+                             << endmsg;
     }
   }
 
@@ -238,8 +238,8 @@ void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& s
                                             theDetector.name(), pandora::SUB_DETECTOR_OTHER, parameters);
       subDetectorNameMap[parameters.m_subDetectorName.Get()] = parameters;
     } catch (std::runtime_error& exception) {
-      streamlog_out(WARNING) << "Marlin pandora geometry creator during Other Muon construction: " << exception.what()
-                             << std::endl;
+      m_log << MSG::WARNING << "Marlin pandora geometry creator during Other Muon construction: " << exception.what()
+                             << endmsg;
     }
   }
 }
@@ -291,7 +291,7 @@ void DDGeometryCreator::SetDefaultSubDetectorParameters(
 
 pandora::StatusCode DDGeometryCreator::SetILDSpecificGeometry(SubDetectorTypeMap& /*subDetectorTypeMap*/,
                                                               SubDetectorNameMap& /*subDetectorNameMap*/) const {
-  streamlog_out(DEBUG0) << " Building gaps in detector active material" << std::endl;
+  m_log << MSG::DEBUG << " Building gaps in detector active material" << endmsg;
   // Gaps in detector active material
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateHCalBarrelBoxGaps());
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateHCalEndCapBoxGaps());
@@ -315,9 +315,9 @@ pandora::StatusCode DDGeometryCreator::CreateHCalBarrelBoxGaps() const {
   const unsigned int outerSymmetryOrder(hCalBarrelParameters->outer_symmetry);
 
   if ((0 == innerSymmetryOrder) || (2 != outerSymmetryOrder / innerSymmetryOrder)) {
-    streamlog_out(ERROR) << " Detector " << detectorName
+    m_log << MSG::ERROR << " Detector " << detectorName
                          << " doesn't conform to expected ILD-specific geometry: innerSymmetryOrder : "
-                         << innerSymmetryOrder << " outerSymmetryOrder: " << outerSymmetryOrder << std::endl;
+                         << innerSymmetryOrder << " outerSymmetryOrder: " << outerSymmetryOrder << endmsg;
     return pandora::STATUS_CODE_INVALID_PARAMETER;
   }
 
@@ -335,8 +335,8 @@ pandora::StatusCode DDGeometryCreator::CreateHCalBarrelBoxGaps() const {
   const float cosOuterPseudoPhi0(std::cos(outerPseudoPhi0));
 
   if ((0 == outerPseudoPhi0) || (0.f == cosOuterPseudoPhi0)) {
-    streamlog_out(ERROR) << " Detector " << detectorName << " doesn't conform to expected ILD-specific geometry"
-                         << std::endl;
+    m_log << MSG::ERROR << " Detector " << detectorName << " doesn't conform to expected ILD-specific geometry"
+                         << endmsg;
     return pandora::STATUS_CODE_INVALID_PARAMETER;
   }
 
