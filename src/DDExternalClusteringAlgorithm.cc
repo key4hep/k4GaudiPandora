@@ -29,7 +29,7 @@
 #include "edm4hep/ClusterCollection.h"
 
 #include "DDExternalClusteringAlgorithm.h"
-#include "DDPandoraPFANewProcessor.h"
+#include "DDPandoraPFANewAlgorithm.h"
 
 #include "Pandora/AlgorithmHeaders.h"
 

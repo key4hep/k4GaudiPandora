@@ -25,11 +25,8 @@
  *  $Log: $
  */
 
-#include "EVENT/LCCollection.h"
 #include "edm4hep/ReconstructedParticle.h"
-#include "edm4hep/Vertex.h"
-#include "UTIL/ILDConf.h"
-#include "UTIL/Operators.h"
+
 
 #include <LCObjects/LCTrack.h>
 #include "DDTrackCreatorBase.h"
@@ -433,9 +430,9 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track track, lc_content::
   int      detElementID        = 0;
   /// TODO this.... 
   m_encoder->reset();  // reset to 0
-  (*m_encoder)[lcio::LCTrackerCellID::subdet()] = ecal_endcap_face_ID;
-  (*m_encoder)[lcio::LCTrackerCellID::side()]   = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
-  (*m_encoder)[lcio::LCTrackerCellID::layer()]  = 0;
+  (*m_encoder)["subdet"] = ecal_endcap_face_ID;
+  (*m_encoder)["side"]   = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
+  (*m_encoder)["layer"]  = 0;
 
   return_error = marlintrk->propagateToLayer(m_encoder->lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
                                              MarlinTrk::IMarlinTrack::modeForward);

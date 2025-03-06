@@ -28,6 +28,7 @@
 #ifndef DDGEOMETRY_CREATOR_H
 #define DDGEOMETRY_CREATOR_H 1
 
+#include <k4FWCore/Transformer.h>
 #include "Api/PandoraApi.h"
 
 #include "DDRec/DetectorData.h"

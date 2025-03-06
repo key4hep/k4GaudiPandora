@@ -32,6 +32,8 @@
 #include <edm4hep/CalorimeterHitCollection.h>
 #include <edm4hep/MutableCalorimeterHit.h>
 
+#include <k4FWCore/Transformer.h>
+
 #include "BitField64.hxx"
 
 #include "Api/PandoraApi.h"
