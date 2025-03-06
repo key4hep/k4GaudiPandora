@@ -156,14 +156,19 @@ public:
   /**
      *  @brief  Get the calorimeter hit vector
      *
+     *  @param  eCalCollections  CalorimeterHit Collection for the ECal
+     *  @param  hCalCollections  CalorimeterHit Collection for the HCal
+     *  @param  mCalCollections  CalorimeterHit Collection for the Muon Calo
+     *  @param  lCalCollections  CalorimeterHit Collection for the LCal
+     *  @param  lhCalCollections CalorimeterHit Collection for the HLCal
      *  @return The calorimeter hit vector
      */
   const CalorimeterHitVector& GetCalorimeterHitVector(
-   std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections
-   std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections
-   std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections
-   std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections
-   std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections
   ) const;
 
   /**
@@ -177,35 +182,35 @@ private:
      *
      *  @param  eCalCollections the eCal collections
      */
-  pandora::StatusCode CreateECalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections);
+  pandora::StatusCode CreateECalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections);
 
   /**
      *  @brief  Create hcal calo hits
      *
      *  @param  hCalCollections the hCal collections
      */
-  pandora::StatusCode CreateHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections);
+  pandora::StatusCode CreateHCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections);
 
   /**
      *  @brief  Create muon calo hits
      *
      *  @param  mCalCollections the mCal collections
      */
-  pandora::StatusCode CreateMuonCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
+  pandora::StatusCode CreateMuonCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
 
   /**
      *  @brief  Create lcal calo hits
      *
      *  @param  lCalCollections the lCal collections
      */
-  pandora::StatusCode CreateLCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
+  pandora::StatusCode CreateLCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections);
 
   /**
      *  @brief  Create lhcal calo hits
      *
      *  @param  lhCalCollections the lhCal collections
      */
-  pandora::StatusCode CreateLHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections);
+  pandora::StatusCode CreateLHCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections);
 
   /**
      *  @brief  Get common calo hit properties: position, parent address, input energy and time

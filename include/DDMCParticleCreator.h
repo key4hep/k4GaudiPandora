@@ -84,14 +84,14 @@ public:
      *  @brief  Create Track to mc particle relationships
      *
      */
-  pandora::StatusCode CreateTrackToMCParticleRelationships(std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
+  pandora::StatusCode CreateTrackToMCParticleRelationships(const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
                                                            const TrackVector&    trackVector) const;
 
   /**
      *  @brief  Create calo hit to mc particle relationships
      *
      */
-  pandora::StatusCode CreateCaloHitToMCParticleRelationships(std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections,
+  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections,
                                                              const CalorimeterHitVector& calorimeterHitVector) const;
 
 private:

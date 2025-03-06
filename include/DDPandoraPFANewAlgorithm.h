@@ -18,15 +18,15 @@
  */
 
 /**
- *  @file   DDMarlinPandora/include/DDPandoraPFANewProcessor.h
+ *  @file   DDMarlinPandora/include/DDPandoraPFANewAlgorithm.h
  *
- *  @brief  Header file for the pandora pfa new processor class.
+ *  @brief  Header file for the pandora pfa new algorithm class.
  *
  *  $Log: $
  */
 
-#ifndef DDPANDORAPFANEWPROCESSOR_H
-#define DDPANDORAPFANEWPROCESSOR_H 1
+#ifndef DDPANDORAPFANEWALGORITHM_H
+#define DDPANDORAPFANEWALGORITHM_H 1
 
 #include "DDCaloHitCreator.h"
 #include "DDGeometryCreator.h"
@@ -34,7 +34,11 @@
 #include "DDPfoCreator.h"
 #include "DDTrackCreatorBase.h"
 
-#include "marlin/Processor.h"
+// k4FWCore
+#include <k4FWCore/DataHandle.h>
+#include <k4FWCore/BaseClass.h>
+#include <k4FWCore/Transformer.h>
+#include <Gaudi/Property.h>
 
 #include "DD4hep/DetType.h"
 #include "DD4hep/DetectorSelector.h"
@@ -46,9 +50,21 @@ namespace pandora {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief  DDPandoraPFANewProcessor class
+ *  @brief  DDPandoraPFANewAlgorithm class
  */
-class DDPandoraPFANewProcessor : public marlin::Processor {
+struct DDPandoraPFANewAlgorithm final : 
+  k4FWCore::MultiTransformer<std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection>(
+	const std::vector<const edm4hep::MCParticle*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>&)> {
 public:
   typedef std::vector<float>       FloatVector;
   typedef std::vector<std::string> StringVector;
@@ -90,45 +106,52 @@ public:
   /**
      *  @brief  Default constructor
      */
-  DDPandoraPFANewProcessor();
-  DDPandoraPFANewProcessor(const DDPandoraPFANewProcessor&)            = delete;
-  DDPandoraPFANewProcessor& operator=(const DDPandoraPFANewProcessor&) = delete;
-
-  /**
-     *  @brief  Create new processor
-     */
-  virtual Processor* newProcessor();
+  DDPandoraPFANewAlgorithm(const std::string& name, ISvcLocator* svcLoc);
 
   /**
      *  @brief  Initialize, called at startup
      */
-  virtual void init();
+  StatusCode initialize();
+
 
   /**
-     *  @brief  Process run header
-     *
-     *  @param  pLCRunHeader the lc run header
-     */
-  virtual void processRunHeader(lcio::LCRunHeader* pLCRunHeader);
+   *  @brief operator, the workhorse of the algorithm
+   * 
+   *  @param  MCParticleCollections Collection of MCParticles
+   *  @param  kinkCollections the Vertex collections of kinks
+   *  @param  prongCollections the Vertex collections of prongs and splits
+   *  @param  v0Collections the Vertex collections of V0s
+   *  @param  trackerHitLinkCollections the associations between trackerHits and simTrackerHits
+   *  @param  eCalCollections  CalorimeterHit Collection for the ECal
+   *  @param  hCalCollections  CalorimeterHit Collection for the HCal
+   *  @param  mCalCollections  CalorimeterHit Collection for the Muon Calo
+   *  @param  lCalCollections  CalorimeterHit Collection for the LCal
+   *  @param  lhCalCollections CalorimeterHit Collection for the HLCal
+   *  @param  caloLinkCollections the associations between CalorimeterHits and MCParticles
+   * 
+   *  @return tuple of reconstructed: (Clusters, RecoParticles, Verticies)
+   *  
+   */
+  std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection> operator()(
+   const std::vector<const edm4hep::MCParticle*>& MCParticleCollections,
+   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
+   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+   const std::vector<const edm4hep::VertexCollection*>& v0Collections,
+   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
+   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& caloLinkCollections
+ ) const override;
 
-  /**
-     *  @brief  Process event, main entry point
-     *
-     *  @param  pLCEvent the lc event
-     */
-  virtual void processEvent(EVENT::LCEvent* pLCEvent);
 
-  /**
-     *  @brief  Checks for event
-     *
-     *  @param  pLCEvent the lc event
-     */
-  virtual void check(EVENT::LCEvent* pLCEvent);
 
   /**
      *  @brief  End, called at shutdown
      */
-  virtual void end();
+  StatusCode finalize();
 
   /**
      *  @brief  Get address of the pandora instance
@@ -144,7 +167,7 @@ public:
      *
      *  @return address of the current lcio event
      */
-  static const EVENT::LCEvent* GetCurrentEvent(const pandora::Pandora* const pPandora);
+  //static const EVENT::LCEvent* GetCurrentEvent(const pandora::Pandora* const pPandora);
 
 private:
   /**
@@ -182,12 +205,10 @@ private:
   DDTrackCreatorBase::Settings  m_trackCreatorSettings{};       ///< The track creator settings
   DDPfoCreator::Settings        m_pfoCreatorSettings{};         ///< The pfo creator settings
 
-  typedef std::map<const pandora::Pandora*, EVENT::LCEvent*> PandoraToLCEventMap;
-  static PandoraToLCEventMap                                 m_pandoraToLCEventMap;  ///< The pandora to lc event map
+  //typedef std::map<const pandora::Pandora*, EVENT::LCEvent*> PandoraToLCEventMap;
+  //static PandoraToLCEventMap                                 m_pandoraToLCEventMap;  ///< The pandora to lc event map
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline marlin::Processor* DDPandoraPFANewProcessor::newProcessor() { return new DDPandoraPFANewProcessor; }
-
-#endif  // #ifndef DDPANDORAPFANEWPROCESSOR_H
+#endif  // #ifndef DDPANDORAPFANEWALGORITHM_H

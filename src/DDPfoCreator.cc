@@ -59,7 +59,7 @@ DDPfoCreator::~DDPfoCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
-    edm4hep::ClusterCollection>&              pClusterCollection,
+    edm4hep::ClusterCollection&              pClusterCollection,
     edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
     edm4hep::VertexCollection&                pStartVertexCollection) {
 

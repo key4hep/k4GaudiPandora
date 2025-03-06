@@ -86,11 +86,12 @@ DDCaloHitCreator::~DDCaloHitCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDCaloHitCreator::CreateCaloHits(
-  std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections
-  std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections
-  std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections
-  std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections
-  std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections) {
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections
+) {
   //fg: there cannot be any reasonable default for this string - so we set it to sth. that will cause an exception in case
   //    the cellID encoding string is not in the collection:
   UTIL::CellIDDecoder<CalorimeterHit>::setDefaultEncoding("undefined_cellID_encoding:100");
@@ -106,7 +107,7 @@ pandora::StatusCode DDCaloHitCreator::CreateCaloHits(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections) {
+pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections) {
   for (int colIndex = 0; colIndex < eCalCollections.size(); colIndex++) {
     try {
       const edm4hep::CalorimeterHitCollection* pCaloHitCollection = eCalCollections[colIndex];
@@ -226,7 +227,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(std::vector<const edm4h
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections) {
+pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections) {
   for (int colIndex = 0; colIndex < hCalCollections.size(); colIndex++) {
     try {
       const edm4hep::CalorimeterHitCollection* pCaloHitCollection = hCalCollections[colIndex];
@@ -297,7 +298,7 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(std::vector<const edm4h
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections) {
+pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections) {
   for (int colIndex = 0; colIndex < mCalCollections.size(); colIndex++) {
     try {
       const edm4hep::CalorimeterHitCollection* pCaloHitCollection = mCalCollections[colIndex];
@@ -381,7 +382,7 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(std::vector<const edm4h
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections) {
+pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections) {
   for (int colIndex = 0; colIndex < lCalCollections.size(); colIndex++) {
     try {
       const edm4hep::CalorimeterHitCollection* pCaloHitCollection = lCalCollections[colIndex];
@@ -441,7 +442,7 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(std::vector<const edm4h
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections) {
+pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections) {
   for (int colIndex = 0; colIndex < lhCalCollections.size(); colIndex++) {
     try {
       const edm4hep::CalorimeterHitCollection* pCaloHitCollection = lhCalCollections[colIndex];

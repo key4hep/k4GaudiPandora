@@ -43,8 +43,8 @@
 
 #include <memory>
 
-typedef std::vector<EVENT::Track*>    TrackVector;
-typedef std::set<const EVENT::Track*> TrackList;
+typedef std::vector<edm4hep::Track*>    TrackVector;
+typedef std::set<const edm4hep::Track*> TrackList;
 typedef std::map<EVENT::Track*, int>  TrackToPidMap;
 
 namespace lc_content {
@@ -162,16 +162,20 @@ public:
   /**
      *  @brief  Create associations between tracks, V0s, kinks, etc
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  kinkCollections the Vertex collections of kinks
+     *  @param  prongCollections the Vertex collections of prongs and splits
+     *  @param  v0Collections the Vertex collections of V0s
      */
-  pandora::StatusCode CreateTrackAssociations(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateTrackAssociations(
+   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
+   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+   const std::vector<const edm4hep::VertexCollection*>& v0Collections
+  );
 
   /**
      *  @brief  Create tracks, insert user code here. Implement accordin to detector model
-     *
-     *  @param  pLCEvent the lcio event
      */
-  virtual pandora::StatusCode CreateTracks(EVENT::LCEvent* pLCEvent) = 0;
+  virtual pandora::StatusCode CreateTracks() = 0;
 
   /**
      *  @brief  Get the track vector
@@ -183,10 +187,10 @@ public:
   /**
      *  @brief  Calculate possible second track state at the ECal Endcap
      *
-     *  @param track lcio track
+     *  @param track edm4hep track
      *  @param trackParameters pandora LCTrackParameters
      */
-  virtual void GetTrackStatesAtCalo(EVENT::Track* track, lc_content::LCTrackParameters& trackParameters);
+  virtual void GetTrackStatesAtCalo(edm4hep::Track track, lc_content::LCTrackParameters& trackParameters);
 
   /**
      *  @brief  Reset the track creator
@@ -236,32 +240,32 @@ protected:
      *          1) if the track proves to be associated with a cluster, OR
      *          2) if the track proves to have no cluster associations
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void DefineTrackPfoUsage(const EVENT::Track* const      pTrack,
+  virtual void DefineTrackPfoUsage(const edm4hep::Track* const      pTrack,
                                    PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
-     *  @brief  Extract kink information from specified lcio collections
+     *  @brief  Extract kink information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractKinks(std::vector<const edm4hep::VertexCollection*>& vertexCollections);
+  pandora::StatusCode ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
-     *  @brief  Extract prong and split information from specified lcio collections
+     *  @brief  Extract prong and split information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractProngsAndSplits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
-     *  @brief  Extract v0 information from specified lcio collections
+     *  @brief  Extract v0 information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractV0s(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
      *  @brief  Whether the track vertex conflicts with previously provided relationship information

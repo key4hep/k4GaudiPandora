@@ -18,23 +18,17 @@
  */
 
 /**
- *  @file   DDMarlinPandora/src/DDPandoraPFANewProcessor.cc
+ *  @file   DDMarlinPandora/src/DDPandoraPFANewAlgorithm.cc
  *
  *  @brief  Implementation of the pandora pfa new processor class.
  *
  *  $Log: $
  */
 
-#include "marlin/Exceptions.h"
-#include "marlin/Global.h"
-
 #include "Api/PandoraApi.h"
 
-#include "LCContent.h"
-#include "LCPlugins/LCSoftwareCompensation.h"
-
 #include "DDExternalClusteringAlgorithm.h"
-#include "DDPandoraPFANewProcessor.h"
+#include "DDPandoraPFANewAlgorithm.h"
 
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/DetType.h"
@@ -49,7 +43,7 @@
 
 #include <cstdlib>
 
-DDPandoraPFANewProcessor aDDPandoraPFANewProcessor;
+DECLARE_COMPONENT(DDPandoraPFANewAlgorithm)
 
 double getFieldFromCompact() {
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
@@ -60,58 +54,16 @@ double getFieldFromCompact() {
   return magneticFieldVector[2] / dd4hep::tesla;  // z component at (0,0,0)
 }
 
-//Not needed anymore; to be removed
-// double getCoilOuterR(){
-//
-//   try{
-//     dd4hep::Detector & mainDetector = dd4hep::Detector::getInstance();
-//     const std::vector< dd4hep::DetElement>& theDetectors = dd4hep::DetectorSelector(mainDetector).detectors(  dd4hep::DetType::COIL ) ;
-//     //access the detelement and create a shape from the envelope since only minimal info needed
-//     dd4hep::Tube coilTube = dd4hep::Tube( theDetectors.at(0).volume().solid() )  ;
-//     return coilTube->GetRmax()/ dd4hep::mm;
-//   } catch ( std::exception & e ) {
-//
-//           streamlog_out(ERROR)<< "BIG WARNING! CANNOT GET EXTENSION FOR COIL: "<<e.what()<<" MAKE SURE YOU CHANGE THIS!"<< std::endl;
-//
-//   }
-//
-//   return 0;
-// }
-
-///Not needed anymore. To be removed
-// DD4hep::DDRec::LayeredCalorimeterData * getExtension(std::string detectorName){
-//
-//
-//   DD4hep::DDRec::LayeredCalorimeterData * theExtension = 0;
-//
-//   try {
-//     dd4hep::Detector & mainDetector = dd4hep::Detector::getInstance();
-//     const dd4hep::DetElement & theDetector = mainDetector.detector(detectorName);
-//     theExtension = theDetector.extension<DD4hep::DDRec::LayeredCalorimeterData>();
-//     //     std::cout<< "DEBUG: in getExtension(\""<<detectorName<<"\"): size of layers: "<<theExtension->layers.size()<<" positions not shown. "<<std::endl;
-//
-//     //     for(int i=0; i< theExtension->layers.size(); i++){
-//     //       std::cout<<theExtension->layers[i].distance/dd4hep::mm<<" ";
-//     //     }
-//     //     std::cout<<std::endl;
-//   } catch ( ... ){
-//
-//     streamlog_out(ERROR) << "BIG WARNING! EXTENSION DOES NOT EXIST FOR " << detectorName<<". MAKE SURE YOU CHANGE THIS!"<< std::endl;
-//   }
-//
-//   return theExtension;
-// }
-
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) {
+dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0, MsgStream log) {
   dd4hep::rec::LayeredCalorimeterData* theExtension = 0;
 
   dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
   const std::vector<dd4hep::DetElement>& theDetectors =
       dd4hep::DetectorSelector(mainDetector).detectors(includeFlag, excludeFlag);
 
-  streamlog_out(DEBUG2) << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
-                        << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
-                        << "  - first det: " << theDetectors.at(0).name() << std::endl;
+  log << MSG::DEBUG << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
+                    << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
+                    << "  - first det: " << theDetectors.at(0).name() << endmsg;
 
   if (theDetectors.size() != 1) {
     std::stringstream es;
@@ -143,21 +95,44 @@ std::vector<double> getTrackingRegionExtent() {
   return extent;
 }
 
-DDPandoraPFANewProcessor::PandoraToLCEventMap DDPandoraPFANewProcessor::m_pandoraToLCEventMap;
+DDPandoraPFANewAlgorithm::PandoraToLCEventMap DDPandoraPFANewAlgorithm::m_pandoraToLCEventMap;
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-DDPandoraPFANewProcessor::DDPandoraPFANewProcessor() : Processor("DDPandoraPFANewProcessor") {
-  _description = "Pandora reconstructs clusters and particle flow objects";
-  this->ProcessSteeringFile();
+DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm() (const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc,
+   const std::vector<const edm4hep::MCParticle*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
+   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>&
+  { KeyValues("InputMCParticles", {"MCParticles"}), 
+    KeyValues("InputKinkVerticies", {"KinkVerticies"}),
+    KeyValues("InputProngSplitVerticies", {"ProngSplitVerticies"}),
+    KeyValues("InputTrackerHitLinkCollections", {"TrackerHitLinkCollections"}),
+    KeyValues("InputECalCollections", {"ECalCollections"}),
+    KeyValues("InputHCalCollections", {"HCalCollections"}),
+    KeyValues("InputMCalCollections", {"MCalCollections"}),
+    KeyValues("InputLCalCollections", {"LCalCollections"}),
+    KeyValues("InputHLCalCollections", {"HLCalCollections"}),
+    KeyValues("InputCaloHitLinkCollections", {"CaloHitLinkCollections"}),},
+  { KeyValues("OutputClusterCollections", {"PandoraClusters"}),
+    KeyValues("OutputRecoParticleCollections", {"ReconstrcutedParticles"}), 
+    KeyValues("OutputVertexCollections", {"PandoraVerticies"}) }) {
+    this->ProcessSteeringFile();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::init() {
-  printParameters();
+StatusCode DDPandoraPFANewAlgorithm::initialize() {
   try {
-    streamlog_out(MESSAGE) << "DDPandoraPFANewProcessor - Init" << std::endl;
+    MsgStream log(msgSvc(), name());
+    log << MSG::INFO << "DDPandoraPFANewAlgorithm - Init" << endmsg;
     this->FinaliseSteeringParameters();
 
     m_pPandora         = new pandora::Pandora();
@@ -170,7 +145,7 @@ void DDPandoraPFANewProcessor::init() {
     else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
       m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
     else
-      streamlog_out(ERROR) << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << std::endl;
+      log << MSG::ERROR << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
     m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora);
     m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
@@ -180,68 +155,84 @@ void DDPandoraPFANewProcessor::init() {
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             PandoraApi::ReadSettings(*m_pPandora, m_settings.m_pandoraSettingsXmlFile));
   } catch (pandora::StatusCodeException& statusCodeException) {
-    streamlog_out(ERROR) << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << std::endl;
+    log << MSG::ERROR << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
   } catch (std::exception& exception) {
-    streamlog_out(ERROR) << "Failed to initialize marlin pandora: std exception " << exception.what() << std::endl;
+    log << MSG::ERROR << "Failed to initialize marlin pandora: std exception " << exception.what() << endmsg;
     throw exception;
   } catch (...) {
-    streamlog_out(ERROR) << "Failed to initialize marlin pandora: unrecognized exception" << std::endl;
+    log << MSG::ERROR << "Failed to initialize marlin pandora: unrecognized exception" << endmsg;
     throw;
   }
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::processRunHeader(LCRunHeader* /*pLCRunHeader*/) {}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-void DDPandoraPFANewProcessor::processEvent(LCEvent* pLCEvent) {
+std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection> operator()(
+  const std::vector<const edm4hep::MCParticle *>& MCParticleCollections,
+  const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
+  const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+  const std::vector<const edm4hep::VertexCollection*>& v0Collections,
+  const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
+  const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
+  const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& caloLinkCollections
+) const{
   try {
-    streamlog_out(DEBUG) << "DDPandoraPFANewProcessor - Run " << std::endl;
+    MsgStream log(msgSvc(), name());
+    log << MSG::DEBUG << "DDPandoraPFANewAlgorithm - Run " << endmsg;
     (void)m_pandoraToLCEventMap.insert(PandoraToLCEventMap::value_type(m_pPandora, pLCEvent));
 
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDMCParticleCreator->CreateMCParticles(pLCEvent));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTrackAssociations(pLCEvent));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks(pLCEvent));
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDMCParticleCreator->CreateMCParticles(MCParticleCollections));
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, v0Collections));
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks());
     PANDORA_THROW_RESULT_IF(
         pandora::STATUS_CODE_SUCCESS, !=,
-        m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(pLCEvent, m_pTrackCreator->GetTrackVector()));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pCaloHitCreator->CreateCaloHits(pLCEvent));
+        m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(trackerHitLinkCollections, m_pTrackCreator->GetTrackVector()));
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, 
+      m_pCaloHitCreator->CreateCaloHits(eCalCollections, hCalCollections, mCalCollections, lCalCollections, lhCalCollections));
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(
-                                pLCEvent, m_pCaloHitCreator->GetCalorimeterHitVector()));
+                              caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector()));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDPfoCreator->CreateParticleFlowObjects(pLCEvent));
+
+    edm4hep::ClusterCollection               pClusterCollection;
+    edm4hep::ReconstructedParticleCollection pReconstructedParticleCollection;
+    edm4hep::VertexCollection                pStartVertexCollection;
+
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, 
+      m_pDDPfoCreator->CreateParticleFlowObjects(pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora));
     this->Reset();
   } catch (pandora::StatusCodeException& statusCodeException) {
-    streamlog_out(ERROR) << "Marlin pandora failed to process event: " << statusCodeException.ToString() << std::endl;
+    log << MSG::ERROR << "Marlin pandora failed to process event: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
   } catch (EVENT::Exception& exception) {
-    streamlog_out(ERROR) << "Marlin pandora failed to process event: lcio exception " << exception.what() << std::endl;
+    log << MSG::ERROR << "Marlin pandora failed to process event: lcio exception " << exception.what() << endmsg;
     throw exception;
   } catch (std::exception& exception) {
-    streamlog_out(ERROR) << "Marlin pandora failed to process event: std exception " << exception.what() << std::endl;
+    log << MSG::ERROR << "Marlin pandora failed to process event: std exception " << exception.what() << endmsg;
     throw exception;
   } catch (...) {
-    streamlog_out(ERROR) << "Marlin pandora failed to process event: unrecognized exception" << std::endl;
+    log << MSG::ERROR << "Marlin pandora failed to process event: unrecognized exception" << endmsg;
     throw;
   }
+
+  return std::make_tuple(
+    std::move(pClusterCollection), 
+    std::move(pReconstructedParticleCollection), 
+    std::move(pStartVertexCollection), 
+  )
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::check(LCEvent* /*pLCEvent*/) {
-  streamlog_out(DEBUG) << "DDPandoraPFANewProcessor - Check" << std::endl;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-void DDPandoraPFANewProcessor::end() {
+StatusCode DDPandoraPFANewAlgorithm::finalize() {
   delete m_pPandora;
   delete m_pGeometryCreator;
   delete m_pCaloHitCreator;
@@ -249,12 +240,14 @@ void DDPandoraPFANewProcessor::end() {
   delete m_pDDMCParticleCreator;
   delete m_pDDPfoCreator;
 
-  streamlog_out(MESSAGE) << "DDPandoraPFANewProcessor - End" << std::endl;
+  MsgStream log(msgSvc(), name());
+  log << MSG::INFO << "DDPandoraPFANewAlgorithm - End" << endmsg;
+  return StatusCode::SUCCESS;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-const pandora::Pandora* DDPandoraPFANewProcessor::GetPandora() const {
+const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
   if (NULL == m_pPandora)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 
@@ -262,8 +255,8 @@ const pandora::Pandora* DDPandoraPFANewProcessor::GetPandora() const {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-
-const EVENT::LCEvent* DDPandoraPFANewProcessor::GetCurrentEvent(const pandora::Pandora* const pPandora) {
+/*
+const EVENT::LCEvent* DDPandoraPFANewAlgorithm::GetCurrentEvent(const pandora::Pandora* const pPandora) {
   PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(pPandora);
 
   if (m_pandoraToLCEventMap.end() == iter)
@@ -271,10 +264,10 @@ const EVENT::LCEvent* DDPandoraPFANewProcessor::GetCurrentEvent(const pandora::P
 
   return iter->second;
 }
-
+*/
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDPandoraPFANewProcessor::RegisterUserComponents() const {
+pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(*m_pPandora));
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(*m_pPandora));
 
@@ -318,7 +311,7 @@ pandora::StatusCode DDPandoraPFANewProcessor::RegisterUserComponents() const {
 //------------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::ProcessSteeringFile() {
+void DDPandoraPFANewAlgorithm::ProcessSteeringFile() {
   registerProcessorParameter("PandoraSettingsXmlFile", "The pandora settings xml file",
                              m_settings.m_pandoraSettingsXmlFile, std::string());
 
@@ -678,9 +671,10 @@ void DDPandoraPFANewProcessor::ProcessSteeringFile() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
+void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
   // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the processor,
   // when the steering file is parsed e.g. the call to GEAR to get the inner bfield
+  MsgStream log(msgSvc(), name());
   m_trackCreatorSettings.m_prongSplitVertexCollections = m_trackCreatorSettings.m_prongVertexCollections;
   m_trackCreatorSettings.m_prongSplitVertexCollections.insert(
       m_trackCreatorSettings.m_prongSplitVertexCollections.end(),
@@ -691,29 +685,29 @@ void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
   //Get ECal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
   //Get ECal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalEndcapExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
   //Get HCal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
   //Get HCal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalEndcapExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
   //Get Muon Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* muonBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
   //fg: muon endcap is not used :
   // //Get Muon Endcap extension by type, ignore plugs and rings
   // const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP), ( dd4hep::DetType::AUXILIARY ) );
 
   //Get COIL extension
-  const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL));
+  const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL), log);
 
   m_trackCreatorSettings.m_eCalBarrelInnerSymmetry = eCalBarrelExtension->inner_symmetry;
   m_trackCreatorSettings.m_eCalBarrelInnerPhi0     = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
@@ -751,22 +745,22 @@ void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewProcessor::Reset() {
+void DDPandoraPFANewAlgorithm::Reset() {
   m_pCaloHitCreator->Reset();
   m_pTrackCreator->Reset();
-
+  /*
   PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(m_pPandora);
 
   if (m_pandoraToLCEventMap.end() == iter)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
 
-  m_pandoraToLCEventMap.erase(iter);
+  m_pandoraToLCEventMap.erase(iter);*/
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-DDPandoraPFANewProcessor::Settings::Settings()
+DDPandoraPFANewAlgorithm::Settings::Settings()
     : m_innerBField(3.5f),
       m_muonBarrelBField(-1.5f),
       m_muonEndCapBField(0.01f),

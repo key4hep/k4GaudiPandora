@@ -77,17 +77,21 @@ DDTrackCreatorBase::~DDTrackCreatorBase() {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(const EVENT::LCEvent* const pLCEvent) {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractKinks(pLCEvent));
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(pLCEvent));
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractV0s(pLCEvent));
+pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(
+  const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
+  const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+  const std::vector<const edm4hep::VertexCollection*>& v0Collections
+) {
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractKinks(kinkCollections));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(prongCollections));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractV0s(v0Collections));
 
   return pandora::STATUS_CODE_SUCCESS;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractKinks(std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
+pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pKinkCollection =vertexCollections[colIndex];
@@ -178,7 +182,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(std::vector<const edm4hep::
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
+pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pProngOrSplitCollection = vertexCollections[colIndex];
@@ -237,7 +241,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(std::vector<const
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractV0s(std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
+pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pProngOrSplitCollection = vertexCollections[colIndex];

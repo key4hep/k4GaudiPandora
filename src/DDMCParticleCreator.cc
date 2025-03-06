@@ -101,7 +101,7 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(std::vector<const edm
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
+pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
                                                                               const TrackVector&    trackVector) const {
   for (unsigned ik = 0; ik < trackVector.size(); ik++) {
     const edm4hep::Track* pTrack = trackVector.at(ik);
@@ -152,7 +152,7 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(st
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections, 
+pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections, 
                                                                                 const CalorimeterHitVector& calorimeterHitVector) const {
   typedef std::map<MCParticle*, float> MCParticleToEnergyWeightMap;
   MCParticleToEnergyWeightMap          mcParticleToEnergyWeightMap;
