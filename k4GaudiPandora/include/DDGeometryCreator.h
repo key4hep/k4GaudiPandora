@@ -62,7 +62,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
+  DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log);
 
   /**
      *  @brief  Destructor
@@ -154,7 +154,7 @@ private:
 
   const Settings          m_settings;  ///< The geometry creator settings
   const pandora::Pandora& m_pPandora;  ///< Address of the pandora object to create the geometry
-  MsgStream m_log;
+  MsgStream& m_log;
 };
 
 #endif  // #ifndef GEOMETRY_CREATOR_H

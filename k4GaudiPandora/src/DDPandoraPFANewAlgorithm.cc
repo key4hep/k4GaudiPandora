@@ -27,7 +27,6 @@
 
 #include "Api/PandoraApi.h"
 
-#include "DDExternalClusteringAlgorithm.h"
 #include "DDPandoraPFANewAlgorithm.h"
 
 #include "DD4hep/DD4hepUnits.h"
@@ -287,10 +286,6 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
                            LCContent::RegisterNonLinearityEnergyCorrection(
                                *m_pPandora, "NonLinearity", pandora::HADRONIC, m_settings.m_inputEnergyCorrectionPoints,
                                m_settings.m_outputEnergyCorrectionPoints));
-
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                           PandoraApi::RegisterAlgorithmFactory(*m_pPandora, "ExternalClustering",
-                                                                new DDExternalClusteringAlgorithm::Factory));
 
   lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
   softwareCompensationParameters.m_softCompParameters              = m_settings.m_softCompParameters;

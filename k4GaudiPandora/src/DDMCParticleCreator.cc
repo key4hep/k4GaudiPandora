@@ -34,7 +34,6 @@
 #include "edm4hep/Track.h"
 
 #include "DDMCParticleCreator.h"
-#include "PandoraPFAlg.h"
 
 #include <string>
 

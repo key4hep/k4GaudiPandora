@@ -49,7 +49,7 @@
 #include <algorithm>
 #include <cmath>
 
-DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
     : m_settings(settings), m_pandora(*pPandora), m_log(log) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------

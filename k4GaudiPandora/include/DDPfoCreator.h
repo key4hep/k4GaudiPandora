@@ -19,8 +19,16 @@
 #ifndef DDPFO_CREATOR_H
 #define DDPFO_CREATOR_H 1
 
+#include <k4FWCore/Transformer.h>
 #include "Api/PandoraApi.h"
 #include "ClusterShapes.h"
+#include "pandora/CartesianVector"
+
+#include <edm4hep/ClusterCollection.h>
+#include <edm4hep/ReconstructedParticleCollection.h>
+#include <edm4hep/VertexCollection.h>
+#include <edm4hep/MutableReconstructedParticle.h>
+#include <edm4hep/MutableCluster.h>
 
 class CollectionMaps;
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -56,7 +64,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
+  DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log);
 
   /**
      *  @brief  Destructor
@@ -210,7 +218,7 @@ private:
 
   const Settings          m_settings;  ///< The pfo creator settings
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object from which to extract the pfos
-  MsgStream m_log;
+  MsgStream& m_log;
 };
 
 #endif  // #ifndef DDPFO_CREATOR_H

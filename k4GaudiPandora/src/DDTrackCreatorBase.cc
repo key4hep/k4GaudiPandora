@@ -32,9 +32,6 @@
 #include "DDTrackCreatorBase.h"
 #include "Pandora/PdgTable.h"
 
-#include <MarlinTrk/Factory.h>
-#include <MarlinTrk/IMarlinTrack.h>
-
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/Detector.h"
 #include "DDRec/DetectorData.h"
@@ -46,7 +43,7 @@
 //forward declaration
 std::vector<double> getTrackingRegionExtent();
 
-DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
     : m_settings(settings),
       m_pandora(*pPandora),
       m_trackVector(0),
@@ -59,11 +56,7 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::
   const float ecalInnerR           = settings.m_eCalBarrelInnerR;
   const float tsTolerance          = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
-  //wrap in shared_ptr with a dummy destructor
-  m_trackingSystem = std::shared_ptr<MarlinTrk::IMarlinTrkSystem>(
-      MarlinTrk::Factory::createMarlinTrkSystem(settings.m_trackingSystemName, nullptr, ""),
-      [](MarlinTrk::IMarlinTrkSystem*) {});
-  m_trackingSystem->init();
+
   m_encoder        = std::make_shared<BitField64>("encoding string");
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
@@ -312,7 +305,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4h
 bool DDTrackCreatorBase::IsConflictingRelationship(const edm4hep::ReconstructedParticle pReconstructedParticle) const {
   for (edm4hep::Track pTrack : pReconstructedParticle.getTracks()) {
 
-    if (this->IsDaughter(pTrack) || this->IsParent(pTrack) || this->IsV0(pTrack))
+    if (this->IsDaughter(&pTrack) || this->IsParent(&pTrack) || this->IsV0(&pTrack))
       return true;
   }
 
@@ -353,111 +346,6 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
   const float particleEnergy(
       std::sqrt(particleMass * particleMass + trackParameters.m_momentumAtDca.Get().GetMagnitudeSquared()));
   trackParameters.m_timeAtCalorimeter = minGenericTime * particleEnergy / 299.792f;
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track track, lc_content::LCTrackParameters& trackParameters) {
-  if (not trackParameters.m_reachesCalorimeter.Get()) {
-    m_log << MSG::DEBUG << "Track does not reach the ECal" << endmsg;
-    return;
-  }
-
-  const edm4hep::TrackState* trackAtCalo = &(track.getTrackState(TrackState::AtCalorimeter));
-  if (!trackAtCalo) {
-    m_log << MSG::DEBUG << "Track does not have a trackState at calorimeter" << endmsg;
-    m_log << MSG::DEBUG << toString(track) << endmsg;
-    return;
-  }
-
-  m_log << MSG::DEBUG << "Original" << toString(trackAtCalo) << endmsg;
-
-  const auto* tsPosition = trackAtCalo->getReferencePoint();
-
-  if (std::fabs(tsPosition[2]) < getTrackingRegionExtent()[2]) {
-    m_log << MSG::DEBUG << "Original trackState is at Barrel" << endmsg;
-    pandora::InputTrackState pandoraTrackState;
-    this->CopyTrackState(trackAtCalo, pandoraTrackState);
-    trackParameters.m_trackStates.push_back(pandoraTrackState);
-  } else {  // if track state is in endcap we do not repeat track state calculation, because the barrel cannot be hit
-    m_log << MSG::DEBUG << "Original track state is at Endcap" << endmsg;
-    pandora::InputTrackState pandoraTrackState;
-    this->CopyTrackState(trackAtCalo, pandoraTrackState);
-    trackParameters.m_trackStates.push_back(pandoraTrackState);
-    return;
-  }
-
-  auto marlintrk  = std::unique_ptr<MarlinTrk::IMarlinTrack>(m_trackingSystem->createTrack());
-
-  for (int iHit = 0; iHit < track.trackerHits_size(); ++iHit) {
-    edm4hep::TrackerHit trkHit = track.getTrackerHits(iHit);
-    /* TODO this....
-    if (UTIL::BitSet32(
-            trkHit->getType())[UTIL::ILDTrkHitTypeBit::COMPOSITE_SPACEPOINT]) {  //it is a composite spacepoint
-      //Split it up and add both hits to the MarlinTrk
-      const EVENT::LCObjectVec& rawObjects = trkHit->getRawHits();
-      for (unsigned k = 0; k < rawObjects.size(); k++) {
-        EVENT::TrackerHit* rawHit = static_cast<EVENT::TrackerHit*>(rawObjects[k]);
-        if (marlintrk->addHit(rawHit) != MarlinTrk::IMarlinTrack::success) {
-          m_log << MSG::DEBUG << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add strip hit " << *rawHit
-                                << endmsg;
-        }
-      }
-    } else {*/
-      if (marlintrk->addHit(track.getTrackerHits(iHit)) != MarlinTrk::IMarlinTrack::success)
-        m_log << MSG::DEBUG << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add tracker hit " << *trkHit
-                              << endmsg;
-    //}
-  }
-
-  bool tanL_is_positive = trackAtCalo->tanLambda() > 0;
-
-  auto trackState = edm4hep::MutableTrackState(*trackAtCalo);
-
-  int return_error = marlintrk->initialise(trackState, m_settings.m_bField, MarlinTrk::IMarlinTrack::modeForward);
-  if (return_error != MarlinTrk::IMarlinTrack::success) {
-    m_log << MSG::DEBUG << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to initialize track for endcap track : "
-                          << endmsg;
-    return;
-  }
-
-  double chi2 = -DBL_MAX;
-  int    ndf  = 0;
-
-  edm4hep::MutableTrackState trackStateAtCaloEndcap;
-
-  unsigned ecal_endcap_face_ID = lcio::ILDDetID::ECAL_ENDCAP;
-  int      detElementID        = 0;
-  /// TODO this.... 
-  m_encoder->reset();  // reset to 0
-  (*m_encoder)["subdet"] = ecal_endcap_face_ID;
-  (*m_encoder)["side"]   = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
-  (*m_encoder)["layer"]  = 0;
-
-  return_error = marlintrk->propagateToLayer(m_encoder->lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
-                                             MarlinTrk::IMarlinTrack::modeForward);
-  m_log << MSG::DEBUG << "Found trackState at endcap? Error code: " << return_error << endmsg;
-
-  if (return_error == MarlinTrk::IMarlinTrack::success) {
-    m_log << MSG::DEBUG << "Endcap" << toString(&trackStateAtCaloEndcap) << endmsg;
-    const auto*  tsEP       = trackStateAtCaloEndcap.getReferencePoint();
-    const double radSquared = (tsEP[0] * tsEP[0] + tsEP[1] * tsEP[1]);
-    if (radSquared < m_minimalTrackStateRadiusSquared) {
-      m_log << MSG::DEBUG << "new track state is below tolerance radius" << endmsg;
-      return;
-    }
-    //for curling tracks the propagated track has the wrong z0 whereas it should be 0. really
-    if (std::abs(trackStateAtCaloEndcap.getZ0()) >
-        std::abs(2. * M_PI / trackStateAtCaloEndcap.getOmega() * trackStateAtCaloEndcap.getTanLambda())) {
-      trackStateAtCaloEndcap.setZ0(0.);
-    }
-    m_log << MSG::DEBUG << "new track state at endcap accepted" << endmsg;
-    pandora::InputTrackState pandoraAtEndcap;
-    this->CopyTrackState(&trackStateAtCaloEndcap, pandoraAtEndcap);
-    trackParameters.m_trackStates.push_back(pandoraAtEndcap);
-  }
-
-  return;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------

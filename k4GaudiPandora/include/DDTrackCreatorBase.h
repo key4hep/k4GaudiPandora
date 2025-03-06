@@ -34,6 +34,8 @@
 #include "edm4hep/Vertex.h"
 #include "BitField64.hxx"
 
+#include <k4FWCore/Transformer.h>
+
 #include "Api/PandoraApi.h"
 #include "Objects/Helix.h"
 
@@ -41,27 +43,12 @@
 
 typedef std::vector<edm4hep::Track*>    TrackVector;
 typedef std::set<const edm4hep::Track*> TrackList;
-typedef std::map<EVENT::Track*, int>  TrackToPidMap;
+typedef std::map<edm4hep::Track*, int>  TrackToPidMap;
 
 namespace lc_content {
   class LCTrackParameters;
   class LCTrackFactory;
 }  // namespace lc_content
-namespace MarlinTrk {
-  class IMarlinTrkSystem;
-}
-
-inline IMPL::LCCollectionVec* newTrkCol(const std::string& name, EVENT::LCEvent* evt, bool isSubset) {
-  IMPL::LCCollectionVec* col = new IMPL::LCCollectionVec(EVENT::LCIO::TRACK);
-
-  IMPL::LCFlagImpl hitFlag(0);
-  hitFlag.setBit(EVENT::LCIO::TRBIT_HITS);
-  col->setFlag(hitFlag.getFlag());
-  evt->addCollection(col, name);
-  col->setSubset(isSubset);
-
-  return col;
-}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -148,7 +135,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
+  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log);
 
   /**
      *  @brief  Destructor
@@ -181,14 +168,6 @@ public:
   const TrackVector& GetTrackVector() const;
 
   /**
-     *  @brief  Calculate possible second track state at the ECal Endcap
-     *
-     *  @param track edm4hep track
-     *  @param trackParameters pandora LCTrackParameters
-     */
-  virtual void GetTrackStatesAtCalo(edm4hep::Track track, lc_content::LCTrackParameters& trackParameters);
-
-  /**
      *  @brief  Reset the track creator
      */
   void Reset();
@@ -203,11 +182,10 @@ protected:
   TrackList     m_daughterTrackList;  ///< The list of daughter tracks
   TrackToPidMap m_trackToPidMap;      ///< The map from track addresses to particle ids, where set by kinks/V0s
   float         m_minimalTrackStateRadiusSquared;                      ///< minimal track state radius, derived value
-  std::shared_ptr<MarlinTrk::IMarlinTrkSystem> m_trackingSystem = {};  ///< Tracking system used for track states
   std::shared_ptr<BitField64>                  m_encoder        = {};  ///< cell ID encoder
   std::shared_ptr<lc_content::LCTrackFactory>  m_lcTrackFactory = {};  ///< LCTrackFactor for creating LCTracks
 
-  MsgStream m_log;
+  MsgStream& m_log;
 
   ///Nikiforos: Need to implement following abstract functions according to detector model
 
@@ -219,7 +197,7 @@ protected:
      *
      *  @return boolean
      */
-  virtual bool PassesQualityCuts(const edm4hep::Track const            pTrack,
+  virtual bool PassesQualityCuts(const edm4hep::Track pTrack,
                                  const PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -228,7 +206,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void TrackReachesECAL(const edm4hep::Track const      pTrack,
+  virtual void TrackReachesECAL(const edm4hep::Track pTrack,
                                 PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -239,7 +217,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void DefineTrackPfoUsage(const edm4hep::Track* const      pTrack,
+  virtual void DefineTrackPfoUsage(const edm4hep::Track* pTrack,
                                    PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -277,7 +255,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsV0(const edm4hep::Track const pTrack) const;
+  bool IsV0(const edm4hep::Track* const pTrack) const;
 
   /**
      *  @brief  Whether a track is a parent track
@@ -286,7 +264,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsParent(const edm4hep::Track const pTrack) const;
+  bool IsParent(const edm4hep::Track* const pTrack) const;
 
   /**
      *  @brief  Whether a track is a daughter track
@@ -295,7 +273,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsDaughter(const edm4hep::Track const pTrack) const;
+  bool IsDaughter(const edm4hep::Track* const pTrack) const;
 
   /**
      *  @brief  Copy track states stored in lcio tracks to pandora track parameters
@@ -303,7 +281,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  void GetTrackStates(const edm4hep::Track const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+  void GetTrackStates(const edm4hep::Track pTrack, PandoraApi::Track::Parameters& trackParameters) const;
 
   /**
      *  @brief  Copy track state from lcio track state instance to pandora input track state
@@ -311,14 +289,14 @@ protected:
      *  @param  pTrackState the track state instance
      *  @param  inputTrackState the pandora input track state
      */
-  void CopyTrackState(const edm4hep::TrackState const pTrackState, pandora::InputTrackState& inputTrackState) const;
+  void CopyTrackState(const edm4hep::TrackState pTrackState, pandora::InputTrackState& inputTrackState) const;
 
   /**
      *  @brief  Obtain track time when it reaches ECAL
      *
      *  @param  pTrack the track
      */
-  float CalculateTrackTimeAtCalorimeter(const edm4hep::Track const pTrack) const;
+  float CalculateTrackTimeAtCalorimeter(const edm4hep::Track pTrack) const;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -337,19 +315,19 @@ inline void DDTrackCreatorBase::Reset() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsV0(const edm4hep::Track const pTrack) const {
+inline bool DDTrackCreatorBase::IsV0(const edm4hep::Track* const pTrack) const {
   return (m_v0TrackList.end() != m_v0TrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsParent(const edm4hep::Track const pTrack) const {
+inline bool DDTrackCreatorBase::IsParent(const edm4hep::Track* const pTrack) const {
   return (m_parentTrackList.end() != m_parentTrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsDaughter(const edm4hep::Track const pTrack) const {
+inline bool DDTrackCreatorBase::IsDaughter(const edm4hep::Track* const pTrack) const {
   return (m_daughterTrackList.end() != m_daughterTrackList.find(pTrack));
 }
 

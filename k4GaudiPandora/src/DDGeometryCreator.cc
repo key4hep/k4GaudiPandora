@@ -41,7 +41,7 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 
 std::vector<double> getTrackingRegionExtent();
 
-DDGeometryCreator::DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+DDGeometryCreator::DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
     : m_settings(settings), m_pPandora(*pPandora), m_log(log) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
