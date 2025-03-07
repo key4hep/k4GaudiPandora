@@ -22,7 +22,7 @@
 #include <k4FWCore/Transformer.h>
 #include "Api/PandoraApi.h"
 #include "ClusterShapes.h"
-#include "pandora/CartesianVector"
+#include "Objects/CartesianVector.h"
 
 #include <edm4hep/ClusterCollection.h>
 #include <edm4hep/ReconstructedParticleCollection.h>
@@ -106,7 +106,7 @@ private:
      *  @param  hitZ the vector to receive the z position of hits
      */
   void SetClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames,
-                                     const edm4hep::MutableCluster*       pCluster,
+                                     edm4hep::MutableCluster*       pCluster,
                                      const pandora::CaloHitList&  pandoraCaloHitList, pandora::FloatVector& hitE,
                                      pandora::FloatVector& hitX,  pandora::FloatVector& hitY,
                                      pandora::FloatVector& hitZ) const;
@@ -120,7 +120,7 @@ private:
      *  @param  clusterCorrectEnergy a number to receive the cluster correct energy
      */
   void SetClusterEnergyAndError(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                const pandora::Cluster* const pPandoraCluster, const edm4hep::MutableCluster* pCluster,
+                                const pandora::Cluster* const pPandoraCluster, edm4hep::MutableCluster* pCluster,
                                 float& clusterCorrectEnergy) const;
 
   /**
@@ -136,7 +136,7 @@ private:
      */
   void SetClusterPositionAndError(const unsigned int nHitsInCluster, pandora::FloatVector& hitE,
                                   pandora::FloatVector& hitX, pandora::FloatVector& hitY, pandora::FloatVector& hitZ,
-                                  const edm4hep::MutableCluster*   pCluster,
+                                  edm4hep::MutableCluster*   pCluster,
                                   pandora::CartesianVector& clusterPositionVec) const;
 
   /**
@@ -155,7 +155,7 @@ private:
      *  @param  pReconstructedParticle the address of the reconstructed particle to be reference point
      */
   void SetRecoParticleReferencePoint(const pandora::CartesianVector&       referencePoint,
-                                     const edm4hep::MutableReconstructedParticle* pReconstructedParticle) const;
+                                     edm4hep::MutableReconstructedParticle* pReconstructedParticle) const;
 
   /**
      *  @brief  Add tracks to reconstructed particle
@@ -164,7 +164,7 @@ private:
      *  @param  pReconstructedParticle the address of the reconstructed particle to be added tracks
      */
   void AddTracksToRecoParticle(const pandora::ParticleFlowObject* const pPandoraPfo,
-                               const edm4hep::MutableReconstructedParticle*    pReconstructedParticle) const;
+                               edm4hep::MutableReconstructedParticle*    pReconstructedParticle) const;
 
   /**
      *  @brief  Set properties of reconstructed particle from pandora pfo
@@ -173,7 +173,7 @@ private:
      *  @param  pReconstructedParticle the address of the reconstructed particle to be set properties
      */
   void SetRecoParticlePropertiesFromPFO(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                        const edm4hep::MutableReconstructedParticle*    pReconstructedParticle) const;
+                                        edm4hep::MutableReconstructedParticle*    pReconstructedParticle) const;
 
   /**
      *  @brief  Whether parent and daughter tracks are associated with the same pfo

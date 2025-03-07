@@ -93,8 +93,6 @@ pandora::StatusCode DDCaloHitCreator::CreateCaloHits(
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections
 ) {
   //fg: there cannot be any reasonable default for this string - so we set it to sth. that will cause an exception in case
-  //    the cellID encoding string is not in the collection:
-  UTIL::CellIDDecoder<CalorimeterHit>::setDefaultEncoding("undefined_cellID_encoding:100");
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateECalCaloHits(eCalCollections));
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateHCalCaloHits(hCalCollections));
@@ -131,7 +129,8 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
 
       for (int i = 0; i < nElements; ++i) {
         try {
-          edm4hep::CalorimeterHit* pCaloHit = dynamic_cast<edm4hep::CalorimeterHit*>(&(pCaloHitCollection->at(i)));
+          edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
+	        edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
@@ -220,6 +219,8 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
                                << statusCodeException.ToString() << endmsg;
         }
       }
+    } catch (...) {
+      m_log << MSG::ERROR << "Failed to extract ecal calo hit collection" << endmsg;
     }
   }
 
@@ -251,7 +252,8 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const
 
       for (int i = 0; i < nElements; ++i) {
         try {
-          edm4hep::CalorimeterHit *pCaloHit = dynamic_cast<edm4hep::CalorimeterHit*>(&(pCaloHitCollection->at(i)));
+          edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
+          edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
@@ -291,6 +293,8 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const
           m_log << MSG::ERROR << "Failed to extract hcal calo hit: " << statusCodeException.ToString() << endmsg;
         }
       }
+    } catch (...) {
+      m_log << MSG::ERROR << "Failed to extract ecal calo hit collection" << endmsg;
     }
   }
 
@@ -307,7 +311,7 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_mCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << m_settings.m_muonCaloHitCollections[colIndex] << " hits" << endmsg;
       
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
           getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
@@ -323,7 +327,8 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const
 
       for (int i = 0; i < nElements; ++i) {
         try {
-          edm4hep::CalorimeterHit *pCaloHit = dynamic_cast<edm4hep::CalorimeterHit*>(&(pCaloHitCollection->at(i)));
+          edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
+          edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
@@ -375,6 +380,8 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const
           m_log << MSG::ERROR << "Failed to extract muon hit: " << statusCodeException.ToString() << std::endl;
         }
       }
+    } catch (...) {
+      m_log << MSG::ERROR << "Failed to extract ecal calo hit collection" << endmsg;
     }
   }
 
@@ -404,7 +411,8 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const
 
       for (int i = 0; i < nElements; ++i) {
         try {
-          edm4hep::CalorimeterHit *pCaloHit = dynamic_cast<edm4hep::CalorimeterHit*>(&(pCaloHitCollection->at(i)));
+          edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
+          edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
@@ -435,6 +443,8 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const
           m_log << MSG::ERROR << "Failed to extract lcal calo hit: " << statusCodeException.ToString() << std::endl;
         }
       }
+    } catch (...) {
+      m_log << MSG::ERROR << "Failed to extract ecal calo hit collection" << endmsg;
     }
   }
 
@@ -451,7 +461,7 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_lhCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << m_settings.m_lHCalCaloHitCollections[colIndex] << " hits" << endmsg;
 
       ///FIXME! WHAT ABOUT MORE HCALS?
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
@@ -463,7 +473,8 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
 
       for (int i = 0; i < nElements; ++i) {
         try {
-          edm4hep::CalorimeterHit *pCaloHit = dynamic_cast<edm4hep::CalorimeterHit*>(&(pCaloHitCollection->at(i)));
+          edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
+          edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
@@ -496,6 +507,8 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
           m_log << MSG::ERROR << "Failed to extract lhcal calo hit: " << statusCodeException.ToString() << std::endl;
         }
       }
+    } catch (...) {
+      m_log << MSG::ERROR << "Failed to extract ecal calo hit collection" << endmsg;
     }
   }
 

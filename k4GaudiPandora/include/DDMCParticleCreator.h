@@ -32,7 +32,8 @@
 
 #include <edm4hep/TrackerHitSimTrackerHitLinkCollection.h>
 #include <edm4hep/MCParticle.h>
-#include <edm4hep/CaloHitMCParticleLinkCollection.h>
+#include <edm4hep/MCParticleCollection.h>
+#include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
 
 #include "DDCaloHitCreator.h"
 #include "DDTrackCreatorBase.h"
@@ -66,7 +67,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log);
+  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log);
 
   /**
      *  @brief  Destructor
@@ -91,17 +92,21 @@ public:
      *  @brief  Create calo hit to mc particle relationships
      *
      */
-  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections,
+  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& linkCollections,
                                                              const CalorimeterHitVector& calorimeterHitVector) const;
+  /**
+     *  @brief  Reset the MCP creator
+     */
+  void Reset();
 
 private:
   const Settings          m_settings;  ///< The mc particle creator settings
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
   const float             m_bField;    ///< The bfield
-  std::map<unsigned int, const edm4hep::MCParticle*>* m_id_pMC_map;
-  MsgStream m_log;
+  std::map<int, const edm4hep::MCParticle*>* m_id_pMC_map;
+  MsgStream& m_log;
 };
 
-inline void MCParticleCreator::Reset() { m_id_pMC_map->clear(); }
+inline void DDMCParticleCreator::Reset() { m_id_pMC_map->clear(); }
 
 #endif  // #ifndef DDMCPARTICLECREATOR_H

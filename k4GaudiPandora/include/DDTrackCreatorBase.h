@@ -35,6 +35,7 @@
 #include "BitField64.hxx"
 
 #include <k4FWCore/Transformer.h>
+#include <edm4hep/TrackCollection.h>
 
 #include "Api/PandoraApi.h"
 #include "Objects/Helix.h"
@@ -158,7 +159,7 @@ public:
   /**
      *  @brief  Create tracks, insert user code here. Implement accordin to detector model
      */
-  virtual pandora::StatusCode CreateTracks() = 0;
+  virtual pandora::StatusCode CreateTracks(const std::vector<const edm4hep::TrackCollection*>& trackCollections) = 0;
 
   /**
      *  @brief  Get the track vector
@@ -289,7 +290,7 @@ protected:
      *  @param  pTrackState the track state instance
      *  @param  inputTrackState the pandora input track state
      */
-  void CopyTrackState(const edm4hep::TrackState pTrackState, pandora::InputTrackState& inputTrackState) const;
+  void CopyTrackState(const edm4hep::TrackState *pTrackState, pandora::InputTrackState& inputTrackState) const;
 
   /**
      *  @brief  Obtain track time when it reaches ECAL

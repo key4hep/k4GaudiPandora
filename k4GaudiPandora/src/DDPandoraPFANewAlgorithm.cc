@@ -109,7 +109,7 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm() (const std::string& name, I
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>&
+   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&
   { KeyValues("InputMCParticles", {"MCParticles"}), 
     KeyValues("InputKinkVerticies", {"KinkVerticies"}),
     KeyValues("InputProngSplitVerticies", {"ProngSplitVerticies"}),
@@ -172,13 +172,14 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
   const std::vector<const edm4hep::VertexCollection*>& v0Collections,
+  const std::vector<const edm4hep::TrackCollection*>& trackCollections,
   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-  const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& caloLinkCollections
+  const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections
 ) const{
   try {
     MsgStream log(msgSvc(), name());
@@ -187,7 +188,7 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDMCParticleCreator->CreateMCParticles(MCParticleCollections));
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, v0Collections));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks());
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks(trackCollections));
     PANDORA_THROW_RESULT_IF(
         pandora::STATUS_CODE_SUCCESS, !=,
         m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(trackerHitLinkCollections, m_pTrackCreator->GetTrackVector()));

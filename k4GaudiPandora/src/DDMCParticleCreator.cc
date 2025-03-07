@@ -40,7 +40,7 @@
 //forward declarations. See in DDPandoraPFANewProcessor.cc
 double getFieldFromCompact();
 
-DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream log)
+DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
     : m_settings(settings), m_pandora(*pPandora), m_bField(getFieldFromCompact()), m_log(log) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -52,46 +52,47 @@ DDMCParticleCreator::~DDMCParticleCreator() {}
 pandora::StatusCode DDMCParticleCreator::CreateMCParticles(std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const {
   for (int colIndex = 0; colIndex < MCParticleCollections.size(); colIndex++) {
     try {
-      const edm4hep::CalorimeterHitCollection* pMCParticleCollection = MCParticleCollections[colIndex];
+      const edm4hep::MCParticleCollection* pMCParticleCollection = MCParticleCollections[colIndex];
       const int nElements(pMCParticleCollection->size());
 
       if (0 == nElements)
         continue;
 
       m_log << MSG::DEBUG << "Creating " << m_settings.m_mcParticleCollections[colIndex] << " particles" << endmsg;
-      for (int i = 0, iMax = pMCParticleCollection->size(); i < iMax; ++i) {
+      for (int i = 0, iMax = nElements; i < iMax; ++i) {
         try {
-          edm4hep::MCParticle pMcParticle = dynamic_cast<MCParticle>(pMCParticleCollection->at(i));
+          edm4hep::MCParticle pMcParticle0 = pMCParticleCollection->at(i);
+	        edm4hep::MCParticle *pMcParticle = &pMcParticle0;
 
           if (NULL == pMcParticle)
             m_log << MSG::ERROR << "Collection type mismatch" << endmsg;
 
           PandoraApi::MCParticle::Parameters mcParticleParameters;
-          mcParticleParameters.m_energy         = pMcParticle.getEnergy();
-          mcParticleParameters.m_particleId     = pMcParticle.getPDG();
+          mcParticleParameters.m_energy         = pMcParticle->getEnergy();
+          mcParticleParameters.m_particleId     = pMcParticle->getPDG();
           mcParticleParameters.m_mcParticleType = pandora::MC_3D;
           mcParticleParameters.m_pParentAddress = pMcParticle;
           mcParticleParameters.m_momentum       = pandora::CartesianVector(
-              pMcParticle.getMomentum().x, pMcParticle.getMomentum().y, pMcParticle.getMomentum().z);
+              pMcParticle->getMomentum().x, pMcParticle->getMomentum().y, pMcParticle->getMomentum().z);
           mcParticleParameters.m_vertex = pandora::CartesianVector(
-              pMcParticle.getVertex().x, pMcParticle.getVertex().y, pMcParticle.getVertex().z);
+              pMcParticle->getVertex().x, pMcParticle->getVertex().y, pMcParticle->getVertex().z);
           mcParticleParameters.m_endpoint = pandora::CartesianVector(
-              pMcParticle.getEndpoint().x, pMcParticle.getEndpoint().y, pMcParticle.getEndpoint().z);
+              pMcParticle->getEndpoint().x, pMcParticle->getEndpoint().y, pMcParticle->getEndpoint().z);
 
           PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                                   PandoraApi::MCParticle::Create(m_pandora, mcParticleParameters));
 
           // Create parent-daughter relationships
-          for (MCParticleVec::const_iterator itDaughter    = pMcParticle.getDaughters().begin(),
-                                             itDaughterEnd = pMcParticle.getDaughters().end();
-               itDaughter != itDaughterEnd; ++itDaughter) {
+          for (edm4hep::MCParticle daughter : pMcParticle->getDaughters()) {
             PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                    PandoraApi::SetMCParentDaughterRelationship(m_pandora, pMcParticle, *itDaughter));
+                                    PandoraApi::SetMCParentDaughterRelationship(m_pandora, pMcParticle, &daughter));
           }
         } catch (pandora::StatusCodeException& statusCodeException) {
           m_log << MSG::ERROR << "Failed to extract MCParticle: " << statusCodeException.ToString() << endmsg;
         }
       }
+    } catch(...) {
+      m_log << MSG::ERROR << "Failed to extract MCParticle collection" << endmsg;
     }
   }
 
@@ -115,21 +116,21 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
     float                bestDeltaMomentum(std::numeric_limits<float>::max());
     try {
       for (int colIndex = 0; colIndex < linkCollections.size(); colIndex++) {
-        const edm4hep::TrackerHitSimTrackerHitLinkCollection pLinkCollection = linkCollections[colIndex];
+        const edm4hep::TrackerHitSimTrackerHitLinkCollection *pLinkCollection = linkCollections[colIndex];
         for (unsigned ith = 0; ith < pTrack->trackerHits_size(); ith++) {
-          for (unsigned ic = 0; ic < pLinkCollection.size(); ic++) {
-            if (pLinkCollection.at(ic).getFrom() != pTrack->getTrackerHits(ith))
+          for (unsigned ic = 0; ic < pLinkCollection->size(); ic++) {
+            if ((pLinkCollection->at(ic)).getFrom() != pTrack->getTrackerHits(ith))
               continue;
-            const edm4hep::SimTrackerHit pSimHit = pLinkCollection.at(ic).getTo();
+            const edm4hep::SimTrackerHit pSimHit = (pLinkCollection->at(ic)).getTo();
             const edm4hep::MCParticle    ipa     = pSimHit.getParticle();
-            if (m_id_pMC_map->find(ipa.id()) == m_id_pMC_map->end())
+            if (m_id_pMC_map->find(ipa.id().index) == m_id_pMC_map->end())
               continue;
             const float trueMomentum(
                 pandora::CartesianVector(ipa.getMomentum().x, ipa.getMomentum().y, ipa.getMomentum().z)
                     .GetMagnitude());
             const float deltaMomentum(std::fabs(recoMomentum - trueMomentum));
             if (deltaMomentum < bestDeltaMomentum) {
-              pBestMCParticle   = const_cast<edm4hep::MCParticle*>((*m_id_pMC_map)[ipa.id()]);
+              pBestMCParticle   = const_cast<edm4hep::MCParticle*>((*m_id_pMC_map)[ipa.id().index]);
               bestDeltaMomentum = deltaMomentum;
             }
           }
@@ -151,30 +152,30 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& linkCollections, 
+pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& linkCollections, 
                                                                                 const CalorimeterHitVector& calorimeterHitVector) const {
-  typedef std::map<MCParticle*, float> MCParticleToEnergyWeightMap;
+  typedef std::map<const edm4hep::MCParticle*, float> MCParticleToEnergyWeightMap;
   MCParticleToEnergyWeightMap          mcParticleToEnergyWeightMap;
 
   for (int colIndex = 0; colIndex < linkCollections.size(); colIndex++) {
     try {
-      const std::vector<edm4hep::CaloHitMCParticleLinkCollection>& pLinkCollection = linkCollections[colIndex];
+      const edm4hep::CaloHitSimCaloHitLinkCollection *pLinkCollection = linkCollections[colIndex];
 
       for (unsigned i_calo = 0; i_calo < calorimeterHitVector.size(); i_calo++) {
         try {
           mcParticleToEnergyWeightMap.clear();
 
-          for (unsigned ic = 0; ic < pLinkCollection.size(); ic++) {
-            if (pLinkCollection.at(ic).getFrom() != (*(calorimeterHitVector.at(i_calo))))
+          for (unsigned ic = 0; ic < pLinkCollection->size(); ic++) {
+            if ((pLinkCollection->at(ic)).getFrom() != *(calorimeterHitVector.at(i_calo)))
               continue;
-            const edm4hep::SimCalorimeterHit pSimHit = pLinkCollection.at(ic).getTo();
+            const edm4hep::SimCalorimeterHit pSimHit = (pLinkCollection->at(ic)).getTo();
             for (int iCont = 0, iEnd = pSimHit.contributions_size(); iCont < iEnd; ++iCont) {
               edm4hep::CaloHitContribution conb = pSimHit.getContributions(iCont);
               const edm4hep::MCParticle    ipa  = conb.getParticle();
               float                        ien  = conb.getEnergy();
-              if (m_id_pMC_map->find(ipa.id()) == m_id_pMC_map->end())
+              if (m_id_pMC_map->find(ipa.id().index) == m_id_pMC_map->end())
                 continue;
-              const edm4hep::MCParticle* p_tmp = (*m_id_pMC_map)[ipa.id()];
+              const edm4hep::MCParticle* p_tmp = (*m_id_pMC_map)[ipa.id().index];
               mcParticleToEnergyWeightMap[p_tmp] += ien;
             }
           }
@@ -184,13 +185,15 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
                mcParticleIter != mcParticleIterEnd; ++mcParticleIter) {
             PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                                     PandoraApi::SetCaloHitToMCParticleRelationship(
-                                        m_pandora, *(calorimeterHitVector.at(i_calo)), mcParticleIter->first, mcParticleIter->second));
+                                        m_pandora, calorimeterHitVector.at(i_calo), mcParticleIter->first, mcParticleIter->second));
           }
         } catch (pandora::StatusCodeException& statusCodeException) {
           m_log << MSG::ERROR << "Failed to extract calo hit to mc particle relationship: "
                                << statusCodeException.ToString() << endmsg;
         } 
       }
+    } catch(...) {
+      m_log << MSG::ERROR << "Failed to extract Calo MCP Link collection" << endmsg;
     }
   }
 

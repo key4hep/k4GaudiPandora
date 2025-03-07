@@ -88,7 +88,8 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
 
       for (int i = 0, iMax = pKinkCollection->size(); i < iMax; ++i) {
         try {
-          edm4hep::Vertex* pVertex = dynamic_cast<Vertex*>(&(pKinkCollection->at(i)));
+          edm4hep::Vertex pVertex0 = pKinkCollection->at(i);
+          edm4hep::Vertex *pVertex = &pVertex0;
 
           if (NULL == pVertex)
             m_log << MSG::ERROR << "Collection type mismatch" << endmsg;
@@ -98,7 +99,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
           if (this->IsConflictingRelationship(pReconstructedParticle))
             continue;
 
-          const int vertexPdgCode(pReconstructedParticle.getType());
+          const int vertexPdgCode(pReconstructedParticle.getPDG());
 
           // Extract the kink vertex information
           for (unsigned int iTrack = 0, nTracks = pReconstructedParticle.tracks_size(); iTrack < nTracks; ++iTrack) {
@@ -130,7 +131,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
                   trackPdgCode = pandora::PI_PLUS;
                   break;
                 default:
-                  (pTrack.getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+                  (pTrack.getTrackStates(edm4hep::TrackState::AtIP).omega > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
                   break;
               }
             }
@@ -143,27 +144,28 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
             // Make track parent-daughter relationships
             if (0 == iTrack) {
               for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
+                edm4hep::Track pJTrack = pReconstructedParticle.getTracks(jTrack);
                 PANDORA_RETURN_RESULT_IF(
                     pandora::STATUS_CODE_SUCCESS, !=,
-                    PandoraApi::SetTrackParentDaughterRelationship(m_pandora, pTrack, pReconstructedParticle.getTracks(jTrack)));
+                    PandoraApi::SetTrackParentDaughterRelationship(m_pandora, &pTrack, &pJTrack));
               }
             }
 
             // Make track sibling relationships
             else {
               for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
+                edm4hep::Track pJTrack = pReconstructedParticle.getTracks(jTrack);
                 PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                         PandoraApi::SetTrackSiblingRelationship(m_pandora, pTrack, pReconstructedParticle.getTracks(jTrack)));
+                                         PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, &pJTrack));
               }
             }
           }
         } catch (...) {
-          m_log << MSG::WARNING << "Failed to extract kink vertex: " << exception.what() << endmsg;
+          m_log << MSG::WARNING << "Failed to extract kink vertex"   << endmsg;
         }
       }
     } catch (...) {
-      m_log << MSG::DEBUG << "Failed to extract kink vertex collection: " << *iter << ", " << exception.what()
-                            << endmsg;
+      m_log << MSG::DEBUG << "Failed to extract kink vertex collection" << endmsg;
     }
   }
 
@@ -179,7 +181,8 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector
 
       for (int i = 0, iMax = pProngOrSplitCollection->size(); i < iMax; ++i) {
         try {
-          edm4hep::Vertex* pVertex = dynamic_cast<Vertex*>(&(pProngOrSplitCollection->at(i)));
+          edm4hep::Vertex pVertex0 = pProngOrSplitCollection->at(i);
+          edm4hep::Vertex *pVertex = &pVertex0;
 
           if (NULL == pVertex)
             m_log << MSG::ERROR << "Collection type mismatch" << endmsg;
@@ -202,27 +205,28 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector
             // Make track parent-daughter relationships
             if (0 == iTrack) {
               for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
+                edm4hep::Track pJTrack = pReconstructedParticle.getTracks(jTrack);
                 PANDORA_RETURN_RESULT_IF(
                     pandora::STATUS_CODE_SUCCESS, !=,
-                    PandoraApi::SetTrackParentDaughterRelationship(m_pandora, pTrack, pReconstructedParticle.getTracks(jTrack)));
+                    PandoraApi::SetTrackParentDaughterRelationship(m_pandora, &pTrack, &pJTrack));
               }
             }
 
             // Make track sibling relationships
             else {
               for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
+                edm4hep::Track pJTrack = pReconstructedParticle.getTracks(jTrack);
                 PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                         PandoraApi::SetTrackSiblingRelationship(m_pandora, pTrack, pReconstructedParticle.getTracks(jTrack)));
+                                         PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, &pJTrack));
               }
             }
           }
         } catch (...) {
-          m_log << MSG::WARNING << "Failed to extract prong/split vertex: " << exception.what() << endmsg;
+          m_log << MSG::WARNING << "Failed to extract prong/split vertex" << endmsg;
         }
       }
     } catch (...) {
-      m_log << MSG::DEBUG << "Failed to extract prong/split vertex collection: " << *iter << ", " << exception.what()
-                            << endmsg;
+      m_log << MSG::DEBUG << "Failed to extract prong/split vertex collection: " << endmsg;
     }
   }
 
@@ -234,11 +238,12 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector
 pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
-      const edm4hep::VertexCollection* pProngOrSplitCollection = vertexCollections[colIndex];
+      const edm4hep::VertexCollection* pV0Collection = vertexCollections[colIndex];
 
       for (int i = 0, iMax = pV0Collection->size(); i < iMax; ++i) {
         try {
-          edm4hep::Vertex* pVertex = dynamic_cast<Vertex*>(&(pV0Collection->at(i)));
+          edm4hep::Vertex pVertex0 = pV0Collection->at(i);
+          edm4hep::Vertex *pVertex = &pVertex0;
 
           if (NULL == pVertex)
             m_log << MSG::ERROR << "Collection type mismatch" << endmsg;
@@ -249,7 +254,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4h
             continue;
 
           // Extract the v0 vertex information
-          const int vertexPdgCode(pReconstructedParticle.getType());
+          const int vertexPdgCode(pReconstructedParticle.getPDG());
 
           for (unsigned int iTrack = 0, nTracks = pReconstructedParticle.tracks_size(); iTrack < nTracks; ++iTrack) {
             edm4hep::Track pTrack = pReconstructedParticle.getTracks(iTrack);
@@ -258,21 +263,22 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4h
 
             int trackPdgCode = pandora::UNKNOWN_PARTICLE_TYPE;
 
+            float omega = pTrack.getTrackStates(edm4hep::TrackState::AtIP).omega;
             switch (vertexPdgCode) {
               case pandora::PHOTON:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::E_PLUS : trackPdgCode = pandora::E_MINUS;
+                (omega > 0) ? trackPdgCode = pandora::E_PLUS : trackPdgCode = pandora::E_MINUS;
                 break;
               case pandora::LAMBDA:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PROTON : trackPdgCode = pandora::PI_MINUS;
+                (omega > 0) ? trackPdgCode = pandora::PROTON : trackPdgCode = pandora::PI_MINUS;
                 break;
               case pandora::LAMBDA_BAR:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PROTON_BAR;
+                (omega > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PROTON_BAR;
                 break;
               case pandora::K_SHORT:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+                (omega > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
                 break;
               default:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+                (omega > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
                 break;
             }
 
@@ -283,17 +289,17 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4h
 
             // Make track sibling relationships
             for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
+              edm4hep::Track pJTrack = pReconstructedParticle.getTracks(jTrack);
               PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                       PandoraApi::SetTrackSiblingRelationship(m_pandora, pTrack, pReconstructedParticle.getTracks(jTrack)));
+                                       PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, &pJTrack));
             }
           }
         } catch (...) {
-          m_log << MSG::WARNING << "Failed to extract v0 vertex: " << exception.what() << endmsg;
+          m_log << MSG::WARNING << "Failed to extract v0 vertex" << endmsg;
         }
       }
     } catch (...) {
-      m_log << MSG::DEBUG << "Failed to extract v0 vertex collection: " << *iter << ", " << exception.what()
-                            << endmsg;
+      m_log << MSG::DEBUG << "Failed to extract v0 vertex collection" << endmsg;
     }
   }
 
@@ -316,24 +322,28 @@ bool DDTrackCreatorBase::IsConflictingRelationship(const edm4hep::ReconstructedP
 
 void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
                                         PandoraApi::Track::Parameters& trackParameters) const {
-  const edm4hep::TrackState *pTrackState = &(pTrack.getTrackState(edm4hep::TrackState::AtIP));
+  const edm4hep::TrackState pTrackState0 = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
+  const edm4hep::TrackState *pTrackState = &pTrackState0;
 
   if (!pTrackState)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState->omega()));
+  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState->omega));
   trackParameters.m_momentumAtDca =
-      pandora::CartesianVector(std::cos(pTrackState->phi()), std::sin(pTrackState->phi()),
-                               pTrackState->tanLambda()) *
+      pandora::CartesianVector(std::cos(pTrackState->phi), std::sin(pTrackState->phi),
+                               pTrackState->tanLambda) *
       pt;
 
-  this->CopyTrackState(&(pTrack.getTrackState(TrackState::AtFirstHit)), trackParameters.m_trackStateAtStart);
+  edm4hep::TrackState firstHit = pTrack.getTrackStates(edm4hep::TrackState::AtFirstHit);
+  this->CopyTrackState(&firstHit, trackParameters.m_trackStateAtStart);
 
   //fg: curling TPC tracks have pointers to track segments stored -> need to get track states from last segment!
-  const edm4hep::Track pEndTrack = (pTrack.getTracks().empty() ? pTrack : pTrack.getTracks().back());
+  const edm4hep::Track pEndTrack = (pTrack.getTracks().empty() ? pTrack : *std::prev(pTrack.getTracks().end()));
+  edm4hep::TrackState lastHit = pEndTrack.getTrackStates(edm4hep::TrackState::AtLastHit);
+  edm4hep::TrackState atCalo = pEndTrack.getTrackStates(edm4hep::TrackState::AtCalorimeter);
 
-  this->CopyTrackState(&(pEndTrack.getTrackState(TrackState::AtLastHit)), trackParameters.m_trackStateAtEnd);
-  this->CopyTrackState(&(pEndTrack->getTrackState(TrackState::AtCalorimeter)), trackParameters.m_trackStateAtCalorimeter);
+  this->CopyTrackState(&lastHit, trackParameters.m_trackStateAtEnd);
+  this->CopyTrackState(&atCalo, trackParameters.m_trackStateAtCalorimeter);
 
   trackParameters.m_isProjectedToEndCap =
       ((std::fabs(trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetZ()) < m_settings.m_eCalEndCapInnerZ)
@@ -352,8 +362,8 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track pTrack) const {
   edm4hep::TrackState state = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
-  const pandora::Helix            helix(state.phi(), state.d0(), state.z0(), state.omega(),
-                                        state.tanLambda(), m_settings.m_bField);
+  const pandora::Helix            helix(state.phi, state.D0, state.Z0, state.omega,
+                                        state.tanLambda, m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
 
   // First project to endcap
@@ -408,15 +418,15 @@ void DDTrackCreatorBase::CopyTrackState(const edm4hep::TrackState* pTrackState,
   if (!pTrackState)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState->omega()));
+  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState->omega));
 
-  const double px(pt * std::cos(pTrackState->phi()));
-  const double py(pt * std::sin(pTrackState->phi()));
-  const double pz(pt * pTrackState->tanLambda());
+  const double px(pt * std::cos(pTrackState->phi));
+  const double py(pt * std::sin(pTrackState->phi));
+  const double pz(pt * pTrackState->tanLambda);
 
-  const double xs(pTrackState->referencePoint().x);
-  const double ys(pTrackState->referencePoint().y);
-  const double zs(pTrackState->referencePoint().z);
+  const double xs(pTrackState->referencePoint.x);
+  const double ys(pTrackState->referencePoint.y);
+  const double zs(pTrackState->referencePoint.z);
 
   inputTrackState = pandora::TrackState(xs, ys, zs, px, py, pz);
 }

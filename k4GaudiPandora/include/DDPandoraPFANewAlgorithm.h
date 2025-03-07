@@ -58,13 +58,14 @@ struct DDPandoraPFANewAlgorithm final :
    const std::vector<const edm4hep::VertexCollection*>&,
    const std::vector<const edm4hep::VertexCollection*>&,
    const std::vector<const edm4hep::VertexCollection*>&,
+   const std::vector<const edm4hep::TrackCollection*>&,
    const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
    const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>&)> {
+   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&)> {
 public:
   typedef std::vector<float>       FloatVector;
   typedef std::vector<std::string> StringVector;
@@ -122,6 +123,7 @@ public:
    *  @param  prongCollections the Vertex collections of prongs and splits
    *  @param  v0Collections the Vertex collections of V0s
    *  @param  trackerHitLinkCollections the associations between trackerHits and simTrackerHits
+   *  @param  trackCollections collections of tracks
    *  @param  eCalCollections  CalorimeterHit Collection for the ECal
    *  @param  hCalCollections  CalorimeterHit Collection for the HCal
    *  @param  mCalCollections  CalorimeterHit Collection for the Muon Calo
@@ -137,6 +139,7 @@ public:
    const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
    const std::vector<const edm4hep::VertexCollection*>& prongCollections,
    const std::vector<const edm4hep::VertexCollection*>& v0Collections,
+   const std::vector<const edm4hep::TrackCollection*>& trackCollections,
    const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
    const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
    const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
