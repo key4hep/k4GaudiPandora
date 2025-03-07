@@ -205,7 +205,7 @@
  
            this->GetTrackStates(pTrack, trackParameters);
            this->TrackReachesECAL(pTrack, trackParameters);
-           //this->GetTrackStatesAtCalo(pTrack, trackParameters);
+           this->GetTrackStatesAtCalo(pTrack, trackParameters);
            this->DefineTrackPfoUsage(pTrack, trackParameters);
  
            PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
