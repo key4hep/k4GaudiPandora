@@ -25,79 +25,93 @@
  *  $Log: $
  */
 
-#ifndef DDMCPARTICLECREATOR_H
-#define DDMCPARTICLECREATOR_H 1
-
-#include "Api/PandoraApi.h"
-#include "edm4hep/MCParticle.h"
-
-#include "DDCaloHitCreator.h"
-#include "DDTrackCreatorBase.h"
 /**
  *  @brief  DDMCParticleCreator class
  */
+#ifndef DDMCPARTICLECREATOR_H
+#define DDMCPARTICLECREATOR_H
+
+#include "edm4hep/MCParticleCollection.h"
+#include "edm4hep/MCParticle.h"
+#include "edm4hep/MCRecoTrackerAssociationCollection.h"
+#include "edm4hep/MCRecoCaloAssociationCollection.h"
+#include "DDCaloHitCreator.h"
+#include "DDTrackCreatorBase.h"
+
+#include "Api/PandoraApi.h"
+#include <vector>
+#include <map>
+#include <string>
+
 class CollectionMaps;
+
+/**
+ *  @brief  DDMCParticleCreator class
+ */
 class DDMCParticleCreator {
 public:
   typedef std::vector<std::string> StringVector;
 
   /**
-     *  @brief  Settings class
-     */
+   *  @brief  Settings class
+   */
   class Settings {
   public:
     /**
-         *  @brief  Default constructor
-         */
+     *  @brief  Default constructor
+     */
     Settings();
 
     StringVector m_mcParticleCollections;         ///< The mc particle collections
-    StringVector m_lcCaloHitRelationCollections;  ///< The SimCaloHit to CaloHit particle relations
-    StringVector m_lcTrackRelationCollections;    ///< The SimTrackerHit to TrackerHit particle relations
-    float        m_bField;                        ///< m_bField
+    StringVector m_caloHitRelationCollections;    ///< The SimCaloHit to CaloHit particle relations
+    StringVector m_trackRelationCollections;      ///< The SimTrackerHit to TrackerHit particle relations
+    float        m_bField;                        ///< Magnetic field strength
   };
 
   /**
-     *  @brief  Constructor
-     *
-     *  @param  settings the creator settings
-     *  @param  pPandora address of the relevant pandora instance
-     */
+   *  @brief  Constructor
+   *
+   *  @param  settings the creator settings
+   *  @param  pPandora address of the relevant pandora instance
+   */
   DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora);
 
   /**
-     *  @brief  Destructor
-     */
+   *  @brief  Destructor
+   */
   ~DDMCParticleCreator();
 
   /**
-     *  @brief  Create MCParticles
-     *
-     *  @param  pLCEvent the lcio event
-     */
+   *  @brief  Create MCParticles
+   *
+   *  @param  collectionMaps The collection map containing input data
+   */
   pandora::StatusCode CreateMCParticles(const CollectionMaps& collectionMaps) const;
 
   /**
-     *  @brief  Create Track to mc particle relationships
-     *
-     */
+   *  @brief  Create Track to MCParticle relationships
+   *
+   *  @param  collectionMaps The collection map containing input data
+   *  @param  trackVector Vector of reconstructed tracks
+   */
   pandora::StatusCode CreateTrackToMCParticleRelationships(const CollectionMaps& collectionMaps,
-                                                           const TrackVector&    trackVector) const;
+                                                           const std::vector<edm4hep::Track>& trackVector) const;
 
   /**
-     *  @brief  Create calo hit to mc particle relationships
-     *
-     */
-  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const CollectionMaps&       collectionMaps,
-                                                             const CalorimeterHitVector& calorimeterHitVector) const;
+   *  @brief  Create CaloHit to MCParticle relationships
+   *
+   *  @param  collectionMaps The collection map containing input data
+   *  @param  calorimeterHitVector Vector of calorimeter hits
+   */
+  pandora::StatusCode CreateCaloHitToMCParticleRelationships(const CollectionMaps& collectionMaps,
+                                                             const std::vector<edm4hep::CalorimeterHit>& calorimeterHitVector) const;
 
 private:
   const Settings          m_settings;  ///< The mc particle creator settings
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
-  const float             m_bField;    ///< The bfield
+  const float             m_bField;    ///< The magnetic field strength
   std::map<unsigned int, const edm4hep::MCParticle*>* m_id_pMC_map;
 };
 
-inline void MCParticleCreator::Reset() { m_id_pMC_map->clear(); }
-
 #endif  // #ifndef DDMCPARTICLECREATOR_H
+

@@ -25,8 +25,6 @@
  *  $Log: $
  */
 
-#include "marlin/Global.h"
-#include "marlin/Processor.h"
 
 #include "DDGeometryCreator.h"
 
