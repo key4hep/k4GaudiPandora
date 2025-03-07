@@ -28,11 +28,14 @@
 #ifndef DDTRACK_CREATOR_BASE_H
 #define DDTRACK_CREATOR_BASE_H 1
 
+#include "lcio.h"
 
 #include "edm4hep/VertexCollection.h"
 #include "edm4hep/Track.h"
 #include "edm4hep/Vertex.h"
 #include "BitField64.hxx"
+#include <MarlinTrk/Factory.h>
+#include <MarlinTrk/IMarlinTrack.h>
 
 #include <k4FWCore/Transformer.h>
 #include <edm4hep/TrackCollection.h>
@@ -186,6 +189,7 @@ protected:
   TrackToPidMap m_trackToPidMap;      ///< The map from track addresses to particle ids, where set by kinks/V0s
   float         m_minimalTrackStateRadiusSquared;                      ///< minimal track state radius, derived value
   std::shared_ptr<BitField64>                  m_encoder        = {};  ///< cell ID encoder
+  std::shared_ptr<MarlinTrk::IMarlinTrkSystem> m_trackingSystem={}; ///< Tracking system used for track states
   std::shared_ptr<lc_content::LCTrackFactory>  m_lcTrackFactory = {};  ///< LCTrackFactor for creating LCTracks
 
   MsgStream& m_log;
@@ -302,6 +306,9 @@ protected:
      *  @param  pTrack the track
      */
   float CalculateTrackTimeAtCalorimeter(const edm4hep::Track* const pTrack) const;
+
+  void GetTrackStatesAtCalo(edm4hep::Track *track, lc_content::LCTrackParameters& trackParameters );
+
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

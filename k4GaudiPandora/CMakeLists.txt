@@ -10,10 +10,13 @@ gaudi_add_module(k4GaudiPandoraPlugins
 				${PandoraSDK_LIBRARIES}
 				${LCConent_LIBRARIES}
 				${GSL_LIBRARIES}
+                                ${LCIO_LIBRARIES}
+                                ${MarlinTrk_LIBRARIES}
 				DD4hep::DDCore
                                 ROOT::Hist
                                 ${ROOT_LIBRARIES}
                                 k4FWCore::k4FWCore )
+
 
 INSTALL( TARGETS k4GaudiPandoraPlugins
         EXPORT ${CMAKE_PROJECT_NAME}Targets
@@ -30,6 +33,8 @@ TARGET_INCLUDE_DIRECTORIES(k4GaudiPandoraPlugins
 			${GSL_INCLUDE_DIRS}
 			${PandoraSDK_INCLUDE_DIRS}
                         ${LCConent_INCLUDE_DIRS}
+                        ${LCIO_INCLUDE_DIRS}
+                        ${MarlinTrk_INCLUDE_DIRS}
 			${DD4hep_INCLUDE_DIRS}
 			${LCContent_INCLUDE_DIRS}
                         ${ROOT_INCLUDE_DIRS})
