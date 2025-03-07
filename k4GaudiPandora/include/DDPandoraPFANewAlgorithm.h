@@ -39,6 +39,7 @@
 #include <k4FWCore/BaseClass.h>
 #include <k4FWCore/Transformer.h>
 #include <Gaudi/Property.h>
+#include "GaudiKernel/MsgStream.h"
 
 #include "DD4hep/DetType.h"
 #include "DD4hep/DetectorSelector.h"
@@ -54,7 +55,8 @@ namespace pandora {
  */
 struct DDPandoraPFANewAlgorithm final : 
   k4FWCore::MultiTransformer<std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection>(
-	const std::vector<const edm4hep::MCParticle*>&,
+	const std::vector<const edm4hep::MCParticleCollection*>&,
+   const std::vector<const edm4hep::VertexCollection*>&,
    const std::vector<const edm4hep::VertexCollection*>&,
    const std::vector<const edm4hep::VertexCollection*>&,
    const std::vector<const edm4hep::VertexCollection*>&,
@@ -120,7 +122,8 @@ public:
    * 
    *  @param  MCParticleCollections Collection of MCParticles
    *  @param  kinkCollections the Vertex collections of kinks
-   *  @param  prongCollections the Vertex collections of prongs and splits
+   *  @param  prongCollections the Vertex collections of prongs
+   *  @param  splitCollections the Vertex collections of splits
    *  @param  v0Collections the Vertex collections of V0s
    *  @param  trackerHitLinkCollections the associations between trackerHits and simTrackerHits
    *  @param  trackCollections collections of tracks
@@ -135,9 +138,10 @@ public:
    *  
    */
   std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection> operator()(
-   const std::vector<const edm4hep::MCParticle*>& MCParticleCollections,
+   const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections,
    const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
    const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+   const std::vector<const edm4hep::VertexCollection*>& splitCollections,
    const std::vector<const edm4hep::VertexCollection*>& v0Collections,
    const std::vector<const edm4hep::TrackCollection*>& trackCollections,
    const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
@@ -146,7 +150,7 @@ public:
    const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
    const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
    const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-   const std::vector<const edm4hep::CaloHitMCParticleLinkCollection*>& caloLinkCollections
+   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections
  ) const override;
 
 
@@ -180,11 +184,6 @@ private:
   pandora::StatusCode RegisterUserComponents() const;
 
   /**
-     *  @brief  Process steering file parameters, insert user code here
-     */
-  void ProcessSteeringFile();
-
-  /**
      *  @brief  Copy some steering parameters between settings objects
      */
   void FinaliseSteeringParameters();
@@ -192,7 +191,7 @@ private:
   /**
      *  @brief  Reset the pandora pfa new processor
      */
-  void Reset();
+  void Reset() const;
 
   pandora::Pandora*    m_pPandora             = NULL;  ///< Address of the pandora instance
   DDCaloHitCreator*    m_pCaloHitCreator      = NULL;  ///< The calo hit creator
@@ -208,8 +207,45 @@ private:
   DDTrackCreatorBase::Settings  m_trackCreatorSettings{};       ///< The track creator settings
   DDPfoCreator::Settings        m_pfoCreatorSettings{};         ///< The pfo creator settings
 
-  //typedef std::map<const pandora::Pandora*, EVENT::LCEvent*> PandoraToLCEventMap;
-  //static PandoraToLCEventMap                                 m_pandoraToLCEventMap;  ///< The pandora to lc event map
+  // Properties
+  Gaudi::Property<std::string> m_pandoraSettingsXmlFile{this, "PandoraSettingsXmlFile", "", "The pandora settings xml file"};
+  Gaudi::Property<bool> m_createGaps{this, "CreateGaps", true, "Decides whether to create gaps in the geometry (ILD-specific)"};
+  Gaudi::Property<std::string> m_startVertexAlgName{this, "StartVertexAlgorithmName", "PandoraPFANew", "The algorithm name for filling start vertex"};
+  Gaudi::Property<float> m_emStochasticTerm{this, "EMStochasticTerm", 0.17f, "The stochastic term for EM shower"};
+  Gaudi::Property<float> m_hadStochasticTerm{this, "HadStochasticTerm", 0.6f, "The stochastic term for Hadronic shower"};
+  Gaudi::Property<float> m_emConstantTerm{this, "EMConstantTerm", 0.01f, "The constant term for EM shower"};
+  Gaudi::Property<float> m_hadConstantTerm{this, "HadConstantTerm", 0.03f, "The constant term for Hadronic shower"};
+  Gaudi::Property<float> m_eCalToMip{this, "ECalToMipCalibration", 1.0f, "The calibration from deposited ECal energy to mip"};
+  Gaudi::Property<float> m_hCalToMip{this, "HCalToMipCalibration", 1.0f, "The calibration from deposited HCal energy to mip"};
+  Gaudi::Property<float> m_eCalMipThreshold{this, "ECalMipThreshold", 0.0f, "Threshold for creating calo hits in the ECal, units mip"};
+  Gaudi::Property<float> m_muonToMip{this, "MuonToMipCalibration", 1.0f, "The calibration from deposited Muon energy to mip"};
+  Gaudi::Property<float> m_hCalMipThreshold{this, "HCalMipThreshold", 0.0f, "Threshold for creating calo hits in the HCal, units mip"};
+  Gaudi::Property<float> m_eCalToEMGeV{this, "ECalToEMGeVCalibration", 1.0f, "The calibration from deposited ECal energy to EM energy"};
+  Gaudi::Property<float> m_hCalToEMGeV{this, "HCalToEMGeVCalibration", 1.0f, "The calibration from deposited HCal energy to EM energy"};
+  Gaudi::Property<float> m_eCalToHadGeVEndCap{this, "ECalToHadGeVCalibrationEndCap", 1.0f, "The calibration from deposited ECal energy to hadronic energy"};
+  Gaudi::Property<float> m_eCalToHadGeVBarrel{this, "ECalToHadGeVCalibrationBarrel", 1.0f, "The calibration from deposited ECal energy to hadronic energy"};
+  Gaudi::Property<float> m_hCalToHadGeV{this, "HCalToHadGeVCalibration", 1.0f, "The calibration from deposited HCal energy to hadronic energy"};
+  Gaudi::Property<int> m_muonDigitalHits{this, "DigitalMuonHits", 1, "Treat muon hits as digital"};
+  Gaudi::Property<float> m_muonHitEnergy{this, "MuonHitEnergy", 0.5f, "The energy for a digital muon calorimeter hit, units GeV"};
+  Gaudi::Property<float> m_maxHCalHitHadronicEnergy{this, "MaxHCalHitHadronicEnergy", 10000.0f, "The maximum hadronic energy allowed for a single hcal hit"};
+  Gaudi::Property<int> m_nOuterSamplingLayers{this, "NOuterSamplingLayers", 3, "Number of layers from edge for hit to be flagged as an outer layer hit"};
+  Gaudi::Property<float> m_layersFromEdgeMaxRearDistance{this, "LayersFromEdgeMaxRearDistance", 250.0f, "Maximum number of layers from candidate outer layer hit to rear of detector"};
+  Gaudi::Property<float> m_muonBarrelBField{this, "MuonBarrelBField", -1.5f, "The bfield in the muon barrel, units Tesla"};
+  Gaudi::Property<float> m_muonEndCapBField{this, "MuonEndCapBField", 0.01f, "The bfield in the muon endcap, units Tesla"};
+  Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false, "Whether to use the BField map from DD4hep"};
+  Gaudi::Property<int> m_shouldFormTrackRelationships{this, "ShouldFormTrackRelationships", 1, "Whether to form pandora track relationships using v0 and kink info"};
+  Gaudi::Property<int> m_minTrackHits{this, "MinTrackHits", 5, "Track quality cut: the minimum number of track hits"};
+  Gaudi::Property<int> m_minFtdTrackHits{this, "MinFtdTrackHits", 0, "Track quality cut: the minimum number of ftd track hits for ftd only tracks"};
+  Gaudi::Property<int> m_maxTrackHits{this, "MaxTrackHits", 5000, "Track quality cut: the maximum number of track hits"};
+  Gaudi::Property<float> m_d0TrackCut{this, "D0TrackCut", 50.0f, "Track d0 cut used to determine whether track can be used to form pfo"};
+  Gaudi::Property<float> m_z0TrackCut{this, "Z0TrackCut", 50.0f, "Track z0 cut used to determine whether track can be used to form pfo"};
+  Gaudi::Property<int> m_usingNonVertexTracks{this, "UseNonVertexTracks", 1, "Whether can form pfos from tracks that don't start at vertex"};
+  Gaudi::Property<int> m_usingUnmatchedNonVertexTracks{this, "UseUnmatchedNonVertexTracks", 0, "Whether can form pfos from unmatched tracks that don't start at vertex"};
+  Gaudi::Property<int> m_usingUnmatchedVertexTracks{this, "UseUnmatchedVertexTracks", 1, "Whether can form pfos from unmatched tracks that start at vertex"};
+  Gaudi::Property<float> m_unmatchedVertexTrackMaxEnergy{this, "UnmatchedVertexTrackMaxEnergy", 5.0f, "Maximum energy for unmatched vertex track"};
+  Gaudi::Property<float> m_d0UnmatchedVertexTrackCut{this, "D0UnmatchedVertexTrackCut", 5.0f, "d0 cut used to determine whether unmatched vertex track can form pfo"};
+  Gaudi::Property<float> m_z0UnmatchedVertexTrackCut{this, "Z0UnmatchedVertexTrackCut", 5.0f, "z0 cut used to determine whether unmatched vertex track can form pfo"};
+
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

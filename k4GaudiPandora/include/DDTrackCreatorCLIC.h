@@ -53,7 +53,7 @@
    /**
       *  @brief  Create tracks implementation, insert user code here. Detector specific
       *
-      *  @param  pLCEvent the lcio event
+      *  @param  trackCollections the collection of Tracks
       */
    pandora::StatusCode CreateTracks(const std::vector<const edm4hep::TrackCollection*>& trackCollections);
  
@@ -75,22 +75,22 @@
    /**
       *  @brief  Whether track passes the quality cuts required in order to be used to form a pfo. Detector specific
       *
-      *  @param  pTrack the lcio track
+      *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
       *
       *  @return boolean
       */
  
-   virtual bool PassesQualityCuts(const EVENT::Track* const            pTrack,
+   virtual bool PassesQualityCuts(const edm4hep::Track* const            pTrack,
                                   const PandoraApi::Track::Parameters& trackParameters) const;
  
    /**
       *  @brief  Decide whether track reaches the ecal surface. Detector specific
       *
-      *  @param  pTrack the lcio track
+      *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
       */
-   virtual void TrackReachesECAL(const EVENT::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+   virtual void TrackReachesECAL(const edm4hep::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
  
    /**
       *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -98,13 +98,11 @@
       *          2) if the track proves to have no cluster associations
       *          Detector specific
       *
-      *  @param  pTrack the lcio track
+      *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
       */
-   virtual void DefineTrackPfoUsage(const EVENT::Track* const      pTrack,
+   virtual void DefineTrackPfoUsage(const edm4hep::Track* const      pTrack,
                                     PandoraApi::Track::Parameters& trackParameters) const;
-
-   MsgStream& m_log;
  };
  
  #endif  // #ifndef DDTRACK_CREATOR_CLIC_H

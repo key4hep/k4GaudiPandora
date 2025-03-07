@@ -27,14 +27,7 @@
 
  #include "DDTrackCreatorCLIC.h"
 
- #include "marlin/Global.h"
- #include "marlin/Processor.h"
- 
- #include "EVENT/LCCollection.h"
- #include "EVENT/ReconstructedParticle.h"
- #include "EVENT/Vertex.h"
- #include "UTIL/ILDConf.h"
- #include "UTIL/Operators.h"
+ #include <edm4hep/Vertex.h>
  
  #include "LCObjects/LCTrack.h"
  #include "Pandora/PdgTable.h"
@@ -53,7 +46,7 @@
  std::vector<double> getTrackingRegionExtent();
  
  DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
-     : DDTrackCreatorBase(settings, pPandora),
+     : DDTrackCreatorBase(settings, pPandora, log),
        m_trackerInnerR(0.f),
        m_trackerOuterR(0.f),
        m_trackerZmax(0.f),
@@ -63,8 +56,7 @@
        m_endcapDiskZPositions(DoubleVector()),
        m_nEndcapDiskLayers(0),
        m_barrelTrackerLayers(0),
-       m_tanLambdaEndcapDisk(0.f),
-       m_log(log)
+       m_tanLambdaEndcapDisk(0.f)
  
  {
    m_trackerInnerR = getTrackingRegionExtent()[0];
@@ -171,7 +163,7 @@
        ///FIXME: Should really move to using surfaces
        for (int i = 0, iMax = pTrackCollection->size(); i < iMax; ++i) {
          edm4hep::Track pTrack0 = pTrackCollection->at(i);
-         edm4hep::Track *pTrack = &pTrack;
+         edm4hep::Track *pTrack = &pTrack0;
          edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
  
          if (NULL == pTrack)
@@ -213,7 +205,7 @@
  
            this->GetTrackStates(pTrack, trackParameters);
            this->TrackReachesECAL(pTrack, trackParameters);
-           this->GetTrackStatesAtCalo(pTrack, trackParameters);
+           //this->GetTrackStatesAtCalo(pTrack, trackParameters);
            this->DefineTrackPfoUsage(pTrack, trackParameters);
  
            PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
@@ -223,18 +215,17 @@
            m_log << MSG::ERROR << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
  
            m_log << MSG::DEBUG << " failed track : " << *pTrack << endmsg;
-         } catch (EVENT::Exception& exception) {
-           m_log << MSG::WARNING << "Failed to extract a vertex: " << exception.what() << endmsg;
+         } catch (...) {
+           m_log << MSG::WARNING << "Failed to extract a vertex" << endmsg;
          }
        }
  
-       m_log << MSG::DEBUG << "After treating collection : " << *iter << " with "
-                             << pTrackCollection->getNumberOfElements() << " tracks, the track vector size is "
+       m_log << MSG::DEBUG << "After treating collection" << " with "
+                             << pTrackCollection->size() << " tracks, the track vector size is "
                              << m_trackVector.size() << endmsg;
  
-     } catch (EVENT::Exception& exception) {
-       m_log << MSG::WARNING << "Failed to extract track collection: " << *iter << ", " << exception.what()
-                              << endmsg;
+     } catch (...) {
+       m_log << MSG::WARNING << "Failed to extract track collection" << endmsg;
      }
    }
  
@@ -260,7 +251,7 @@
  
    // Check momentum uncertainty is reasonable to use track
    const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-   const float                     sigmaPOverP(std::sqrt(stateAtIP.getCovMatrix()[5]) / std::fabs(stateAtIP.omega));
+   const float                     sigmaPOverP(std::sqrt(stateAtIP.covMatrix[5]) / std::fabs(stateAtIP.omega));
  
    if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
      m_log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
@@ -280,7 +271,7 @@
      const float pY(fabs(momentumAtDca.GetY()));
      const float pZ(fabs(momentumAtDca.GetZ()));
      const float pT(std::sqrt(pX * pX + pY * pY));
-     const float rInnermostHit(pTrack->getRadiusOfInnermostHit()); // TODO: FIX THIS
+     const float rInnermostHit(std::sqrt(stateAtIP.D0*stateAtIP.D0+stateAtIP.Z0*stateAtIP.Z0)); // TODO: IS THIS RIGHT -- ALSO trackAtCalo
  
      if ((0.f == pT) || (0.f == pZ) || (rInnermostHit == m_trackerOuterR)) {
        m_log << MSG::ERROR << "Invalid track parameter, pT " << pT << ", pZ " << pZ << ", rInnermostHit "

@@ -29,6 +29,7 @@ TARGET_INCLUDE_DIRECTORIES(k4GaudiPandoraPlugins
                         ${Gaudi_INCLUDE_DIRS}
 			${GSL_INCLUDE_DIRS}
 			${PandoraSDK_INCLUDE_DIRS}
+                        ${LCConent_INCLUDE_DIRS}
 			${DD4hep_INCLUDE_DIRS}
 			${LCContent_INCLUDE_DIRS}
                         ${ROOT_INCLUDE_DIRS})

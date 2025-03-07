@@ -79,7 +79,7 @@ public:
      *
      *  @param  pLCEvent the lcio event
      */
-  pandora::StatusCode CreateMCParticles(std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const;
+  pandora::StatusCode CreateMCParticles(const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const;
 
   /**
      *  @brief  Create Track to mc particle relationships

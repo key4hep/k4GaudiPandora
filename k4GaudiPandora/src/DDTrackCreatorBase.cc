@@ -70,10 +70,11 @@ DDTrackCreatorBase::~DDTrackCreatorBase() {}
 pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(
   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+  const std::vector<const edm4hep::VertexCollection*>& splitCollections,
   const std::vector<const edm4hep::VertexCollection*>& v0Collections
 ) {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractKinks(kinkCollections));
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(prongCollections));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(prongCollections, splitCollections));
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractV0s(v0Collections));
 
   return pandora::STATUS_CODE_SUCCESS;
@@ -174,7 +175,12 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
+pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongCollections, 
+                                                               const std::vector<const edm4hep::VertexCollection*>& splitCollections) {
+  std::vector<const edm4hep::VertexCollection*> vertexCollections;
+  vertexCollections.insert(vertexCollections.end(), prongCollections.begin(), prongCollections.end());
+  vertexCollections.insert(vertexCollections.end(), splitCollections.begin(), splitCollections.end());
+
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pProngOrSplitCollection = vertexCollections[colIndex];
@@ -320,9 +326,9 @@ bool DDTrackCreatorBase::IsConflictingRelationship(const edm4hep::ReconstructedP
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
+void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track* const    pTrack,
                                         PandoraApi::Track::Parameters& trackParameters) const {
-  const edm4hep::TrackState pTrackState0 = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
+  const edm4hep::TrackState pTrackState0 = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
   const edm4hep::TrackState *pTrackState = &pTrackState0;
 
   if (!pTrackState)
@@ -334,11 +340,11 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
                                pTrackState->tanLambda) *
       pt;
 
-  edm4hep::TrackState firstHit = pTrack.getTrackStates(edm4hep::TrackState::AtFirstHit);
+  edm4hep::TrackState firstHit = pTrack->getTrackStates(edm4hep::TrackState::AtFirstHit);
   this->CopyTrackState(&firstHit, trackParameters.m_trackStateAtStart);
 
   //fg: curling TPC tracks have pointers to track segments stored -> need to get track states from last segment!
-  const edm4hep::Track pEndTrack = (pTrack.getTracks().empty() ? pTrack : *std::prev(pTrack.getTracks().end()));
+  const edm4hep::Track pEndTrack = (pTrack->getTracks().empty() ? *pTrack : *std::prev(pTrack->getTracks().end()));
   edm4hep::TrackState lastHit = pEndTrack.getTrackStates(edm4hep::TrackState::AtLastHit);
   edm4hep::TrackState atCalo = pEndTrack.getTrackStates(edm4hep::TrackState::AtCalorimeter);
 
@@ -360,8 +366,8 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track           pTrack,
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track pTrack) const {
-  edm4hep::TrackState state = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
+float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track* const pTrack) const {
+  edm4hep::TrackState state = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
   const pandora::Helix            helix(state.phi, state.D0, state.Z0, state.omega,
                                         state.tanLambda, m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());

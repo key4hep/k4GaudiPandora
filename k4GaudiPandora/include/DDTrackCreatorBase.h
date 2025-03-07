@@ -147,12 +147,14 @@ public:
      *  @brief  Create associations between tracks, V0s, kinks, etc
      *
      *  @param  kinkCollections the Vertex collections of kinks
-     *  @param  prongCollections the Vertex collections of prongs and splits
+     *  @param  prongCollections the Vertex collections of prongs
+     *  @param  splitCollections the Vertex collections of splits
      *  @param  v0Collections the Vertex collections of V0s
      */
   pandora::StatusCode CreateTrackAssociations(
    const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
    const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+   const std::vector<const edm4hep::VertexCollection*>& splitCollections,
    const std::vector<const edm4hep::VertexCollection*>& v0Collections
   );
 
@@ -198,7 +200,7 @@ protected:
      *
      *  @return boolean
      */
-  virtual bool PassesQualityCuts(const edm4hep::Track pTrack,
+  virtual bool PassesQualityCuts(const edm4hep::Track* const pTrack,
                                  const PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -207,7 +209,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void TrackReachesECAL(const edm4hep::Track pTrack,
+  virtual void TrackReachesECAL(const edm4hep::Track* const pTrack,
                                 PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -218,7 +220,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void DefineTrackPfoUsage(const edm4hep::Track* pTrack,
+  virtual void DefineTrackPfoUsage(const edm4hep::Track* const pTrack,
                                    PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -233,7 +235,9 @@ protected:
      *
      *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
+  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+                                             const std::vector<const edm4hep::VertexCollection*>& splitCollections
+  );
 
   /**
      *  @brief  Extract v0 information from specified collections
@@ -282,7 +286,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  void GetTrackStates(const edm4hep::Track pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+  void GetTrackStates(const edm4hep::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
 
   /**
      *  @brief  Copy track state from lcio track state instance to pandora input track state
@@ -297,7 +301,7 @@ protected:
      *
      *  @param  pTrack the track
      */
-  float CalculateTrackTimeAtCalorimeter(const edm4hep::Track pTrack) const;
+  float CalculateTrackTimeAtCalorimeter(const edm4hep::Track* const pTrack) const;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

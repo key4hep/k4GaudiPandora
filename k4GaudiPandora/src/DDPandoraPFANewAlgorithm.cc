@@ -26,6 +26,9 @@
  */
 
 #include "Api/PandoraApi.h"
+#include "LCContent.h"
+#include "LCPlugins/LCSoftwareCompensation.h"
+
 
 #include "DDPandoraPFANewAlgorithm.h"
 
@@ -36,7 +39,7 @@
 #include "DDRec/DetectorData.h"
 
 #include "DDTrackCreatorCLIC.h"
-#include "DDTrackCreatorILD.h"
+//#include "DDTrackCreatorILD.h"
 
 #include "DDBFieldPlugin.h"
 
@@ -53,7 +56,7 @@ double getFieldFromCompact() {
   return magneticFieldVector[2] / dd4hep::tesla;  // z component at (0,0,0)
 }
 
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0, MsgStream log) {
+dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, MsgStream log,unsigned int excludeFlag = 0) {
   dd4hep::rec::LayeredCalorimeterData* theExtension = 0;
 
   dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
@@ -94,60 +97,48 @@ std::vector<double> getTrackingRegionExtent() {
   return extent;
 }
 
-DDPandoraPFANewAlgorithm::PandoraToLCEventMap DDPandoraPFANewAlgorithm::m_pandoraToLCEventMap;
-
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm() (const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc,
-   const std::vector<const edm4hep::MCParticle*>&,
-   const std::vector<const edm4hep::VertexCollection*>&,
-   const std::vector<const edm4hep::VertexCollection*>&,
-   const std::vector<const edm4hep::VertexCollection*>&,
-   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>&,
-   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&
-  { KeyValues("InputMCParticles", {"MCParticles"}), 
-    KeyValues("InputKinkVerticies", {"KinkVerticies"}),
-    KeyValues("InputProngSplitVerticies", {"ProngSplitVerticies"}),
-    KeyValues("InputTrackerHitLinkCollections", {"TrackerHitLinkCollections"}),
-    KeyValues("InputECalCollections", {"ECalCollections"}),
-    KeyValues("InputHCalCollections", {"HCalCollections"}),
-    KeyValues("InputMCalCollections", {"MCalCollections"}),
-    KeyValues("InputLCalCollections", {"LCalCollections"}),
-    KeyValues("InputHLCalCollections", {"HLCalCollections"}),
-    KeyValues("InputCaloHitLinkCollections", {"CaloHitLinkCollections"}),},
-  { KeyValues("OutputClusterCollections", {"PandoraClusters"}),
-    KeyValues("OutputRecoParticleCollections", {"ReconstrcutedParticles"}), 
-    KeyValues("OutputVertexCollections", {"PandoraVerticies"}) }) {
-    this->ProcessSteeringFile();
-}
+DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc,
+  { KeyValues("MCParticleCollections", {"MCParticleCollections"}), 
+    KeyValues("KinkVertexCollections", {"KinkVertexCollections"}),
+    KeyValues("ProngVertexCollections", {"ProngVertexCollections"}),
+    KeyValues("SplitVertexCollections", {"SplitVertexCollections"}),
+    KeyValues("V0VertexCollections", {"V0VertexCollections"}),
+    KeyValues("TrackCollections", {"TrackCollections"}),    
+    KeyValues("RelTrackCollections", {"RelTrackCollections"}),
+    KeyValues("ECalCaloHitCollections", {"ECalCaloHitCollections"}),
+    KeyValues("HCalCaloHitCollections", {"HCalCaloHitCollections"}),
+    KeyValues("MuonCaloHitCollections", {"MuonCaloHitCollections"}),
+    KeyValues("LCalCaloHitCollections", {"LCalCaloHitCollections"}),
+    KeyValues("LHCalCaloHitCollections", {"LHCalCaloHitCollections"}),
+    KeyValues("RelCaloHitCollections", {"RelCaloHitCollections"}),},
+  { KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
+    KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}), 
+    KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"}) }) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 StatusCode DDPandoraPFANewAlgorithm::initialize() {
+  MsgStream log(msgSvc(), name());
   try {
-    MsgStream log(msgSvc(), name());
     log << MSG::INFO << "DDPandoraPFANewAlgorithm - Init" << endmsg;
     this->FinaliseSteeringParameters();
 
     m_pPandora         = new pandora::Pandora();
-    m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora);
-    m_pCaloHitCreator  = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora);
+    m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora, log);
+    m_pCaloHitCreator  = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora, log);
 
     ///FIXME: IMPLEMENT FACTORY
     if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-      m_pTrackCreator = new DDTrackCreatorCLIC(m_trackCreatorSettings, m_pPandora);
-    else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
-      m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
+      m_pTrackCreator = new DDTrackCreatorCLIC(m_trackCreatorSettings, m_pPandora, log);
+    //else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
+      //m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
     else
       log << MSG::ERROR << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
-    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora);
-    m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
+    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, log);
+    m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, log);
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry());
@@ -163,14 +154,17 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     log << MSG::ERROR << "Failed to initialize marlin pandora: unrecognized exception" << endmsg;
     throw;
   }
+
+  return StatusCode::SUCCESS;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection> operator()(
-  const std::vector<const edm4hep::MCParticle *>& MCParticleCollections,
+std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection, edm4hep::VertexCollection> DDPandoraPFANewAlgorithm::operator()(
+  const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections,
   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+  const std::vector<const edm4hep::VertexCollection*>& splitCollections,
   const std::vector<const edm4hep::VertexCollection*>& v0Collections,
   const std::vector<const edm4hep::TrackCollection*>& trackCollections,
   const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
@@ -180,14 +174,14 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections
-) const{
+) const {
+  MsgStream log(msgSvc(), name());
   try {
-    MsgStream log(msgSvc(), name());
     log << MSG::DEBUG << "DDPandoraPFANewAlgorithm - Run " << endmsg;
-    (void)m_pandoraToLCEventMap.insert(PandoraToLCEventMap::value_type(m_pPandora, pLCEvent));
+    //(void)m_pandoraToLCEventMap.insert(PandoraToLCEventMap::value_type(m_pPandora, pLCEvent));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDMCParticleCreator->CreateMCParticles(MCParticleCollections));
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, v0Collections));
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, splitCollections, v0Collections));
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks(trackCollections));
     PANDORA_THROW_RESULT_IF(
         pandora::STATUS_CODE_SUCCESS, !=,
@@ -209,25 +203,22 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora));
     this->Reset();
+
+    return std::make_tuple(
+      std::move(pClusterCollection), 
+      std::move(pReconstructedParticleCollection), 
+      std::move(pStartVertexCollection)
+    );
   } catch (pandora::StatusCodeException& statusCodeException) {
     log << MSG::ERROR << "Marlin pandora failed to process event: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
-  } catch (EVENT::Exception& exception) {
-    log << MSG::ERROR << "Marlin pandora failed to process event: lcio exception " << exception.what() << endmsg;
-    throw exception;
   } catch (std::exception& exception) {
-    log << MSG::ERROR << "Marlin pandora failed to process event: std exception " << exception.what() << endmsg;
-    throw exception;
+    log << MSG::ERROR << "Pandora failed to process event: std exception " << exception.what() << endmsg;
+    throw;
   } catch (...) {
-    log << MSG::ERROR << "Marlin pandora failed to process event: unrecognized exception" << endmsg;
+    log << MSG::ERROR << "Pandora failed to process event: unrecognized exception" << endmsg;
     throw;
   }
-
-  return std::make_tuple(
-    std::move(pClusterCollection), 
-    std::move(pReconstructedParticleCollection), 
-    std::move(pStartVertexCollection), 
-  )
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -305,367 +296,6 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-void DDPandoraPFANewAlgorithm::ProcessSteeringFile() {
-  registerProcessorParameter("PandoraSettingsXmlFile", "The pandora settings xml file",
-                             m_settings.m_pandoraSettingsXmlFile, std::string());
-
-  // Input collections
-  registerInputCollections(LCIO::TRACK, "TrackCollections", "Names of the Track collections used for clustering",
-                           m_trackCreatorSettings.m_trackCollections, StringVector());
-
-  registerInputCollections(LCIO::VERTEX, "KinkVertexCollections", "Name of external kink Vertex collections",
-                           m_trackCreatorSettings.m_kinkVertexCollections, StringVector());
-
-  registerInputCollections(LCIO::VERTEX, "ProngVertexCollections", "Name of external prong Vertex collections",
-                           m_trackCreatorSettings.m_prongVertexCollections, StringVector());
-
-  registerInputCollections(LCIO::VERTEX, "SplitVertexCollections", "Name of external split Vertex collections",
-                           m_trackCreatorSettings.m_splitVertexCollections, StringVector());
-
-  registerInputCollections(LCIO::VERTEX, "V0VertexCollections", "Name of external V0 Vertex collections",
-                           m_trackCreatorSettings.m_v0VertexCollections, StringVector());
-
-  registerInputCollections(LCIO::CALORIMETERHIT, "ECalCaloHitCollections", "Name of the ECAL calo hit collections",
-                           m_caloHitCreatorSettings.m_eCalCaloHitCollections, StringVector());
-
-  registerInputCollections(LCIO::CALORIMETERHIT, "HCalCaloHitCollections", "Name of the HCAL calo hit collections",
-                           m_caloHitCreatorSettings.m_hCalCaloHitCollections, StringVector());
-
-  registerInputCollections(LCIO::CALORIMETERHIT, "LCalCaloHitCollections", "Name of the LCAL calo hit collections",
-                           m_caloHitCreatorSettings.m_lCalCaloHitCollections, StringVector());
-
-  registerInputCollections(LCIO::CALORIMETERHIT, "LHCalCaloHitCollections", "Name of the LHCAL calo hit collections",
-                           m_caloHitCreatorSettings.m_lHCalCaloHitCollections, StringVector());
-
-  registerInputCollections(LCIO::CALORIMETERHIT, "MuonCaloHitCollections", "Name of the muon calo hit collections",
-                           m_caloHitCreatorSettings.m_muonCaloHitCollections, StringVector());
-
-  registerInputCollections(LCIO::MCPARTICLE, "MCParticleCollections", "Name of mc particle collections",
-                           m_mcParticleCreatorSettings.m_mcParticleCollections, StringVector());
-
-  registerInputCollections(LCIO::LCRELATION, "RelCaloHitCollections", "SimCaloHit to CaloHit Relations Collection Name",
-                           m_mcParticleCreatorSettings.m_lcCaloHitRelationCollections, StringVector());
-
-  registerInputCollections(LCIO::LCRELATION, "RelTrackCollections", "Track to MCParticle Relations Collection Name",
-                           m_mcParticleCreatorSettings.m_lcTrackRelationCollections, StringVector());
-
-  registerProcessorParameter("CreateGaps", "Decides whether to create gaps in the geometry (ILD-specific)",
-                             m_geometryCreatorSettings.m_createGaps, bool(true));
-
-  // Name of PFO collection written by MarlinPandora
-  registerOutputCollection(LCIO::CLUSTER, "ClusterCollectionName", "Cluster Collection Name",
-                           m_pfoCreatorSettings.m_clusterCollectionName, std::string("PandoraPFANewClusters"));
-
-  registerOutputCollection(LCIO::RECONSTRUCTEDPARTICLE, "PFOCollectionName", "PFO Collection Name",
-                           m_pfoCreatorSettings.m_pfoCollectionName, std::string("PandoraPFANewPFOs"));
-  registerOutputCollection(LCIO::VERTEX, "StartVertexCollectionName", "Start Vertex Collection Name",
-                           m_pfoCreatorSettings.m_startVertexCollectionName, std::string("PandoraPFANewStartVertices"));
-
-  registerProcessorParameter("StartVertexAlgorithmName", "The algorithm name for filling start vertex",
-                             m_pfoCreatorSettings.m_startVertexAlgName, std::string("PandoraPFANew"));
-
-  // Energy resolution parameters
-  registerProcessorParameter("EMStochasticTerm", "The stochastic term for EM shower",
-                             m_pfoCreatorSettings.m_emStochasticTerm, float(0.17));
-
-  registerProcessorParameter("HadStochasticTerm", "The stochastic term for Hadronic shower",
-                             m_pfoCreatorSettings.m_hadStochasticTerm, float(0.6));
-
-  registerProcessorParameter("EMConstantTerm", "The constant term for EM shower", m_pfoCreatorSettings.m_emConstantTerm,
-                             float(0.01));
-
-  registerProcessorParameter("HadConstantTerm", "The constant term for Hadronic shower",
-                             m_pfoCreatorSettings.m_hadConstantTerm, float(0.03));
-
-  // Calibration constants
-  registerProcessorParameter("ECalToMipCalibration", "The calibration from deposited ECal energy to mip",
-                             m_caloHitCreatorSettings.m_eCalToMip, float(1.));
-
-  registerProcessorParameter("HCalToMipCalibration", "The calibration from deposited HCal energy to mip",
-                             m_caloHitCreatorSettings.m_hCalToMip, float(1.));
-
-  registerProcessorParameter("ECalMipThreshold", "Threshold for creating calo hits in the ECal, units mip",
-                             m_caloHitCreatorSettings.m_eCalMipThreshold, float(0.));
-
-  registerProcessorParameter("MuonToMipCalibration", "The calibration from deposited Muon energy to mip",
-                             m_caloHitCreatorSettings.m_muonToMip, float(1.));
-
-  registerProcessorParameter("HCalMipThreshold", "Threshold for creating calo hits in the HCal, units mip",
-                             m_caloHitCreatorSettings.m_hCalMipThreshold, float(0.));
-
-  registerProcessorParameter("ECalToEMGeVCalibration", "The calibration from deposited ECal energy to EM energy",
-                             m_caloHitCreatorSettings.m_eCalToEMGeV, float(1.));
-
-  registerProcessorParameter("HCalToEMGeVCalibration", "The calibration from deposited HCal energy to EM energy",
-                             m_caloHitCreatorSettings.m_hCalToEMGeV, float(1.));
-
-  registerProcessorParameter("ECalToHadGeVCalibrationEndCap",
-                             "The calibration from deposited ECal energy to hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalToHadGeVEndCap, float(1.));
-
-  registerProcessorParameter("ECalToHadGeVCalibrationBarrel",
-                             "The calibration from deposited ECal energy to hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalToHadGeVBarrel, float(1.));
-
-  registerProcessorParameter("HCalToHadGeVCalibration", "The calibration from deposited HCal energy to hadronic energy",
-                             m_caloHitCreatorSettings.m_hCalToHadGeV, float(1.));
-
-  registerProcessorParameter("DigitalMuonHits", "Treat muon hits as digital",
-                             m_caloHitCreatorSettings.m_muonDigitalHits, int(1));
-
-  registerProcessorParameter("MuonHitEnergy", "The energy for a digital muon calorimeter hit, units GeV",
-                             m_caloHitCreatorSettings.m_muonHitEnergy, float(0.5));
-
-  registerProcessorParameter("MaxHCalHitHadronicEnergy", "The maximum hadronic energy allowed for a single hcal hit",
-                             m_caloHitCreatorSettings.m_maxHCalHitHadronicEnergy, float(10000.));
-
-  registerProcessorParameter("NOuterSamplingLayers",
-                             "Number of layers from edge for hit to be flagged as an outer layer hit",
-                             m_caloHitCreatorSettings.m_nOuterSamplingLayers, int(3));
-
-  registerProcessorParameter("LayersFromEdgeMaxRearDistance",
-                             "Maximum number of layers from candidate outer layer hit to rear of detector",
-                             m_caloHitCreatorSettings.m_layersFromEdgeMaxRearDistance, float(250.f));
-
-  // B-field parameters
-  registerProcessorParameter("MuonBarrelBField", "The bfield in the muon barrel, units Tesla",
-                             m_settings.m_muonBarrelBField, float(-1.5f));
-
-  registerProcessorParameter("MuonEndCapBField", "The bfield in the muon endcap, units Tesla",
-                             m_settings.m_muonEndCapBField, float(0.01f));
-
-  registerProcessorParameter("UseDD4hepField", "Whether to use the BField map from DD4hep", m_settings.m_useDD4hepField,
-                             false);
-
-  // Track relationship parameters
-  registerProcessorParameter("ShouldFormTrackRelationships",
-                             "Whether to form pandora track relationships using v0 and kink info",
-                             m_trackCreatorSettings.m_shouldFormTrackRelationships, int(1));
-
-  // Initial track hit specifications
-  registerProcessorParameter("MinTrackHits", "Track quality cut: the minimum number of track hits",
-                             m_trackCreatorSettings.m_minTrackHits, int(5));
-
-  registerProcessorParameter("MinFtdTrackHits",
-                             "Track quality cut: the minimum number of ftd track hits for ftd only tracks",
-                             m_trackCreatorSettings.m_minFtdTrackHits, int(0));
-
-  registerProcessorParameter("MaxTrackHits", "Track quality cut: the maximum number of track hits",
-                             m_trackCreatorSettings.m_maxTrackHits, int(5000));
-
-  // Track PFO usage parameters
-  registerProcessorParameter("D0TrackCut", "Track d0 cut used to determine whether track can be used to form pfo",
-                             m_trackCreatorSettings.m_d0TrackCut, float(50.));
-
-  registerProcessorParameter("Z0TrackCut", "Track z0 cut used to determine whether track can be used to form pfo",
-                             m_trackCreatorSettings.m_z0TrackCut, float(50.));
-
-  registerProcessorParameter("UseNonVertexTracks", "Whether can form pfos from tracks that don't start at vertex",
-                             m_trackCreatorSettings.m_usingNonVertexTracks, int(1));
-
-  registerProcessorParameter("UseUnmatchedNonVertexTracks",
-                             "Whether can form pfos from unmatched tracks that don't start at vertex",
-                             m_trackCreatorSettings.m_usingUnmatchedNonVertexTracks, int(0));
-
-  registerProcessorParameter("UseUnmatchedVertexTracks",
-                             "Whether can form pfos from unmatched tracks that start at vertex",
-                             m_trackCreatorSettings.m_usingUnmatchedVertexTracks, int(1));
-
-  registerProcessorParameter("UnmatchedVertexTrackMaxEnergy", "Maximum energy for unmatched vertex track",
-                             m_trackCreatorSettings.m_unmatchedVertexTrackMaxEnergy, float(5.));
-
-  registerProcessorParameter("D0UnmatchedVertexTrackCut",
-                             "d0 cut used to determine whether unmatched vertex track can form pfo",
-                             m_trackCreatorSettings.m_d0UnmatchedVertexTrackCut, float(5.));
-
-  registerProcessorParameter("Z0UnmatchedVertexTrackCut",
-                             "z0 cut used to determine whether unmatched vertex track can form pfo",
-                             m_trackCreatorSettings.m_z0UnmatchedVertexTrackCut, float(5.));
-
-  registerProcessorParameter("ZCutForNonVertexTracks",
-                             "Non vtx track z cut to determine whether track can be used to form pfo",
-                             m_trackCreatorSettings.m_zCutForNonVertexTracks, float(250.));
-
-  // Track "reaches ecal" parameters
-  registerProcessorParameter("ReachesECalNBarrelTrackerHits",
-                             "Minimum number of BarrelTracker hits to consider track as reaching ecal",
-                             m_trackCreatorSettings.m_reachesECalNBarrelTrackerHits, int(11));
-
-  registerProcessorParameter("ReachesECalNFtdHits", "Minimum number of ftd hits to consider track as reaching ecal",
-                             m_trackCreatorSettings.m_reachesECalNFtdHits, int(4));
-
-  registerProcessorParameter("ReachesECalBarrelTrackerOuterDistance",
-                             "Max distance from track to BarrelTracker r max to id whether track reaches ecal",
-                             m_trackCreatorSettings.m_reachesECalBarrelTrackerOuterDistance, float(-100.));
-
-  registerProcessorParameter("ReachesECalMinFtdLayer", "Min FTD layer for track to be considered to have reached ecal",
-                             m_trackCreatorSettings.m_reachesECalMinFtdLayer, int(9));
-
-  registerProcessorParameter("ReachesECalBarrelTrackerZMaxDistance",
-                             "Max distance from track to BarrelTracker z max to id whether track reaches ecal",
-                             m_trackCreatorSettings.m_reachesECalBarrelTrackerZMaxDistance, float(-50.));
-
-  registerProcessorParameter("ReachesECalFtdZMaxDistance",
-                             "Max distance from track hit to ftd z position to identify ftd hits",
-                             m_trackCreatorSettings.m_reachesECalFtdZMaxDistance, float(1.));
-
-  registerProcessorParameter("CurvatureToMomentumFactor", "Constant relating track curvature in b field to momentum",
-                             m_trackCreatorSettings.m_curvatureToMomentumFactor, float(0.3 / 2000.));
-
-  registerProcessorParameter("MinTrackECalDistanceFromIp",
-                             "Sanity check on separation between ip and track projected ecal position",
-                             m_trackCreatorSettings.m_minTrackECalDistanceFromIp, float(100.));
-
-  // Final track quality parameters
-  registerProcessorParameter("MaxTrackSigmaPOverP", "Cut on fractional track momentum error",
-                             m_trackCreatorSettings.m_maxTrackSigmaPOverP, float(0.15));
-
-  registerProcessorParameter("MinMomentumForTrackHitChecks",
-                             "Min track momentum required to perform final quality checks on number of hits",
-                             m_trackCreatorSettings.m_minMomentumForTrackHitChecks, float(1.));
-
-  registerProcessorParameter("MinBarrelTrackerHitFractionOfExpected",
-                             "Cut on fractional of expected number of BarrelTracker hits",
-                             m_trackCreatorSettings.m_minBarrelTrackerHitFractionOfExpected, float(0.20));
-
-  registerProcessorParameter("MinFtdHitsForBarrelTrackerHitFraction",
-                             "Cut on minimum number of FTD hits of BarrelTracker hit fraction to be applied",
-                             m_trackCreatorSettings.m_minFtdHitsForBarrelTrackerHitFraction, int(2));
-
-  registerProcessorParameter("MaxBarrelTrackerInnerRDistance",
-                             "Track cut on distance from BarrelTracker inner r to id whether track can form pfo",
-                             m_trackCreatorSettings.m_maxBarrelTrackerInnerRDistance, float(50.));
-
-  registerProcessorParameter(
-      "TrackStateTolerance",
-      "Distance of possible second track state in the ECal Endcap to the ECal barrel inner radius",
-      m_trackCreatorSettings.m_trackStateTolerance, m_trackCreatorSettings.m_trackStateTolerance);
-
-  registerProcessorParameter("TrackSystemName",
-                             "Name of the track fitting system to be used (KalTest, DDKalTest, aidaTT, ... )",
-                             m_trackCreatorSettings.m_trackingSystemName, m_trackCreatorSettings.m_trackingSystemName);
-
-  // For Strip Splitting method and also for hybrid ECAL
-  registerProcessorParameter("StripSplittingOn", "To use strip splitting algorithm, this should be true",
-                             m_caloHitCreatorSettings.m_stripSplittingOn, int(0));
-
-  // For Strip Splitting method and also for hybrid ECAL
-  registerProcessorParameter("UseEcalScLayers", "To use scintillator layers ~ hybrid ECAL, this should be true",
-                             m_caloHitCreatorSettings.m_useEcalScLayers, int(0));
-
-  // Parameters for hybrid ECAL
-  // Energy to MIP for Si-layers and Sc-layers, respectively.
-  //Si
-  registerProcessorParameter("ECalSiToMipCalibration", "The calibration from deposited Si-layer energy to mip",
-                             m_caloHitCreatorSettings.m_eCalSiToMip, float(1.));
-
-  //Sc
-  registerProcessorParameter("ECalScToMipCalibration", "The calibration from deposited Sc-layer energy to mip",
-                             m_caloHitCreatorSettings.m_eCalScToMip, float(1.));
-
-  // MipThreshold for Si-layers and Sc-layers, respectively.
-  // Si
-  registerProcessorParameter("ECalSiMipThreshold",
-                             "Threshold for creating calo hits in the Si-layers of ECAL, units mip",
-                             m_caloHitCreatorSettings.m_eCalSiMipThreshold, float(0.));
-
-  //Sc
-  registerProcessorParameter("ECalScMipThreshold",
-                             "Threshold for creating calo hits in the Sc-layers of ECAL, units mip",
-                             m_caloHitCreatorSettings.m_eCalScMipThreshold, float(0.));
-
-  // EcalToEM for Si-layers and Sc-layers, respectively.
-  //Si
-  registerProcessorParameter("ECalSiToEMGeVCalibration", "The calibration from deposited Si-layer energy to EM energy",
-                             m_caloHitCreatorSettings.m_eCalSiToEMGeV, float(1.));
-
-  //Sc
-  registerProcessorParameter("ECalScToEMGeVCalibration", "The calibration from deposited Sc-layer energy to EM energy",
-                             m_caloHitCreatorSettings.m_eCalScToEMGeV, float(1.));
-
-  // EcalToHad for Si-layers and Sc-layers of the endcaps, respectively.
-  //Si
-  registerProcessorParameter("ECalSiToHadGeVCalibrationEndCap",
-                             "The calibration from deposited Si-layer energy on the enecaps to hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalSiToHadGeVEndCap, float(1.));
-
-  //Sc
-  registerProcessorParameter("ECalScToHadGeVCalibrationEndCap",
-                             "The calibration from deposited Sc-layer energy on the endcaps to hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalScToHadGeVEndCap, float(1.));
-
-  // EcalToHad for Si-layers and Sc-layers of the barrel, respectively.
-  //Si
-  registerProcessorParameter("ECalSiToHadGeVCalibrationBarrel",
-                             "The calibration from deposited Si-layer energy on the barrel to hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalSiToHadGeVBarrel, float(1.));
-
-  //Sc
-  registerProcessorParameter("ECalScToHadGeVCalibrationBarrel",
-                             "The calibration from deposited Sc-layer energy to the barrel hadronic energy",
-                             m_caloHitCreatorSettings.m_eCalScToHadGeVBarrel, float(1.));
-
-  // Hadronic energy non-linearity correction
-  registerProcessorParameter("InputEnergyCorrectionPoints", "The input energy points for hadronic energy correction",
-                             m_settings.m_inputEnergyCorrectionPoints, FloatVector());
-
-  registerProcessorParameter("OutputEnergyCorrectionPoints", "The output energy points for hadronic energy correction",
-                             m_settings.m_outputEnergyCorrectionPoints, FloatVector());
-
-  ///EXTRA PARAMETERS FROM NIKIFOROS
-  registerProcessorParameter("TrackCreatorName", "The name of the DDTrackCreator implementation",
-                             m_settings.m_trackCreatorName, std::string("DDTrackCreatorCLIC"));
-
-  registerProcessorParameter("ECalBarrelNormalVector",
-                             "Normal vector for the ECal barrel sensitive layers in local coordinates",
-                             m_caloHitCreatorSettings.m_eCalBarrelNormalVector, std::vector<float>({0.0, 0.0, 1.0}));
-
-  registerProcessorParameter("HCalBarrelNormalVector",
-                             "Normal vector for the HCal barrel sensitive layers in local coordinates",
-                             m_caloHitCreatorSettings.m_hCalBarrelNormalVector, std::vector<float>({0.0, 0.0, 1.0}));
-
-  registerProcessorParameter("YokeBarrelNormalVector",
-                             "Normal vector for the muon barrel sensitive layers in local coordinates",
-                             m_caloHitCreatorSettings.m_muonBarrelNormalVector, std::vector<float>({0.0, 0.0, 1.0}));
-
-  // Re-use LCSoftwareCompensationParameters default values
-  lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
-
-  registerProcessorParameter("SoftwareCompensationWeights",
-                             "The 9 software compensation weights for Pandora energy correction",
-                             m_settings.m_softCompParameters, softwareCompensationParameters.m_softCompParameters);
-
-  registerProcessorParameter("SoftwareCompensationEnergyDensityBins",
-                             "The 10 software compensation density bins for Pandora energy correction",
-                             m_settings.m_softCompEnergyDensityBins,
-                             softwareCompensationParameters.m_softCompEnergyDensityBins);
-
-  registerProcessorParameter(
-      "FinalEnergyDensityBin", "The software compensation final energy density bins for Pandora energy correction",
-      m_settings.m_energyDensityFinalBin, softwareCompensationParameters.m_energyDensityFinalBin);
-
-  registerProcessorParameter("MaxClusterEnergyToApplySoftComp",
-                             "The maximum hadronic energy to apply software compensation in Pandora energy correction",
-                             m_settings.m_maxClusterEnergyToApplySoftComp,
-                             softwareCompensationParameters.m_maxClusterEnergyToApplySoftComp);
-
-  registerProcessorParameter("MinCleanHitEnergy",
-                             "The minimum hit energy to apply ecal correction in Pandora energy correction",
-                             m_settings.m_minCleanHitEnergy, softwareCompensationParameters.m_minCleanHitEnergy);
-
-  registerProcessorParameter("MinCleanHitEnergyFraction",
-                             "The minimum hit energy fraction to apply ecal correction in Pandora energy correction",
-                             m_settings.m_minCleanHitEnergyFraction,
-                             softwareCompensationParameters.m_minCleanHitEnergyFraction);
-
-  registerProcessorParameter(
-      "MinCleanCorrectedHitEnergy", "The minimum correction to on ecal hit in Pandora energy correction",
-      m_settings.m_minCleanCorrectedHitEnergy, softwareCompensationParameters.m_minCleanCorrectedHitEnergy);
-}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
   // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the processor,
@@ -680,27 +310,27 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
 
   //Get ECal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalBarrelExtension =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL), log,
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
   //Get ECal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalEndcapExtension =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP), log,
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
   //Get HCal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalBarrelExtension =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL), log,
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
   //Get HCal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalEndcapExtension =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP), log,
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
   //Get Muon Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* muonBarrelExtension =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
-                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD), log);
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL), log,
+                   (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
   //fg: muon endcap is not used :
   // //Get Muon Endcap extension by type, ignore plugs and rings
-  // const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP), ( dd4hep::DetType::AUXILIARY ) );
+  // const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP),  log, ( dd4hep::DetType::AUXILIARY ) );
 
   //Get COIL extension
   const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL), log);
@@ -741,7 +371,7 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewAlgorithm::Reset() {
+void DDPandoraPFANewAlgorithm::Reset() const{
   m_pCaloHitCreator->Reset();
   m_pTrackCreator->Reset();
   /*

@@ -49,7 +49,7 @@ DDMCParticleCreator::~DDMCParticleCreator() {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateMCParticles(std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const {
+pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const {
   for (int colIndex = 0; colIndex < MCParticleCollections.size(); colIndex++) {
     try {
       const edm4hep::MCParticleCollection* pMCParticleCollection = MCParticleCollections[colIndex];
