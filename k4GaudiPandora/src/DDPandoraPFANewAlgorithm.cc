@@ -139,11 +139,16 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
 
     m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, log);
     m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, log);
+    log << MSG::INFO << "PFO" << endmsg;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
+    log << MSG::INFO << "REG" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry());
+    log << MSG::INFO << "CREATE" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             PandoraApi::ReadSettings(*m_pPandora, m_settings.m_pandoraSettingsXmlFile));
+    log << MSG::INFO << "READ" << endmsg;
+
   } catch (pandora::StatusCodeException& statusCodeException) {
     log << MSG::ERROR << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
@@ -301,10 +306,89 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
   // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the processor,
   // when the steering file is parsed e.g. the call to GEAR to get the inner bfield
   MsgStream log(msgSvc(), name());
-  m_trackCreatorSettings.m_prongSplitVertexCollections = m_trackCreatorSettings.m_prongVertexCollections;
-  m_trackCreatorSettings.m_prongSplitVertexCollections.insert(
-      m_trackCreatorSettings.m_prongSplitVertexCollections.end(),
-      m_trackCreatorSettings.m_splitVertexCollections.begin(), m_trackCreatorSettings.m_splitVertexCollections.end());
+
+  m_settings.m_pandoraSettingsXmlFile = m_pandoraSettingsXmlFile;
+  m_geometryCreatorSettings.m_createGaps = m_createGaps;
+  m_pfoCreatorSettings.m_startVertexAlgName = m_startVertexAlgName;
+  m_pfoCreatorSettings.m_emStochasticTerm = m_emStochasticTerm;
+  m_pfoCreatorSettings.m_hadStochasticTerm = m_hadStochasticTerm;
+  m_pfoCreatorSettings.m_emConstantTerm = m_emConstantTerm;
+  m_pfoCreatorSettings.m_hadConstantTerm = m_hadConstantTerm;
+  m_caloHitCreatorSettings.m_eCalToMip = m_eCalToMip;
+  m_caloHitCreatorSettings.m_hCalToMip = m_hCalToMip;
+  m_caloHitCreatorSettings.m_eCalMipThreshold = m_eCalMipThreshold;
+  m_caloHitCreatorSettings.m_muonToMip = m_muonToMip;
+  m_caloHitCreatorSettings.m_hCalMipThreshold = m_hCalMipThreshold;
+  m_caloHitCreatorSettings.m_eCalToEMGeV = m_eCalToEMGeV;
+  m_caloHitCreatorSettings.m_hCalToEMGeV = m_hCalToEMGeV;
+  m_caloHitCreatorSettings.m_eCalToHadGeVEndCap = m_eCalToHadGeVEndCap;
+  m_caloHitCreatorSettings.m_eCalToHadGeVBarrel = m_eCalToHadGeVBarrel;
+  m_caloHitCreatorSettings.m_hCalToHadGeV = m_hCalToHadGeV;
+  m_caloHitCreatorSettings.m_muonDigitalHits = m_muonDigitalHits;
+  m_caloHitCreatorSettings.m_muonHitEnergy = m_muonHitEnergy;
+  m_caloHitCreatorSettings.m_maxHCalHitHadronicEnergy = m_maxHCalHitHadronicEnergy;
+  m_caloHitCreatorSettings.m_nOuterSamplingLayers = m_nOuterSamplingLayers;
+  m_caloHitCreatorSettings.m_layersFromEdgeMaxRearDistance = m_layersFromEdgeMaxRearDistance;
+  m_settings.m_muonBarrelBField = m_muonBarrelBField;
+  m_settings.m_muonEndCapBField = m_muonEndCapBField;
+  m_settings.m_useDD4hepField = m_useDD4hepField;
+  m_trackCreatorSettings.m_shouldFormTrackRelationships = m_shouldFormTrackRelationships;
+  m_trackCreatorSettings.m_minTrackHits = m_minTrackHits;
+  m_trackCreatorSettings.m_minFtdTrackHits = m_minFtdTrackHits;
+  m_trackCreatorSettings.m_maxTrackHits = m_maxTrackHits;
+  m_trackCreatorSettings.m_d0TrackCut = m_d0TrackCut;
+  m_trackCreatorSettings.m_z0TrackCut = m_z0TrackCut;
+  m_trackCreatorSettings.m_usingNonVertexTracks = m_usingNonVertexTracks;
+  m_trackCreatorSettings.m_usingUnmatchedNonVertexTracks = m_usingUnmatchedNonVertexTracks;
+  m_trackCreatorSettings.m_usingUnmatchedVertexTracks = m_usingUnmatchedVertexTracks;
+  m_trackCreatorSettings.m_unmatchedVertexTrackMaxEnergy = m_unmatchedVertexTrackMaxEnergy;
+  m_trackCreatorSettings.m_d0UnmatchedVertexTrackCut = m_d0UnmatchedVertexTrackCut;
+  m_trackCreatorSettings.m_z0UnmatchedVertexTrackCut = m_z0UnmatchedVertexTrackCut;
+  m_trackCreatorSettings.m_zCutForNonVertexTracks = m_zCutForNonVertexTracks;
+  m_trackCreatorSettings.m_reachesECalNBarrelTrackerHits = m_reachesECalNBarrelTrackerHits;
+  m_trackCreatorSettings.m_reachesECalNFtdHits = m_reachesECalNFtdHits;
+  m_trackCreatorSettings.m_reachesECalBarrelTrackerOuterDistance = m_reachesECalBarrelTrackerOuterDistance;
+  m_trackCreatorSettings.m_reachesECalMinFtdLayer = m_reachesECalMinFtdLayer;
+  m_trackCreatorSettings.m_reachesECalBarrelTrackerZMaxDistance = m_reachesECalBarrelTrackerZMaxDistance;
+  m_trackCreatorSettings.m_reachesECalFtdZMaxDistance = m_reachesECalFtdZMaxDistance;
+  m_trackCreatorSettings.m_curvatureToMomentumFactor = m_curvatureToMomentumFactor;
+  m_trackCreatorSettings.m_minTrackECalDistanceFromIp = m_minTrackECalDistanceFromIp;
+  m_trackCreatorSettings.m_maxTrackSigmaPOverP = m_maxTrackSigmaPOverP;
+  m_trackCreatorSettings.m_minMomentumForTrackHitChecks = m_minMomentumForTrackHitChecks;
+  m_trackCreatorSettings.m_minBarrelTrackerHitFractionOfExpected = m_minBarrelTrackerHitFractionOfExpected;
+  m_trackCreatorSettings.m_minFtdHitsForBarrelTrackerHitFraction = m_minFtdHitsForBarrelTrackerHitFraction;
+  m_trackCreatorSettings.m_maxBarrelTrackerInnerRDistance = m_maxBarrelTrackerInnerRDistance;
+  m_trackCreatorSettings.m_trackStateTolerance = m_trackStateTolerance;
+  m_trackCreatorSettings.m_trackingSystemName = m_trackingSystemName;
+  m_caloHitCreatorSettings.m_stripSplittingOn = m_stripSplittingOn;
+  m_caloHitCreatorSettings.m_useEcalScLayers = m_useEcalScLayers;
+  m_caloHitCreatorSettings.m_useEcalSiLayers = m_useEcalSiLayers;
+  m_caloHitCreatorSettings.m_eCalSiToMip = m_eCalSiToMip;
+  m_caloHitCreatorSettings.m_eCalScToMip = m_eCalScToMip;
+  m_caloHitCreatorSettings.m_eCalSiMipThreshold = m_eCalSiMipThreshold;
+  m_caloHitCreatorSettings.m_eCalScMipThreshold = m_eCalScMipThreshold;
+  m_caloHitCreatorSettings.m_eCalSiToEMGeV = m_eCalSiToEMGeV;
+  m_caloHitCreatorSettings.m_eCalScToEMGeV = m_eCalScToEMGeV;
+  m_caloHitCreatorSettings.m_eCalSiToHadGeVEndCap = m_eCalSiToHadGeVEndCap;
+  m_caloHitCreatorSettings.m_eCalScToHadGeVEndCap = m_eCalScToHadGeVEndCap;
+  m_caloHitCreatorSettings.m_eCalSiToHadGeVBarrel = m_eCalSiToHadGeVBarrel;
+  m_caloHitCreatorSettings.m_eCalScToHadGeVBarrel = m_eCalScToHadGeVBarrel;
+  m_settings.m_inputEnergyCorrectionPoints = m_inputEnergyCorrectionPoints;
+  m_settings.m_outputEnergyCorrectionPoints = m_outputEnergyCorrectionPoints;
+  m_settings.m_ecalInputEnergyCorrectionPoints = m_ecalInputEnergyCorrectionPoints;
+  m_settings.m_ecalOutputEnergyCorrectionPoints = m_ecalOutputEnergyCorrectionPoints;
+  m_settings.m_trackCreatorName = m_trackCreatorName;
+  m_settings.m_detectorName = m_detectorName;
+  m_caloHitCreatorSettings.m_eCalBarrelNormalVector = m_eCalBarrelNormalVector;
+  m_caloHitCreatorSettings.m_hCalBarrelNormalVector = m_hCalBarrelNormalVector;
+  m_caloHitCreatorSettings.m_muonBarrelNormalVector = m_muonBarrelNormalVector;
+  m_settings.m_softCompParameters = m_softCompParameters;
+  m_settings.m_softCompEnergyDensityBins = m_softCompEnergyDensityBins;
+  m_settings.m_energyDensityFinalBin = m_energyDensityFinalBin;
+  m_settings.m_maxClusterEnergyToApplySoftComp = m_maxClusterEnergyToApplySoftComp;
+  m_settings.m_minCleanHitEnergy = m_minCleanHitEnergy;
+  m_settings.m_minCleanHitEnergyFraction = m_minCleanHitEnergyFraction;
+  m_settings.m_minCleanCorrectedHitEnergy = m_minCleanCorrectedHitEnergy;
 
   m_trackCreatorSettings.m_bField = getFieldFromCompact();
 

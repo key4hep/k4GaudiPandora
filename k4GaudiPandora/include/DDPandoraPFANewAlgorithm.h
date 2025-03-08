@@ -83,6 +83,7 @@ public:
     Settings();
 
     std::string m_pandoraSettingsXmlFile = "";  ///< The pandora settings xml file
+    
 
     float m_innerBField      = 0.0;    ///< The bfield in the main tracker, ecal and hcal, units Tesla
     float m_muonBarrelBField = 0.0;    ///< The bfield in the muon barrel, units Tesla
@@ -91,6 +92,9 @@ public:
 
     FloatVector m_inputEnergyCorrectionPoints{};   ///< The input energy points for non-linearity energy correction
     FloatVector m_outputEnergyCorrectionPoints{};  ///< The output energy points for non-linearity energy correction
+    FloatVector m_ecalInputEnergyCorrectionPoints{};    ///< The input energy points for non-linearity energy correction in the ECAL
+    FloatVector m_ecalOutputEnergyCorrectionPoints{};   ///< The input energy points for non-linearity energy correction in the ECAL
+
 
     // Software compensation parameters
     FloatVector m_softCompParameters{};
@@ -104,6 +108,10 @@ public:
     ///ADDED BY NIKIFOROS
     //Detector names not needed anymore, accessed by det type flags
     std::string m_trackCreatorName = "";  ///< The name of the DDTrackCreator implementation to use
+
+    // Detector name (used by ALLEGRO)
+    std::string     m_detectorName = "";
+
   };
 
   /**
@@ -211,10 +219,12 @@ private:
   Gaudi::Property<std::string> m_pandoraSettingsXmlFile{this, "PandoraSettingsXmlFile", "", "The pandora settings xml file"};
   Gaudi::Property<bool> m_createGaps{this, "CreateGaps", true, "Decides whether to create gaps in the geometry (ILD-specific)"};
   Gaudi::Property<std::string> m_startVertexAlgName{this, "StartVertexAlgorithmName", "PandoraPFANew", "The algorithm name for filling start vertex"};
+  // Energy resolution parameters
   Gaudi::Property<float> m_emStochasticTerm{this, "EMStochasticTerm", 0.17f, "The stochastic term for EM shower"};
   Gaudi::Property<float> m_hadStochasticTerm{this, "HadStochasticTerm", 0.6f, "The stochastic term for Hadronic shower"};
   Gaudi::Property<float> m_emConstantTerm{this, "EMConstantTerm", 0.01f, "The constant term for EM shower"};
   Gaudi::Property<float> m_hadConstantTerm{this, "HadConstantTerm", 0.03f, "The constant term for Hadronic shower"};
+  // Calibration constants
   Gaudi::Property<float> m_eCalToMip{this, "ECalToMipCalibration", 1.0f, "The calibration from deposited ECal energy to mip"};
   Gaudi::Property<float> m_hCalToMip{this, "HCalToMipCalibration", 1.0f, "The calibration from deposited HCal energy to mip"};
   Gaudi::Property<float> m_eCalMipThreshold{this, "ECalMipThreshold", 0.0f, "Threshold for creating calo hits in the ECal, units mip"};
@@ -230,13 +240,17 @@ private:
   Gaudi::Property<float> m_maxHCalHitHadronicEnergy{this, "MaxHCalHitHadronicEnergy", 10000.0f, "The maximum hadronic energy allowed for a single hcal hit"};
   Gaudi::Property<int> m_nOuterSamplingLayers{this, "NOuterSamplingLayers", 3, "Number of layers from edge for hit to be flagged as an outer layer hit"};
   Gaudi::Property<float> m_layersFromEdgeMaxRearDistance{this, "LayersFromEdgeMaxRearDistance", 250.0f, "Maximum number of layers from candidate outer layer hit to rear of detector"};
+  // B-field parameters
   Gaudi::Property<float> m_muonBarrelBField{this, "MuonBarrelBField", -1.5f, "The bfield in the muon barrel, units Tesla"};
   Gaudi::Property<float> m_muonEndCapBField{this, "MuonEndCapBField", 0.01f, "The bfield in the muon endcap, units Tesla"};
   Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false, "Whether to use the BField map from DD4hep"};
+  // Track relationship parameters
   Gaudi::Property<int> m_shouldFormTrackRelationships{this, "ShouldFormTrackRelationships", 1, "Whether to form pandora track relationships using v0 and kink info"};
+  // Initial track hit specifications
   Gaudi::Property<int> m_minTrackHits{this, "MinTrackHits", 5, "Track quality cut: the minimum number of track hits"};
   Gaudi::Property<int> m_minFtdTrackHits{this, "MinFtdTrackHits", 0, "Track quality cut: the minimum number of ftd track hits for ftd only tracks"};
   Gaudi::Property<int> m_maxTrackHits{this, "MaxTrackHits", 5000, "Track quality cut: the maximum number of track hits"};
+  // Track PFO usage parameters
   Gaudi::Property<float> m_d0TrackCut{this, "D0TrackCut", 50.0f, "Track d0 cut used to determine whether track can be used to form pfo"};
   Gaudi::Property<float> m_z0TrackCut{this, "Z0TrackCut", 50.0f, "Track z0 cut used to determine whether track can be used to form pfo"};
   Gaudi::Property<int> m_usingNonVertexTracks{this, "UseNonVertexTracks", 1, "Whether can form pfos from tracks that don't start at vertex"};
@@ -245,6 +259,75 @@ private:
   Gaudi::Property<float> m_unmatchedVertexTrackMaxEnergy{this, "UnmatchedVertexTrackMaxEnergy", 5.0f, "Maximum energy for unmatched vertex track"};
   Gaudi::Property<float> m_d0UnmatchedVertexTrackCut{this, "D0UnmatchedVertexTrackCut", 5.0f, "d0 cut used to determine whether unmatched vertex track can form pfo"};
   Gaudi::Property<float> m_z0UnmatchedVertexTrackCut{this, "Z0UnmatchedVertexTrackCut", 5.0f, "z0 cut used to determine whether unmatched vertex track can form pfo"};
+  Gaudi::Property<float> m_zCutForNonVertexTracks{this, "ZCutForNonVertexTracks", 250.0f, "Non vtx track z cut to determine whether track can be used to form pfo"};
+  // Track "reaches ecal" parameters
+  Gaudi::Property<int> m_reachesECalNBarrelTrackerHits{this, "ReachesECalNBarrelTrackerHits", 11, "Minimum number of BarrelTracker hits to consider track as reaching ecal"};
+  Gaudi::Property<int> m_reachesECalNFtdHits{this, "ReachesECalNFtdHits", 4, "Minimum number of FTD hits to consider track as reaching ecal"};
+  Gaudi::Property<float> m_reachesECalBarrelTrackerOuterDistance{this, "ReachesECalBarrelTrackerOuterDistance", -100.0f, "Max distance from track to BarrelTracker r max to determine whether track reaches ecal"};
+  Gaudi::Property<int> m_reachesECalMinFtdLayer{this, "ReachesECalMinFtdLayer", 9, "Min FTD layer for track to be considered to have reached ecal"};
+  Gaudi::Property<float> m_reachesECalBarrelTrackerZMaxDistance{this, "ReachesECalBarrelTrackerZMaxDistance", -50.0f, "Max distance from track to BarrelTracker z max to determine whether track reaches ecal"};
+  Gaudi::Property<float> m_reachesECalFtdZMaxDistance{this, "ReachesECalFtdZMaxDistance", 1.0f, "Max distance from track hit to FTD z position to identify FTD hits"};
+  Gaudi::Property<float> m_curvatureToMomentumFactor{this, "CurvatureToMomentumFactor", 0.3f / 2000.0f, "Constant relating track curvature in B field to momentum"};
+  Gaudi::Property<float> m_minTrackECalDistanceFromIp{this, "MinTrackECalDistanceFromIp", 100.0f, "Sanity check on separation between IP and track projected ECal position"};
+  // Final track quality parameters
+  Gaudi::Property<float> m_maxTrackSigmaPOverP{this, "MaxTrackSigmaPOverP", 0.15f, "Cut on fractional track momentum error"};
+  Gaudi::Property<float> m_minMomentumForTrackHitChecks{this, "MinMomentumForTrackHitChecks", 1.0f, "Min track momentum required to perform final quality checks on number of hits"};
+  Gaudi::Property<float> m_minBarrelTrackerHitFractionOfExpected{this, "MinBarrelTrackerHitFractionOfExpected", 0.20f, "Cut on fraction of expected number of BarrelTracker hits"};
+  Gaudi::Property<int> m_minFtdHitsForBarrelTrackerHitFraction{this, "MinFtdHitsForBarrelTrackerHitFraction", 2, "Cut on minimum number of FTD hits for BarrelTracker hit fraction to be applied"};
+  Gaudi::Property<float> m_maxBarrelTrackerInnerRDistance{this, "MaxBarrelTrackerInnerRDistance", 50.0f, "Track cut on distance from BarrelTracker inner r to determine whether track can form PFO"};
+  Gaudi::Property<float> m_trackStateTolerance{this, "TrackStateTolerance", 0.0f, "Distance of possible second track state in the ECal Endcap to the ECal barrel inner radius"};
+  Gaudi::Property<std::string> m_trackingSystemName{this, "TrackSystemName", "", "Name of the track fitting system to be used (KalTest, DDKalTest, aidaTT, ...)"};
+  // For Strip Splitting method and also for hybrid ECAL
+  Gaudi::Property<int> m_stripSplittingOn{this, "StripSplittingOn", 0, "To use strip splitting algorithm, this should be true"};
+  // For Strip Splitting method and also for hybrid ECAL
+  Gaudi::Property<std::vector<int>> m_useEcalScLayers{this, "UseEcalScLayers", {0}, "To use scintillator layers ~ hybrid ECAL, this should be true"};
+  Gaudi::Property<std::vector<int>> m_useEcalSiLayers{this, "UseEcalSiLayers", {0}, "To use scintillator layers ~ hybrid ECAL, this should be true"};
+  // Parameters for hybrid ECAL
+  // Energy to MIP for Si-layers and Sc-layers, respectively.
+  //Si
+  Gaudi::Property<float> m_eCalSiToMip{this, "ECalSiToMipCalibration", 1.0f, "The calibration from deposited Si-layer energy to mip"};
+  //Sc
+  Gaudi::Property<float> m_eCalScToMip{this, "ECalScToMipCalibration", 1.0f, "The calibration from deposited Sc-layer energy to mip"};
+  // MipThreshold for Si-layers and Sc-layers, respectively.
+  // Si
+  Gaudi::Property<float> m_eCalSiMipThreshold{this, "ECalSiMipThreshold", 0.0f, "Threshold for creating calo hits in the Si-layers of ECAL, units mip"};
+  //Sc
+  Gaudi::Property<float> m_eCalScMipThreshold{this, "ECalScMipThreshold", 0.0f,"Threshold for creating calo hits in the Sc-layers of ECAL, units mip"};
+  // EcalToEM for Si-layers and Sc-layers, respectively.
+  // Si
+  Gaudi::Property<float> m_eCalSiToEMGeV{this, "ECalSiToEMGeVCalibration", 1.0f, "The calibration from deposited Si-layer energy to EM energy"};
+  // Sc
+  Gaudi::Property<float> m_eCalScToEMGeV{this, "ECalScToEMGeVCalibration", 1.0f, "The calibration from deposited Sc-layer energy to EM energy"};
+  // EcalToHad for Si-layers and Sc-layers of the endcaps, respectively.
+  // Si
+  Gaudi::Property<float> m_eCalSiToHadGeVEndCap{this, "ECalSiToHadGeVCalibrationEndCap", 1.0f, "The calibration from deposited Si-layer energy on the endcaps to hadronic energy"};
+  // Sc
+  Gaudi::Property<float> m_eCalScToHadGeVEndCap{this, "ECalScToHadGeVCalibrationEndCap", 1.0f, "The calibration from deposited Sc-layer energy on the endcaps to hadronic energy"};
+  // EcalToHad for Si-layers and Sc-layers of the barrel, respectively.
+  // Si
+  Gaudi::Property<float> m_eCalSiToHadGeVBarrel{this, "ECalSiToHadGeVCalibrationBarrel", 1.0f, "The calibration from deposited Si-layer energy on the barrel to hadronic energy"};
+  // Sc
+  Gaudi::Property<float> m_eCalScToHadGeVBarrel{this, "ECalScToHadGeVCalibrationBarrel", 1.0f, "The calibration from deposited Sc-layer energy to the barrel hadronic energy"};
+  // Hadronic energy non-linearity correction
+  Gaudi::Property<std::vector<float>> m_inputEnergyCorrectionPoints{this, "InputEnergyCorrectionPoints", {}, "The input energy points for hadronic energy correction"};
+  Gaudi::Property<std::vector<float>> m_outputEnergyCorrectionPoints{this, "OutputEnergyCorrectionPoints", {}, "The output energy points for hadronic energy correction"};
+  // ECAL energy non-linearity correction
+  Gaudi::Property<std::vector<float>> m_ecalInputEnergyCorrectionPoints{this, "ECALInputEnergyCorrectionPoints", {}, "The input energy points for electromagnetic energy correction"};
+  Gaudi::Property<std::vector<float>> m_ecalOutputEnergyCorrectionPoints{this, "ECALOutputEnergyCorrectionPoints", {}, "The output energy points for electromagnetic energy correction"};
+  // EXTRA PARAMETERS FROM NIKIFOROS
+  Gaudi::Property<std::string> m_trackCreatorName{this, "TrackCreatorName", "DDTrackCreatorCLIC", "The name of the DDTrackCreator implementation"};
+  /// EXTRA parameter that would initialize everything for ALLEGRO detector if m_detectorName=="ALLEGRO"
+  Gaudi::Property<std::string> m_detectorName{this, "DetectorName", "", "The name of the detector"};
+  Gaudi::Property<std::vector<float>> m_eCalBarrelNormalVector{this, "ECalBarrelNormalVector", {0.0f, 0.0f, 1.0f}, "Normal vector for the ECal barrel sensitive layers in local coordinates"};
+  Gaudi::Property<std::vector<float>> m_hCalBarrelNormalVector{this, "HCalBarrelNormalVector", {0.0f, 0.0f, 1.0f}, "Normal vector for the HCal barrel sensitive layers in local coordinates"};
+  Gaudi::Property<std::vector<float>> m_muonBarrelNormalVector{this, "YokeBarrelNormalVector", {0.0f, 0.0f, 1.0f}, "Normal vector for the muon barrel sensitive layers in local coordinates"};
+  Gaudi::Property<pandora::FloatVector> m_softCompParameters{this, "SoftwareCompensationWeights", {}, "The 9 software compensation weights for Pandora energy correction"};
+  Gaudi::Property<pandora::FloatVector> m_softCompEnergyDensityBins{this, "SoftwareCompensationEnergyDensityBins", {}, "The 10 software compensation density bins for Pandora energy correction"};
+  Gaudi::Property<float> m_energyDensityFinalBin{this, "FinalEnergyDensityBin", 0.0f, "The software compensation final energy density bin for Pandora energy correction"};
+  Gaudi::Property<float> m_maxClusterEnergyToApplySoftComp{this, "MaxClusterEnergyToApplySoftComp", 0.0f, "The maximum hadronic energy to apply software compensation in Pandora energy correction"};
+  Gaudi::Property<float> m_minCleanHitEnergy{this, "MinCleanHitEnergy", 0.0f, "The minimum hit energy to apply ECAL correction in Pandora energy correction"};
+  Gaudi::Property<float> m_minCleanHitEnergyFraction{this, "MinCleanHitEnergyFraction", 0.0f, "The minimum hit energy fraction to apply ECAL correction in Pandora energy correction"};
+  Gaudi::Property<float> m_minCleanCorrectedHitEnergy{this, "MinCleanCorrectedHitEnergy", 0.0f, "The minimum correction to an ECAL hit in Pandora energy correction"};
 
 };
 

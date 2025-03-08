@@ -58,7 +58,7 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const std::vector<con
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_mcParticleCollections[colIndex] << " particles" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << pMCParticleCollection << " particles" << endmsg;
       for (int i = 0, iMax = nElements; i < iMax; ++i) {
         try {
           edm4hep::MCParticle pMcParticle0 = pMCParticleCollection->at(i);

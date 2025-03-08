@@ -39,7 +39,7 @@
 //forward declarations. See in DDPandoraPFANewProcessor.cc
 
 // dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
+dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, MsgStream log, unsigned int excludeFlag = 0);
 
 // double getCoilOuterR();
 
@@ -52,14 +52,14 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, const pandora::Pand
       m_calorimeterHitVector(0),
       m_volumeManager(),
       m_log(log),
-      m_cell_encoder("encodingString") {
+      m_cell_encoder("subdet:5,side:-2,layer:9,module:8,sensor:8") {
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL), m_log,
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
           ->layers;
 
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
-      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
+      getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP), m_log,
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
           ->layers;
 
@@ -114,14 +114,14 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_eCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << eCalCollections[colIndex] << " hits" << endmsg;
 
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL), m_log,
                        (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
               ->layers;
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP), m_log,
                        (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
               ->layers;
 
@@ -141,27 +141,18 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
               eCalToHadGeVEndCap(m_settings.m_eCalToHadGeVEndCap);
 
           // Hybrid ECAL including pure ScECAL.
-          if (m_settings.m_useEcalScLayers) {
-            std::string collectionName(m_settings.m_eCalCaloHitCollections[colIndex]);
-            std::transform(collectionName.begin(), collectionName.end(), collectionName.begin(), ::tolower);
-            layerCoding = "layer";
-
-            if (collectionName.find("ecal", 0) == std::string::npos)
-              m_log << MSG::INFO << "WARNING: mismatching hybrid Ecal collection name. " << collectionName << endmsg;
-
-            if (collectionName.find("si", 0) != std::string::npos) {
-              eCalToMip          = m_settings.m_eCalSiToMip;
-              eCalMipThreshold   = m_settings.m_eCalSiMipThreshold;
-              eCalToEMGeV        = m_settings.m_eCalSiToEMGeV;
-              eCalToHadGeVBarrel = m_settings.m_eCalSiToHadGeVBarrel;
-              eCalToHadGeVEndCap = m_settings.m_eCalSiToHadGeVEndCap;
-            } else if (collectionName.find("sc", 0) != std::string::npos) {
-              eCalToMip          = m_settings.m_eCalScToMip;
-              eCalMipThreshold   = m_settings.m_eCalScMipThreshold;
-              eCalToEMGeV        = m_settings.m_eCalScToEMGeV;
-              eCalToHadGeVBarrel = m_settings.m_eCalScToHadGeVBarrel;
-              eCalToHadGeVEndCap = m_settings.m_eCalScToHadGeVEndCap;
-            }
+          if ((m_settings.m_useEcalSiLayers.size() > colIndex) ? m_settings.m_useEcalSiLayers[colIndex] : m_settings.m_useEcalSiLayers[0]) {
+            eCalToMip          = m_settings.m_eCalSiToMip;
+            eCalMipThreshold   = m_settings.m_eCalSiMipThreshold;
+            eCalToEMGeV        = m_settings.m_eCalSiToEMGeV;
+            eCalToHadGeVBarrel = m_settings.m_eCalSiToHadGeVBarrel;
+            eCalToHadGeVEndCap = m_settings.m_eCalSiToHadGeVEndCap;
+          } else if ((m_settings.m_useEcalScLayers.size() > colIndex) ? m_settings.m_useEcalScLayers[colIndex] : m_settings.m_useEcalScLayers[0]) {
+            eCalToMip          = m_settings.m_eCalScToMip;
+            eCalMipThreshold   = m_settings.m_eCalScMipThreshold;
+            eCalToEMGeV        = m_settings.m_eCalScToEMGeV;
+            eCalToHadGeVBarrel = m_settings.m_eCalScToHadGeVBarrel;
+            eCalToHadGeVEndCap = m_settings.m_eCalScToHadGeVEndCap;
           }
 
           PandoraApi::CaloHit::Parameters caloHitParameters;
@@ -175,7 +166,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
 
           //FIXME: Why is this used to get barrel or endcap??? use SystemID if available
           if (std::fabs(pCaloHit->getPosition().z) < m_settings.m_eCalBarrelOuterZ) {
-            m_log << MSG::DEBUG << "IDS " << m_settings.m_eCalCaloHitCollections[colIndex] << std::setw(15) 
+            m_log << MSG::DEBUG << "IDS " << pCaloHitCollection << std::setw(15) 
                                 << pCaloHit->getCellID() << std::setw(15)
                                 << pCaloHit->getPosition().x << std::setw(15) << pCaloHit->getPosition().y
                                 << std::setw(15) << pCaloHit->getPosition().z << std::setw(5)
@@ -215,7 +206,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
           m_calorimeterHitVector.push_back(pCaloHit);
 
         } catch (pandora::StatusCodeException& statusCodeException) {
-          m_log << MSG::ERROR << "Failed to extract ecal calo hit from " << m_settings.m_eCalCaloHitCollections[colIndex]  << ": "
+          m_log << MSG::ERROR << "Failed to extract ecal calo hit from " << pCaloHitCollection << ": "
                                << statusCodeException.ToString() << endmsg;
         }
       }
@@ -237,14 +228,14 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_hCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << pCaloHitCollection << " hits" << endmsg;
       
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL), m_log,
                        (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
               ->layers;
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP), m_log,
                        (dd4hep::DetType::AUXILIARY) | dd4hep::DetType::FORWARD)
               ->layers;
 
@@ -311,14 +302,14 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_muonCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << pCaloHitCollection << " hits" << endmsg;
       
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL), m_log,
                        (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
               ->layers;
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
-          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP),
+          getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP), m_log,
                        (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
               ->layers;
       ///FIXME: WHAT ABOUT MORE MUON SYSTEMS?
@@ -398,12 +389,12 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_lCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << pCaloHitCollection << " hits" << endmsg;
 
       ///FIXME: WHAT ABOUT OTHER ECALS?
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
           getExtension(dd4hep::DetType::CALORIMETER | dd4hep::DetType::ENDCAP | dd4hep::DetType::ELECTROMAGNETIC |
-                           dd4hep::DetType::FORWARD,
+                           dd4hep::DetType::FORWARD, m_log,
                        dd4hep::DetType::AUXILIARY)
               ->layers;
 
@@ -461,12 +452,12 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
       if (0 == nElements)
         continue;
 
-      m_log << MSG::DEBUG << "Creating " << m_settings.m_lHCalCaloHitCollections[colIndex] << " hits" << endmsg;
+      m_log << MSG::DEBUG << "Creating " << pCaloHitCollection << " hits" << endmsg;
 
       ///FIXME! WHAT ABOUT MORE HCALS?
       const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& endcapLayers =
           getExtension(dd4hep::DetType::CALORIMETER | dd4hep::DetType::ENDCAP | dd4hep::DetType::HADRONIC |
-                       dd4hep::DetType::FORWARD)
+                       dd4hep::DetType::FORWARD, m_log)
               ->layers;
 
       const std::string layerCoding("layer");
@@ -759,12 +750,7 @@ float DDCaloHitCreator::GetMaximumRadius(const edm4hep::CalorimeterHit* const pC
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 DDCaloHitCreator::Settings::Settings()
-    : m_eCalCaloHitCollections(StringVector()),
-      m_hCalCaloHitCollections(StringVector()),
-      m_lCalCaloHitCollections(StringVector()),
-      m_lHCalCaloHitCollections(StringVector()),
-      m_muonCaloHitCollections(StringVector()),
-      m_eCalToMip(1.f),
+    : m_eCalToMip(1.f),
       m_hCalToMip(1.f),
       m_muonToMip(1.f),
       m_eCalMipThreshold(0.f),

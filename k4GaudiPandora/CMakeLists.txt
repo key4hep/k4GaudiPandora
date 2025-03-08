@@ -8,7 +8,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                 LINK            Gaudi::GaudiKernel
                                 EDM4HEP::edm4hep
 				${PandoraSDK_LIBRARIES}
-				${LCConent_LIBRARIES}
+				${LCContent_LIBRARIES}
 				${GSL_LIBRARIES}
                                 ${LCIO_LIBRARIES}
                                 ${MarlinTrk_LIBRARIES}

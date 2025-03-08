@@ -74,13 +74,6 @@ public:
          */
     Settings();
 
-    StringVector m_trackCollections;        ///< The reconstructed track collections
-    StringVector m_kinkVertexCollections;   ///< The kink vertex collections
-    StringVector m_prongVertexCollections;  ///< The prong vertex collections
-    StringVector m_splitVertexCollections;  ///< The split vertex collections
-    StringVector m_v0VertexCollections;     ///< The v0 vertex collections
-
-    StringVector m_prongSplitVertexCollections;  ///< Concatenated list of prong and split vertex collections
     int m_shouldFormTrackRelationships;          ///< Whether to form pandora track relationships using v0 and kink info
 
     int m_minTrackHits;     ///< Track quality cut: the minimum number of track hits

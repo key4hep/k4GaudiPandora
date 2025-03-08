@@ -68,7 +68,7 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::
                                                 [](MarlinTrk::IMarlinTrkSystem*){} );
   m_trackingSystem->init();
 
-  m_encoder        = std::make_shared<BitField64>("encoding string");
+  m_encoder        = std::make_shared<BitField64>("subdet:5,side:-2,layer:9,module:8,sensor:8");
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -570,13 +570,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track *track, lc_content:
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
 DDTrackCreatorBase::Settings::Settings()
-    : m_trackCollections(StringVector()),
-      m_kinkVertexCollections(StringVector()),
-      m_prongVertexCollections(StringVector()),
-      m_splitVertexCollections(StringVector()),
-      m_v0VertexCollections(StringVector()),
-      m_prongSplitVertexCollections(StringVector()),
-      m_shouldFormTrackRelationships(1),
+    : m_shouldFormTrackRelationships(1),
       m_minTrackHits(5),
       m_minFtdTrackHits(0),
       m_maxTrackHits(5000.f),
