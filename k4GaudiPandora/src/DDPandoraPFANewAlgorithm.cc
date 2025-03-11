@@ -100,18 +100,18 @@ std::vector<double> getTrackingRegionExtent() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvcLocator* svcLoc) : MultiTransformer(name, svcLoc,
-  { KeyValues("MCParticleCollections", {"MCParticleCollections"}), 
-    KeyValues("KinkVertexCollections", {"KinkVertexCollections"}),
-    KeyValues("ProngVertexCollections", {"ProngVertexCollections"}),
-    KeyValues("SplitVertexCollections", {"SplitVertexCollections"}),
-    KeyValues("V0VertexCollections", {"V0VertexCollections"}),
+  { KeyValues("MCParticleCollections", {"MCParticles"}), 
+    KeyValues("KinkVertexCollections", {}),
+    KeyValues("ProngVertexCollections", {}),
+    KeyValues("SplitVertexCollections", {}),
+    KeyValues("V0VertexCollections", {}),
     KeyValues("TrackCollections", {"TrackCollections"}),    
     KeyValues("RelTrackCollections", {"RelTrackCollections"}),
     KeyValues("ECalCaloHitCollections", {"ECalCaloHitCollections"}),
     KeyValues("HCalCaloHitCollections", {"HCalCaloHitCollections"}),
-    KeyValues("MuonCaloHitCollections", {"MuonCaloHitCollections"}),
-    KeyValues("LCalCaloHitCollections", {"LCalCaloHitCollections"}),
-    KeyValues("LHCalCaloHitCollections", {"LHCalCaloHitCollections"}),
+    KeyValues("MuonCaloHitCollections", {}),
+    KeyValues("LCalCaloHitCollections", {}),
+    KeyValues("LHCalCaloHitCollections", {}),
     KeyValues("RelCaloHitCollections", {"RelCaloHitCollections"}),},
   { KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
     KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}), 
@@ -126,19 +126,19 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     this->FinaliseSteeringParameters();
 
     m_pPandora         = new pandora::Pandora();
-    m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora, log);
-    m_pCaloHitCreator  = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora, log);
+    m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora, msgSvc());
+    m_pCaloHitCreator  = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora, msgSvc());
 
     ///FIXME: IMPLEMENT FACTORY
     if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-      m_pTrackCreator = new DDTrackCreatorCLIC(m_trackCreatorSettings, m_pPandora, log);
+      m_pTrackCreator = new DDTrackCreatorCLIC(m_trackCreatorSettings, m_pPandora, msgSvc());
     //else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
       //m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
     else
       log << MSG::ERROR << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
-    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, log);
-    m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, log);
+    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, msgSvc());
+    m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, msgSvc());
     log << MSG::INFO << "PFO" << endmsg;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());

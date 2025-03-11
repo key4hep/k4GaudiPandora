@@ -45,8 +45,8 @@
  //forward declarations. See in DDPandoraPFANewProcessor.cc
  std::vector<double> getTrackingRegionExtent();
  
- DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
-     : DDTrackCreatorBase(settings, pPandora, log),
+ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::Pandora* const pPandora, IMessageSvc* msgSvc)
+     : DDTrackCreatorBase(settings, pPandora, msgSvc),
        m_trackerInnerR(0.f),
        m_trackerOuterR(0.f),
        m_trackerZmax(0.f),
@@ -59,6 +59,7 @@
        m_tanLambdaEndcapDisk(0.f)
  
  {
+  MsgStream log(m_msgSvc, "TrackCreator");
    m_trackerInnerR = getTrackingRegionExtent()[0];
    m_trackerOuterR = getTrackingRegionExtent()[1];
    m_trackerZmax   = getTrackingRegionExtent()[2];
@@ -84,10 +85,10 @@
        unsigned int N        = theExtension->layers.size();
        m_barrelTrackerLayers = m_barrelTrackerLayers + N;
  
-       m_log << MSG::DEBUG << " Adding layers for barrel tracker from DD4hep for " << theDetector.name()
+       log << MSG::DEBUG << " Adding layers for barrel tracker from DD4hep for " << theDetector.name()
                              << "- n layers: " << N << " sum up to now: " << m_barrelTrackerLayers << endmsg;
      } catch (std::runtime_error& exception) {
-       m_log << MSG::WARNING << "DDTrackCreatorCLIC exception during Barrel Tracker layer sum for "
+       log << MSG::WARNING << "DDTrackCreatorCLIC exception during Barrel Tracker layer sum for "
                               << const_cast<dd4hep::DetElement&>(*iter).name() << " : " << exception.what() << endmsg;
      }
    }
@@ -111,7 +112,7 @@
  
        unsigned int N = theExtension->layers.size();
  
-       m_log << MSG::DEBUG << " Filling FTD-like parameters from DD4hep for " << theDetector.name()
+       log << MSG::DEBUG << " Filling FTD-like parameters from DD4hep for " << theDetector.name()
                              << "- n layers: " << N << endmsg;
  
        for (unsigned int i = 0; i < N; ++i) {
@@ -127,13 +128,13 @@
          const double zpos(thisLayer.zPosition / dd4hep::mm);
          m_endcapDiskZPositions.push_back(zpos);
  
-         m_log << MSG::DEBUG << "     layer " << i << " - mean z position = " << zpos << endmsg;
+         log << MSG::DEBUG << "     layer " << i << " - mean z position = " << zpos << endmsg;
        }
  
        m_nEndcapDiskLayers = m_endcapDiskZPositions.size();
  
      } catch (std::runtime_error& exception) {
-       m_log << MSG::WARNING
+       log << MSG::WARNING
            << "DDTrackCreatorCLIC exception during Forward Tracking Disk parameter construction for detector "
            << const_cast<dd4hep::DetElement&>(*iter).name() << " : " << exception.what() << endmsg;
      }
@@ -156,20 +157,23 @@
  //------------------------------------------------------------------------------------------------------------------------------------------
  
  pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(const std::vector<const edm4hep::TrackCollection*>& trackCollections) {
+   MsgStream log(m_msgSvc, "TrackCreator");
+
    for (int colIndex = 0; colIndex < trackCollections.size(); colIndex++) {
     try {
        const edm4hep::TrackCollection* pTrackCollection =trackCollections[colIndex];
  
        ///FIXME: Should really move to using surfaces
        for (int i = 0, iMax = pTrackCollection->size(); i < iMax; ++i) {
-         edm4hep::Track pTrack0 = pTrackCollection->at(i);
-         edm4hep::Track *pTrack = &pTrack0;
+         std::shared_ptr<edm4hep::Track> pTrack = std::make_shared<edm4hep::Track>(pTrackCollection->at(i));
+         //edm4hep::Track pTrack0 = pTrackCollection->at(i);
+         //edm4hep::Track *pTrack = &pTrack0;
          edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
  
          if (NULL == pTrack)
-           m_log << MSG::ERROR << "Collection type mismatch" << endmsg;
+           log << MSG::ERROR << "Collection type mismatch" << endmsg;
  
-         m_log << MSG::DEBUG
+         log << MSG::DEBUG
              << " Warning! Ignoring expected number of hits and other hit number cuts. Should eventually change!"
              << endmsg;
  
@@ -177,7 +181,10 @@
          lc_content::LCTrackParameters trackParameters;
          trackParameters.m_d0             = stateAtIP.D0;
          trackParameters.m_z0             = stateAtIP.Z0;
-         trackParameters.m_pParentAddress = pTrack;
+
+         std::shared_ptr<void> pTrackVoidPtr = std::static_pointer_cast<void>(pTrack);
+         void* pTrackVoid = pTrackVoidPtr.get(); 
+         trackParameters.m_pParentAddress = pTrackVoid;
  
          // By default, assume tracks are charged pions
          const float signedCurvature(stateAtIP.omega);
@@ -212,40 +219,42 @@
                                    PandoraApi::Track::Create(m_pandora, trackParameters, *m_lcTrackFactory));
            m_trackVector.push_back(pTrack);
          } catch (pandora::StatusCodeException& statusCodeException) {
-           m_log << MSG::ERROR << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
+           log << MSG::ERROR << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
  
-           m_log << MSG::DEBUG << " failed track : " << *pTrack << endmsg;
+           log << MSG::DEBUG << " failed track : " << *pTrack << endmsg;
          } catch (...) {
-           m_log << MSG::WARNING << "Failed to extract a vertex" << endmsg;
+           log << MSG::WARNING << "Failed to extract a vertex" << endmsg;
          }
        }
  
-       m_log << MSG::DEBUG << "After treating collection" << " with "
+       log << MSG::DEBUG << "After treating collection" << " with "
                              << pTrackCollection->size() << " tracks, the track vector size is "
                              << m_trackVector.size() << endmsg;
  
      } catch (...) {
-       m_log << MSG::WARNING << "Failed to extract track collection" << endmsg;
+       log << MSG::WARNING << "Failed to extract track collection" << endmsg;
      }
    }
  
    return pandora::STATUS_CODE_SUCCESS;
  }
  
- bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track* const            pTrack,
+ bool DDTrackCreatorCLIC::PassesQualityCuts(std::shared_ptr<edm4hep::Track>            pTrack,
                                             const PandoraApi::Track::Parameters& trackParameters) const {
+   MsgStream log(m_msgSvc, "TrackCreator");
+
    // First simple sanity checks
    if (trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetMagnitude() <
        m_settings.m_minTrackECalDistanceFromIp) {
-     m_log << MSG::WARNING << " Dropping track! Distance at ECAL: "
+     log << MSG::WARNING << " Dropping track! Distance at ECAL: "
                             << trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetMagnitude() << endmsg;
-     m_log << MSG::DEBUG << " track : " << *pTrack << endmsg;
+     log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
      return false;
    }
  
    edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
    if (stateAtIP.omega == 0.f) {
-     m_log << MSG::ERROR << "Track has Omega = 0 " << endmsg;
+     log << MSG::ERROR << "Track has Omega = 0 " << endmsg;
      return false;
    }
  
@@ -254,15 +263,15 @@
    const float                     sigmaPOverP(std::sqrt(stateAtIP.covMatrix[5]) / std::fabs(stateAtIP.omega));
  
    if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
-     m_log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
+     log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
                             << sigmaPOverP * (momentumAtDca.GetMagnitude()) << " chi2 = " << pTrack->getChi2() << " "
                             << pTrack->getNdf() << " from " << pTrack->getTrackerHits().size() << endmsg;
  
-     m_log << MSG::DEBUG << " track : " << *pTrack << endmsg;
+     log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
      return false;
    }
  
-   m_log << MSG::DEBUG << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << *pTrack << endmsg;
+   log << MSG::DEBUG << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << *pTrack << endmsg;
    return true;
  
    // Require reasonable number of Tracker hits
@@ -274,7 +283,7 @@
      const float rInnermostHit(std::sqrt(stateAtIP.D0*stateAtIP.D0+stateAtIP.Z0*stateAtIP.Z0)); // TODO: IS THIS RIGHT -- ALSO trackAtCalo
  
      if ((0.f == pT) || (0.f == pZ) || (rInnermostHit == m_trackerOuterR)) {
-       m_log << MSG::ERROR << "Invalid track parameter, pT " << pT << ", pZ " << pZ << ", rInnermostHit "
+       log << MSG::ERROR << "Invalid track parameter, pT " << pT << ", pZ " << pZ << ", rInnermostHit "
                             << rInnermostHit << endmsg;
        return false;
      }
@@ -326,11 +335,11 @@
  
      if ((nBarrelTrackerHits < minTrackerHits) &&
          (nEndcapTrackerHits < m_settings.m_minFtdHitsForBarrelTrackerHitFraction)) {
-       m_log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude()
+       log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude()
                               << " Number of Tracker hits = " << nBarrelTrackerHits << " < " << minTrackerHits
                               << " nendcapDisk = " << nEndcapTrackerHits << endmsg;
  
-       m_log << MSG::DEBUG << " track : " << *pTrack << endmsg;
+       log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
        return false;
      }
    }
@@ -340,8 +349,10 @@
  
  //------------------------------------------------------------------------------------------------------------------------------------------
  
- void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track* const      pTrack,
+ void DDTrackCreatorCLIC::DefineTrackPfoUsage(std::shared_ptr<edm4hep::Track>      pTrack,
                                               PandoraApi::Track::Parameters& trackParameters) const {
+   MsgStream log(m_msgSvc, "TrackCreator");
+
    bool canFormPfo(false);
    bool canFormClusterlessPfo(false);
 
@@ -403,8 +414,8 @@
          }
        }
      } else if (this->IsDaughter(pTrack) || this->IsV0(pTrack)) {
-       m_log << MSG::WARNING << "Recovering daughter or v0 track "
-                              << trackParameters.m_momentumAtDca.Get().GetMagnitude() << endmsg;
+       log << MSG::WARNING << "Recovering daughter or v0 track "
+                           << trackParameters.m_momentumAtDca.Get().GetMagnitude() << endmsg;
        canFormPfo = true;
      }
    }
@@ -415,7 +426,7 @@
  
  //------------------------------------------------------------------------------------------------------------------------------------------
  
- void DDTrackCreatorCLIC::TrackReachesECAL(const edm4hep::Track* const      pTrack,
+ void DDTrackCreatorCLIC::TrackReachesECAL(std::shared_ptr<edm4hep::Track>      pTrack,
                                            PandoraApi::Track::Parameters& trackParameters) const {
    // Calculate hit position information
    float hitZMin(std::numeric_limits<float>::max());

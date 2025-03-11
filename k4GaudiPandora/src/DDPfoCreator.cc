@@ -50,8 +50,8 @@
 #include <algorithm>
 #include <cmath>
 
-DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log)
-    : m_settings(settings), m_pandora(*pPandora), m_log(log) {}
+DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora, IMessageSvc* msgSvc)
+    : m_settings(settings), m_pandora(*pPandora), m_msgSvc(msgSvc) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -115,7 +115,8 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
 
     if (!hasTrack) {
       if (clustersTotalEnergy < std::numeric_limits<float>::epsilon()) {
-        m_log << MSG::WARNING << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
+        MsgStream log(m_msgSvc, "PFOCreator");
+        log << MSG::WARNING << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
                                << clustersTotalEnergy << endmsg;
         throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
       } else {
@@ -159,24 +160,35 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
                                                  const pandora::CaloHitList&    pandoraCaloHitList,
                                                  pandora::FloatVector& hitE, pandora::FloatVector& hitX,
                                                  pandora::FloatVector& hitY, pandora::FloatVector& hitZ) const {
+  MsgStream log(m_msgSvc, "PFCreator");
+  log << MSG::ERROR << "Start" << endmsg;
   std::vector<float> subDetectorEnergies;
   for (pandora::CaloHitList::const_iterator hIter = pandoraCaloHitList.begin(), hIterEnd = pandoraCaloHitList.end();
        hIter != hIterEnd; ++hIter) {
     const pandora::CaloHit* pPandoraCaloHit = *hIter;
-    const edm4hep::CalorimeterHit* pCalorimeterHit0 = (edm4hep::CalorimeterHit*)(pPandoraCaloHit->GetParentAddress());
-    const edm4hep::CalorimeterHit  pCalorimeterHit  = *pCalorimeterHit0;
+    const edm4hep::CalorimeterHit* pCalorimeterHit = static_cast<const edm4hep::CalorimeterHit*>(pPandoraCaloHit->GetParentAddress());
+    log << MSG::ERROR << typeid(pCalorimeterHit).name() << endmsg;
+    if (!pCalorimeterHit) {
+      std::cerr << "Error: Retrieved null pointer from GetParentAddress!" << std::endl;
+      std::cout << typeid(pCalorimeterHit).name() << std::endl;
+    }  
+    const edm4hep::CalorimeterHit  pCalorimeterHit0  = *pCalorimeterHit;
 
-    pCluster->addToHits(pCalorimeterHit);
+    pCluster->addToHits(pCalorimeterHit0);
 
-    const float caloHitEnergy(pCalorimeterHit.getEnergy());
+    log << MSG::ERROR << "Prior"<< endmsg;
+
+    const float caloHitEnergy(pCalorimeterHit->getEnergy());
+    log << MSG::ERROR << "Post"<< endmsg;
+
     hitE.push_back(caloHitEnergy);
-    hitX.push_back(pCalorimeterHit.getPosition().x);
-    hitY.push_back(pCalorimeterHit.getPosition().y);
-    hitZ.push_back(pCalorimeterHit.getPosition().z);
+    hitX.push_back(pCalorimeterHit->getPosition().x);
+    hitY.push_back(pCalorimeterHit->getPosition().y);
+    hitZ.push_back(pCalorimeterHit->getPosition().z);
 
     subDetectorEnergies.resize(subDetectorNames.size());
 
-    switch (CHT(pCalorimeterHit.getType()).caloID()) {
+    switch (CHT(pCalorimeterHit->getType()).caloID()) {
       case CHT::ecal:
         subDetectorEnergies[ECAL_INDEX] += caloHitEnergy;
         break;
@@ -196,9 +208,10 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
         subDetectorEnergies[BCAL_INDEX] += caloHitEnergy;
         break;
       default:
-        m_log << MSG::WARNING
+        MsgStream log(m_msgSvc, "PFOCreator");
+        log << MSG::WARNING
             << "DDPfoCreator::SetClusterSubDetectorEnergies: no subdetector found for hit with type: "
-            << pCalorimeterHit.getType() << endmsg;
+            << pCalorimeterHit->getType() << endmsg;
     }
   }
 
@@ -249,7 +262,8 @@ void DDPfoCreator::SetClusterPositionAndError(const unsigned int nHitsInCluster,
     clusterPositionVec.SetValues(pClusterShapes->getCentreOfGravity()[0], pClusterShapes->getCentreOfGravity()[1],
                                  pClusterShapes->getCentreOfGravity()[2]);
   } catch (...) {
-    m_log << MSG::WARNING << "DDPfoCreator::SetClusterPositionAndError: unidentified exception caught." << endmsg;
+    MsgStream log(m_msgSvc, "PFOCreator");
+    log << MSG::WARNING << "DDPfoCreator::SetClusterPositionAndError: unidentified exception caught." << endmsg;
   }
 
   delete pClusterShapes;
@@ -297,7 +311,8 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
 
   if (hasSiblings) {
     if (totalTrackMomentumAtStart < std::numeric_limits<float>::epsilon()) {
-      m_log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
+      MsgStream log(m_msgSvc, "PFOCreator");
+      log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
                              << totalTrackMomentumAtStart << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
@@ -305,7 +320,8 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
     }
   } else {
     if (totalTrackMomentumAtDca < std::numeric_limits<float>::epsilon()) {
-      m_log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
+      MsgStream log(m_msgSvc, "PFOCreator");
+      log << MSG::WARNING << "DDPfoCreator::CalculateTrackBasedReferencePoint: invalid track momentum "
                              << totalTrackMomentumAtDca << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
@@ -328,7 +344,8 @@ bool DDPfoCreator::IsValidParentTrack(const pandora::Track* const pPandoraTrack,
       continue;
 
     // ATTN This track must have a parent not in the all track list; still use it if it is the closest to the ip
-    m_log << MSG::WARNING
+    MsgStream log(m_msgSvc, "PFOCreator");
+    log << MSG::WARNING
         << "DDPfoCreator::IsValidParentTrack: mismatch in track relationship information, use information as available "
         << endmsg;
 
@@ -354,7 +371,8 @@ bool DDPfoCreator::HasValidSiblingTrack(const pandora::Track* const pPandoraTrac
       continue;
 
     // ATTN This track must have a sibling not in the all track list; still use it if it has a second sibling that is in the list
-    m_log << MSG::WARNING << "DDPfoCreator::HasValidSiblingTrack: mismatch in track relationship information, use "
+    MsgStream log(m_msgSvc, "PFOCreator");
+    log << MSG::WARNING << "DDPfoCreator::HasValidSiblingTrack: mismatch in track relationship information, use "
                               "information as available "
                            << endmsg;
 

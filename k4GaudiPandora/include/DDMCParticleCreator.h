@@ -64,7 +64,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, MsgStream& log);
+  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora, IMessageSvc* msgSvc);
 
   /**
      *  @brief  Destructor
@@ -76,7 +76,7 @@ public:
      *
      *  @param  pLCEvent the lcio event
      */
-  pandora::StatusCode CreateMCParticles(const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) const;
+  pandora::StatusCode CreateMCParticles(const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections);
 
   /**
      *  @brief  Create Track to mc particle relationships
@@ -100,8 +100,10 @@ private:
   const Settings          m_settings;  ///< The mc particle creator settings
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
   const float             m_bField;    ///< The bfield
-  std::map<int, const edm4hep::MCParticle*>* m_id_pMC_map;
-  MsgStream& m_log;
+  std::unique_ptr<std::map<int, std::shared_ptr<edm4hep::MCParticle>>> m_id_pMC_map;
+  
+
+  IMessageSvc* m_msgSvc;
 };
 
 inline void DDMCParticleCreator::Reset() { m_id_pMC_map->clear(); }
