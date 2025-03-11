@@ -115,7 +115,10 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvc
     KeyValues("RelCaloHitCollections", {"RelCaloHitCollections"}),},
   { KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
     KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}), 
-    KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"}) }) {}
+    KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"}) })
+{
+  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
+}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -360,6 +363,9 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
   m_trackCreatorSettings.m_maxBarrelTrackerInnerRDistance = m_maxBarrelTrackerInnerRDistance;
   m_trackCreatorSettings.m_trackStateTolerance = m_trackStateTolerance;
   m_trackCreatorSettings.m_trackingSystemName = m_trackingSystemName;
+  std::string trackString;
+  trackString = m_geoSvc->constantAsString(m_trackEncodingStringVariable.value());
+  m_trackCreatorSettings.m_trackingEncodingString = trackString;
   m_caloHitCreatorSettings.m_stripSplittingOn = m_stripSplittingOn;
   m_caloHitCreatorSettings.m_useEcalScLayers = m_useEcalScLayers;
   m_caloHitCreatorSettings.m_useEcalSiLayers = m_useEcalSiLayers;
@@ -373,6 +379,9 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
   m_caloHitCreatorSettings.m_eCalScToHadGeVEndCap = m_eCalScToHadGeVEndCap;
   m_caloHitCreatorSettings.m_eCalSiToHadGeVBarrel = m_eCalSiToHadGeVBarrel;
   m_caloHitCreatorSettings.m_eCalScToHadGeVBarrel = m_eCalScToHadGeVBarrel;
+  std::string caloString;
+  caloString = m_geoSvc->constantAsString(m_caloEncodingStringVariable.value());
+  m_caloHitCreatorSettings.m_caloEncodingString = caloString;
   m_settings.m_inputEnergyCorrectionPoints = m_inputEnergyCorrectionPoints;
   m_settings.m_outputEnergyCorrectionPoints = m_outputEnergyCorrectionPoints;
   m_settings.m_ecalInputEnergyCorrectionPoints = m_ecalInputEnergyCorrectionPoints;

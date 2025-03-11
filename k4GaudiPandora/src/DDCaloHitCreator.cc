@@ -51,8 +51,7 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, const pandora::Pand
       m_hCalEndCapLayerThickness(0.f),
       m_calorimeterHitVector(0),
       m_volumeManager(),
-      m_msgSvc(msgSvc),
-      m_cell_encoder("subdet:5,side:-2,layer:9,module:8,sensor:8") {
+      m_msgSvc(msgSvc) {
   MsgStream log(m_msgSvc, "CaloCreator");
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL), log,
@@ -72,6 +71,8 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, const pandora::Pand
       (m_hCalBarrelLayerThickness < std::numeric_limits<float>::epsilon()))
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
 
+  m_cell_encoder = dd4hep::DDSegmentation::BitFieldCoder(settings.m_caloEncodingString);
+  
   dd4hep::Detector& theDetector = dd4hep::Detector::getInstance();
   m_volumeManager               = theDetector.volumeManager();
   if (not m_volumeManager.isValid()) {
@@ -134,7 +135,6 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
           //edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
 	        //edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           std::shared_ptr<edm4hep::CalorimeterHit> pCaloHit = std::make_shared<edm4hep::CalorimeterHit>(pCaloHitCollection->at(i));
-          m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
             log << MSG::ERROR << "Collection type mismatch" << endmsg;
@@ -161,7 +161,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
           PandoraApi::CaloHit::Parameters caloHitParameters;
           caloHitParameters.m_hitType                = pandora::ECAL;
           caloHitParameters.m_isDigital              = false;
-          caloHitParameters.m_layer                  = m_cell_encoder[layerCoding.c_str()];
+          caloHitParameters.m_layer                  = m_cell_encoder.get(pCaloHit->getCellID(), layerCoding.c_str());
           caloHitParameters.m_isInOuterSamplingLayer = false;
           this->GetCommonCaloHitProperties(pCaloHit, caloHitParameters);
 
@@ -173,11 +173,11 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(const std::vector<const
                                 << pCaloHit->getCellID() << std::setw(15)
                                 << pCaloHit->getPosition().x << std::setw(15) << pCaloHit->getPosition().y
                                 << std::setw(15) << pCaloHit->getPosition().z << std::setw(5)
-                                << m_cell_encoder["system"] << std::setw(5)
-                                << m_cell_encoder["module"] << std::setw(5)
-                                << m_cell_encoder["stave"] << std::setw(5)
-                                << m_cell_encoder["layer"] << std::setw(5) << m_cell_encoder["x"]
-                                << std::setw(5) << m_cell_encoder["y"] << std::endl;
+                                << m_cell_encoder.get(pCaloHit->getCellID(), "system") << std::setw(5)
+                                << m_cell_encoder.get(pCaloHit->getCellID(), "module") << std::setw(5)
+                                << m_cell_encoder.get(pCaloHit->getCellID(), "stave") << std::setw(5)
+                                << m_cell_encoder.get(pCaloHit->getCellID(), "layer") << std::setw(5) << m_cell_encoder.get(pCaloHit->getCellID(), "x")
+                                << std::setw(5) << m_cell_encoder.get(pCaloHit->getCellID(), "y") << endmsg;
 
             this->GetBarrelCaloHitProperties(pCaloHit, barrelLayers, m_settings.m_eCalBarrelInnerSymmetry,
                                              caloHitParameters, m_settings.m_eCalBarrelNormalVector,
@@ -251,7 +251,6 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const
           //edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
           //edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           std::shared_ptr<edm4hep::CalorimeterHit> pCaloHit = std::make_shared<edm4hep::CalorimeterHit>(pCaloHitCollection->at(i));
-          m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
             log << MSG::ERROR <<"Collection type mismatch" << endmsg;
@@ -259,7 +258,7 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<const
           PandoraApi::CaloHit::Parameters caloHitParameters;
           caloHitParameters.m_hitType   = pandora::HCAL;
           caloHitParameters.m_isDigital = false;
-          caloHitParameters.m_layer     = m_cell_encoder[layerCoding.c_str()];
+          caloHitParameters.m_layer     = m_cell_encoder.get(pCaloHit->getCellID(), layerCoding.c_str());
           caloHitParameters.m_isInOuterSamplingLayer =
               (this->GetNLayersFromEdge(pCaloHit) <= m_settings.m_nOuterSamplingLayers);
           this->GetCommonCaloHitProperties(pCaloHit, caloHitParameters);
@@ -329,14 +328,13 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<const
           //edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
           //edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           std::shared_ptr<edm4hep::CalorimeterHit> pCaloHit = std::make_shared<edm4hep::CalorimeterHit>(pCaloHitCollection->at(i));
-          m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
             log << MSG::ERROR <<"Collection type mismatch" << endmsg;
 
           PandoraApi::CaloHit::Parameters caloHitParameters;
           caloHitParameters.m_hitType                = pandora::MUON;
-          caloHitParameters.m_layer                  = m_cell_encoder[layerCoding.c_str()];
+          caloHitParameters.m_layer                  = m_cell_encoder.get(pCaloHit->getCellID(), layerCoding.c_str());
           caloHitParameters.m_isInOuterSamplingLayer = true;
           this->GetCommonCaloHitProperties(pCaloHit, caloHitParameters);
 
@@ -416,7 +414,6 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const
           //edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
           //edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           std::shared_ptr<edm4hep::CalorimeterHit> pCaloHit = std::make_shared<edm4hep::CalorimeterHit>(pCaloHitCollection->at(i));
-          m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
             log << MSG::ERROR <<"Collection type mismatch" << endmsg;
@@ -424,7 +421,7 @@ pandora::StatusCode DDCaloHitCreator::CreateLCalCaloHits(const std::vector<const
           PandoraApi::CaloHit::Parameters caloHitParameters;
           caloHitParameters.m_hitType                = pandora::ECAL;
           caloHitParameters.m_isDigital              = false;
-          caloHitParameters.m_layer                  = m_cell_encoder[layerCoding.c_str()];
+          caloHitParameters.m_layer                  = m_cell_encoder.get(pCaloHit->getCellID(), layerCoding.c_str());
           caloHitParameters.m_isInOuterSamplingLayer = false;
           this->GetCommonCaloHitProperties(pCaloHit, caloHitParameters);
 
@@ -481,7 +478,6 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
           //edm4hep::CalorimeterHit pCaloHit0 = pCaloHitCollection->at(i);
           //edm4hep::CalorimeterHit* pCaloHit = &pCaloHit0;
           std::shared_ptr<edm4hep::CalorimeterHit> pCaloHit = std::make_shared<edm4hep::CalorimeterHit>(pCaloHitCollection->at(i));
-          m_cell_encoder.setValue(pCaloHit->getCellID());
 
           if (NULL == pCaloHit)
             log << MSG::ERROR <<"Collection type mismatch" << endmsg;
@@ -489,7 +485,7 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<cons
           PandoraApi::CaloHit::Parameters caloHitParameters;
           caloHitParameters.m_hitType   = pandora::HCAL;
           caloHitParameters.m_isDigital = false;
-          caloHitParameters.m_layer     = m_cell_encoder[layerCoding.c_str()];
+          caloHitParameters.m_layer     = m_cell_encoder.get(pCaloHit->getCellID(), layerCoding.c_str());
           caloHitParameters.m_isInOuterSamplingLayer =
               (this->GetNLayersFromEdge(pCaloHit) <= m_settings.m_nOuterSamplingLayers);
           this->GetCommonCaloHitProperties(pCaloHit, caloHitParameters);
@@ -818,4 +814,5 @@ DDCaloHitCreator::Settings::Settings()
       m_hCalBarrelOuterSymmetry(0.f),
       m_eCalBarrelNormalVector({0.0, 0.0, 1.0}),
       m_hCalBarrelNormalVector({0.0, 0.0, 1.0}),
-      m_muonBarrelNormalVector({0.0, 0.0, 1.0}) {}
+      m_muonBarrelNormalVector({0.0, 0.0, 1.0}),
+      m_caloEncodingString("") {}

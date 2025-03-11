@@ -58,7 +58,7 @@ private:
   Gaudi::Property<std::string> m_calo_layout{this, "CaloLayout", "barrel", "Calorimeter Layout: barrel, endcap, ring, plug"};
   Gaudi::Property<std::string> outputRelCollection{this, "outputRelCollection", "outputRelCollection", "The output collection of relations"};
   Gaudi::Property<std::string> outputMuonCollection{this, "outputMuonCollection", "outputMuonCollection", "The output collection of muons"};
-  Gaudi::Property<std::string> m_encodingStringVariable{this, "EncodingStringParameterName", "GlobalTrackerReadoutID", "The name of the DD4hep constant that contains the Encoding string for tracking detectors"};
+  Gaudi::Property<std::string> m_encodingStringVariable{this, "EncodingStringParameterName", "GlobalCalorimeterReadoutID", "The name of the DD4hep constant that contains the Encoding string for the detector"};
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "Layer", "Name of the part of the cellID that holds the layer"};
   Gaudi::Property<float>       m_thresholdMuon{this, "MuonThreshold", {0.025}, "Threshold for muon"};
   Gaudi::Property<float>       m_timeThresholdMuon{this, "timethresholdMuon", {0.025}, "time threshold for muons"};

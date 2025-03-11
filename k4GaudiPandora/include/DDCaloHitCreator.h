@@ -34,7 +34,7 @@
 
 #include <k4FWCore/Transformer.h>
 
-#include "BitField64.hxx"
+#include "DDSegmentation/BitFieldCoder.h"
 
 #include "Api/PandoraApi.h"
 
@@ -122,6 +122,8 @@ public:
     float        m_hCalBarrelOuterR;         ///< HCal barrel outer r coordinate
     float        m_hCalBarrelOuterPhi0;      ///< HCal barrel outer phi0 coordinate
     unsigned int m_hCalBarrelOuterSymmetry;  ///< HCal barrel outer symmetry order
+
+    std::string m_caloEncodingString; ///< Encoding String for calo
 
   public:
     FloatVector m_eCalBarrelNormalVector;
@@ -272,7 +274,7 @@ private:
 
   dd4hep::VolumeManager m_volumeManager;  ///< DD4hep volume manager
 
-  BitField64 m_cell_encoder;
+  dd4hep::DDSegmentation::BitFieldCoder m_cell_encoder;
   IMessageSvc* m_msgSvc;
 };
 

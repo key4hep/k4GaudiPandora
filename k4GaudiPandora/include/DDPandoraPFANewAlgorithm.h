@@ -38,6 +38,7 @@
 #include <k4FWCore/DataHandle.h>
 #include <k4FWCore/BaseClass.h>
 #include <k4FWCore/Transformer.h>
+#include "k4Interface/IGeoSvc.h"
 #include <Gaudi/Property.h>
 #include "GaudiKernel/MsgStream.h"
 
@@ -207,6 +208,8 @@ private:
   DDTrackCreatorBase*  m_pTrackCreator        = NULL;  ///< The track creator
   DDMCParticleCreator* m_pDDMCParticleCreator = NULL;  ///< The mc particle creator
   DDPfoCreator*        m_pDDPfoCreator        = NULL;  ///< The pfo creator
+  SmartIF<IGeoSvc>     m_geoSvc;                       ///< The GeoSvc
+
 
   Settings                      m_settings{};                   ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings    m_caloHitCreatorSettings{};     ///< The calo hit creator settings
@@ -314,8 +317,11 @@ private:
   // ECAL energy non-linearity correction
   Gaudi::Property<std::vector<float>> m_ecalInputEnergyCorrectionPoints{this, "ECALInputEnergyCorrectionPoints", {}, "The input energy points for electromagnetic energy correction"};
   Gaudi::Property<std::vector<float>> m_ecalOutputEnergyCorrectionPoints{this, "ECALOutputEnergyCorrectionPoints", {}, "The output energy points for electromagnetic energy correction"};
-  // EXTRA PARAMETERS FROM NIKIFOROS
+  // EXTRA PARAMETERS FROM NIKIFOROS m_caloEncodingString
   Gaudi::Property<std::string> m_trackCreatorName{this, "TrackCreatorName", "DDTrackCreatorCLIC", "The name of the DDTrackCreator implementation"};
+  // Encoding Strings
+  Gaudi::Property<std::string> m_trackEncodingStringVariable{this, "TrackerEncodingStringParameterName", "GlobalTrackerReadoutID", "The name of the DD4hep constant that contains the Encoding string for the Tracking detectors"};
+  Gaudi::Property<std::string> m_caloEncodingStringVariable{this, "CaloEncodingStringParameterName", "GlobalCalorimeterReadoutID", "The name of the DD4hep constant that contains the Encoding string for the Calo detectors"};
   /// EXTRA parameter that would initialize everything for ALLEGRO detector if m_detectorName=="ALLEGRO"
   Gaudi::Property<std::string> m_detectorName{this, "DetectorName", "", "The name of the detector"};
   Gaudi::Property<std::vector<float>> m_eCalBarrelNormalVector{this, "ECalBarrelNormalVector", {0.0f, 0.0f, 1.0f}, "Normal vector for the ECal barrel sensitive layers in local coordinates"};

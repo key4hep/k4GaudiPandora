@@ -68,7 +68,7 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::
                                                 [](MarlinTrk::IMarlinTrkSystem*){} );
   m_trackingSystem->init();
 
-  m_encoder        = std::make_shared<BitField64>("subdet:5,side:-2,layer:9,module:8,sensor:8");
+  m_encoder = dd4hep::DDSegmentation::BitFieldCoder(settings.m_trackingEncodingString);
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -532,12 +532,12 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(std::shared_ptr<edm4hep::Track> tr
   
   unsigned ecal_endcap_face_ID = lcio::ILDDetID::ECAL_ENDCAP;
   int detElementID = 0;
-  m_encoder->reset();  // reset to 0
-  (*m_encoder)[lcio::LCTrackerCellID::subdet()] = ecal_endcap_face_ID;
-  (*m_encoder)[lcio::LCTrackerCellID::side()] = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
-  (*m_encoder)[lcio::LCTrackerCellID::layer()]  = 0;
+  uint64_t cellID = 0;
+  m_encoder.set(cellID, lcio::LCTrackerCellID::subdet(), ecal_endcap_face_ID);
+  m_encoder.set(cellID, lcio::LCTrackerCellID::side(), (tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd));
+  m_encoder.set(cellID, lcio::LCTrackerCellID::layer(), 0);
 
-  return_error = marlintrk->propagateToLayer(m_encoder->lowWord(), trackStateAtCaloEndcap, chi2, ndf,
+  return_error = marlintrk->propagateToLayer(m_encoder.lowWord(cellID), trackStateAtCaloEndcap, chi2, ndf,
                                              detElementID, MarlinTrk::IMarlinTrack::modeForward );
   log << MSG::DEBUG << "Found trackState at endcap? Error code: " << return_error  << endmsg;
 
@@ -606,6 +606,7 @@ DDTrackCreatorBase::Settings::Settings()
       m_minFtdHitsForBarrelTrackerHitFraction(2),
       m_trackStateTolerance(0.f),
       m_trackingSystemName("DDKalTest"),
+      m_trackingEncodingString(""),
       m_bField(0.f),
       m_eCalBarrelInnerSymmetry(0),
       m_eCalBarrelInnerPhi0(0.f),
