@@ -103,7 +103,6 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   CHT::Layout caloLayout = layoutFromString(m_calo_layout.value());
 
   initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-  log << MSG::ERROR << initString << endmsg;
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
   // check if decoder contains "layer"
 
