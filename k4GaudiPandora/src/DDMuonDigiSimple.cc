@@ -32,14 +32,17 @@ DDMuonDigiSimple::DDMuonDigiSimple(const std::string& name, ISvcLocator* svcLoc)
                     { KeyValues("MUONCollection", {"ECalBarrelCollection"}),
                       KeyValues("HeaderName", {"EventHeader"}) },
                     { KeyValues("MUONOutputCollections", {"CalorimeterHit"}),
-                     KeyValues("RelationOutputCollection", {"RelationMuonHit"}) })
-{
-  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
-}
+                     KeyValues("RelationOutputCollection", {"RelationMuonHit"}) }) {}
 
 StatusCode DDMuonDigiSimple::initialize() {
   //Get the number of Layers in the Endcap and Barrel
   MsgStream log(msgSvc(), name());
+  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
+  if (!m_geoSvc) {
+    error() << "Unable to retrieve the GeoSvc" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   int layersEndcap = 0, layersBarrel = 0;
   try {
     const auto                                 mainDetector = m_geoSvc->getDetector();

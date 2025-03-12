@@ -115,17 +115,19 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvc
     KeyValues("RelCaloHitCollections", {"RelCaloHitCollections"}),},
   { KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
     KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}), 
-    KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"}) })
-{
-  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
-}
+    KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"}) }) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 StatusCode DDPandoraPFANewAlgorithm::initialize() {
-  MsgStream log(msgSvc(), name());
+  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
+  if (!m_geoSvc) {
+    error() << "Unable to retrieve the GeoSvc" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   try {
-    log << MSG::INFO << "DDPandoraPFANewAlgorithm - Init" << endmsg;
+    info() << "DDPandoraPFANewAlgorithm - Init" << endmsg;
     this->FinaliseSteeringParameters();
 
     m_pPandora         = new pandora::Pandora();
@@ -138,28 +140,28 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     //else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
       //m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
     else
-      log << MSG::ERROR << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
+      error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
     m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, msgSvc());
     m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, msgSvc());
-    log << MSG::INFO << "PFO" << endmsg;
+    info() << "PFO" << endmsg;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
-    log << MSG::INFO << "REG" << endmsg;
+    info() << "REG" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry());
-    log << MSG::INFO << "CREATE" << endmsg;
+    info() << "CREATE" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             PandoraApi::ReadSettings(*m_pPandora, m_settings.m_pandoraSettingsXmlFile));
-    log << MSG::INFO << "READ" << endmsg;
+    info() << "READ" << endmsg;
 
   } catch (pandora::StatusCodeException& statusCodeException) {
-    log << MSG::ERROR << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
+    error() << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
   } catch (std::exception& exception) {
-    log << MSG::ERROR << "Failed to initialize marlin pandora: std exception " << exception.what() << endmsg;
+    error() << "Failed to initialize marlin pandora: std exception " << exception.what() << endmsg;
     throw exception;
   } catch (...) {
-    log << MSG::ERROR << "Failed to initialize marlin pandora: unrecognized exception" << endmsg;
+    error() << "Failed to initialize marlin pandora: unrecognized exception" << endmsg;
     throw;
   }
 
@@ -183,9 +185,8 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
   const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
   const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections
 ) const {
-  MsgStream log(msgSvc(), name());
   try {
-    log << MSG::DEBUG << "DDPandoraPFANewAlgorithm - Run " << endmsg;
+    debug() << "DDPandoraPFANewAlgorithm - Run " << endmsg;
     //(void)m_pandoraToLCEventMap.insert(PandoraToLCEventMap::value_type(m_pPandora, pLCEvent));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pDDMCParticleCreator->CreateMCParticles(MCParticleCollections));
@@ -218,13 +219,13 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
       std::move(pStartVertexCollection)
     );
   } catch (pandora::StatusCodeException& statusCodeException) {
-    log << MSG::ERROR << "Marlin pandora failed to process event: " << statusCodeException.ToString() << endmsg;
+    error() << "Marlin pandora failed to process event: " << statusCodeException.ToString() << endmsg;
     throw statusCodeException;
   } catch (std::exception& exception) {
-    log << MSG::ERROR << "Pandora failed to process event: std exception " << exception.what() << endmsg;
+    error() << "Pandora failed to process event: std exception " << exception.what() << endmsg;
     throw;
   } catch (...) {
-    log << MSG::ERROR << "Pandora failed to process event: unrecognized exception" << endmsg;
+    error() << "Pandora failed to process event: unrecognized exception" << endmsg;
     throw;
   }
 }
@@ -239,8 +240,7 @@ StatusCode DDPandoraPFANewAlgorithm::finalize() {
   delete m_pDDMCParticleCreator;
   delete m_pDDPfoCreator;
 
-  MsgStream log(msgSvc(), name());
-  log << MSG::INFO << "DDPandoraPFANewAlgorithm - End" << endmsg;
+  info() << "DDPandoraPFANewAlgorithm - End" << endmsg;
   return StatusCode::SUCCESS;
 }
 
