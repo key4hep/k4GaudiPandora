@@ -144,15 +144,11 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
 
     m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora, msgSvc());
     m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora, msgSvc());
-    info() << "PFO" << endmsg;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
-    info() << "REG" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry());
-    info() << "CREATE" << endmsg;
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             PandoraApi::ReadSettings(*m_pPandora, m_settings.m_pandoraSettingsXmlFile));
-    info() << "READ" << endmsg;
 
   } catch (pandora::StatusCodeException& statusCodeException) {
     error() << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
