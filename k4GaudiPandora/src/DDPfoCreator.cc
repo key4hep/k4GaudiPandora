@@ -160,14 +160,11 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
                                                  const pandora::CaloHitList&    pandoraCaloHitList,
                                                  pandora::FloatVector& hitE, pandora::FloatVector& hitX,
                                                  pandora::FloatVector& hitY, pandora::FloatVector& hitZ) const {
-  MsgStream log(m_msgSvc, "PFCreator");
-  log << MSG::ERROR << "Start" << endmsg;
   std::vector<float> subDetectorEnergies;
   for (pandora::CaloHitList::const_iterator hIter = pandoraCaloHitList.begin(), hIterEnd = pandoraCaloHitList.end();
        hIter != hIterEnd; ++hIter) {
     const pandora::CaloHit* pPandoraCaloHit = *hIter;
     const edm4hep::CalorimeterHit* pCalorimeterHit = static_cast<const edm4hep::CalorimeterHit*>(pPandoraCaloHit->GetParentAddress());
-    log << MSG::ERROR << typeid(pCalorimeterHit).name() << endmsg;
     if (!pCalorimeterHit) {
       std::cerr << "Error: Retrieved null pointer from GetParentAddress!" << std::endl;
       std::cout << typeid(pCalorimeterHit).name() << std::endl;
@@ -176,10 +173,7 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
 
     pCluster->addToHits(pCalorimeterHit0);
 
-    log << MSG::ERROR << "Prior"<< endmsg;
-
     const float caloHitEnergy(pCalorimeterHit->getEnergy());
-    log << MSG::ERROR << "Post"<< endmsg;
 
     hitE.push_back(caloHitEnergy);
     hitX.push_back(pCalorimeterHit->getPosition().x);
