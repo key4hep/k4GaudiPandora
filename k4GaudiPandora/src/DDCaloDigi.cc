@@ -958,7 +958,6 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   if (m_misCalibEcal_uncorrel > 0) {
     float miscal(0);
     if (m_misCalibEcal_uncorrel_keep) {
-      int id{0};
       if (m_ECAL_cell_miscalibs.find(id) !=
           m_ECAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
         miscal = m_ECAL_cell_miscalibs.at(id);
@@ -979,8 +978,6 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   // random cell kill
   if (m_deadCellFractionEcal > 0) {
     if (m_deadCellEcal_keep == true) {
-      int id;
-
       if (m_ECAL_cell_dead.find(id) != m_ECAL_cell_dead.end()) {  // this cell was previously seen
         if (m_ECAL_cell_dead.at(id) == true) {
           e_out = 0;
@@ -1022,7 +1019,6 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   if (m_misCalibHcal_uncorrel > 0) {
     float miscal(0);
     if (m_misCalibHcal_uncorrel_keep) {
-      int id;
       if (m_HCAL_cell_miscalibs.find(id) !=
           m_HCAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
         miscal = m_HCAL_cell_miscalibs.at(id);
@@ -1043,8 +1039,6 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   // random cell kill
   if (m_deadCellFractionHcal > 0) {
     if (m_deadCellHcal_keep == true) {
-      int id;
-
       if (m_HCAL_cell_dead.find(id) != m_HCAL_cell_dead.end()) {  // this cell was previously seen
         if (m_HCAL_cell_dead.at(id) == true) {
           e_out = 0;
