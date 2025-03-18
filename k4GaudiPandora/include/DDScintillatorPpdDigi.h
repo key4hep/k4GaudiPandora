@@ -21,8 +21,6 @@
 
 #include "CLHEP/Random/MTwistEngine.h"
 
-#include <memory>
-
 //GaudiKernel::MsgStream
 class MsgStream;
 
@@ -52,7 +50,7 @@ public:
   // electronics dynamic range (in MIP units)
   void setElecRange(float x) { m_elecMaxDynRange_MIP = x; }
 
-  float getDigitisedEnergy(float energy, std::unique_ptr<CLHEP::MTwistEngine>&);
+  float getDigitisedEnergy(float energy, CLHEP::MTwistEngine&);
 
   void printParameters(MsgStream&);
 
