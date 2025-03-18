@@ -409,11 +409,11 @@ private:
   float digitalHcalCalibCoeff(CHT::Layout, float energy) const;
   float analogueHcalCalibCoeff(CHT::Layout, int layer) const;
 
-  float ecalEnergyDigi(float energy, int id, std::unique_ptr<CLHEP::MTwistEngine>&) const;
-  float hcalEnergyDigi(float energy, int id, std::unique_ptr<CLHEP::MTwistEngine>&) const;
+  float ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine&) const;
+  float hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine&) const;
 
-  float siliconDigi(float energy, std::unique_ptr<CLHEP::MTwistEngine>&) const;
-  float scintillatorDigi(float energy, bool isEcal, std::unique_ptr<CLHEP::MTwistEngine>&) const;
+  float siliconDigi(float energy, CLHEP::MTwistEngine&) const;
+  float scintillatorDigi(float energy, bool isEcal, CLHEP::MTwistEngine&) const;
 
   std::vector<std::pair<int, int>>     getLayerConfig() const;
   void                                 checkConsistency(std::string colName, int layer) const;
