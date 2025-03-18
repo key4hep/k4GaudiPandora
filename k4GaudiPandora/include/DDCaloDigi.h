@@ -409,11 +409,11 @@ private:
   float digitalHcalCalibCoeff(CHT::Layout, float energy) const;
   float analogueHcalCalibCoeff(CHT::Layout, int layer) const;
 
-  float ecalEnergyDigi(float energy, int id) const;
-  float hcalEnergyDigi(float energy, int id) const;
+  float ecalEnergyDigi(float energy, int id, std::unique_ptr<CLHEP::MTwistEngine>&) const;
+  float hcalEnergyDigi(float energy, int id, std::unique_ptr<CLHEP::MTwistEngine>&) const;
 
-  float siliconDigi(float energy) const;
-  float scintillatorDigi(float energy, bool isEcal) const;
+  float siliconDigi(float energy, std::unique_ptr<CLHEP::MTwistEngine>&) const;
+  float scintillatorDigi(float energy, bool isEcal, std::unique_ptr<CLHEP::MTwistEngine>&) const;
 
   std::vector<std::pair<int, int>>     getLayerConfig() const;
   void                                 checkConsistency(std::string colName, int layer) const;
@@ -435,8 +435,6 @@ private:
   mutable int m_countWarnings = 0;
   std::string m_ecalLayout    = "";
 
-  CLHEP::MTwistEngine* m_randomEngineDeadCellEcal   = NULL;
-  CLHEP::MTwistEngine* m_randomEngineDeadCellHcal   = NULL;
   float                m_event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_correl);
   float                m_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_correl);
 
