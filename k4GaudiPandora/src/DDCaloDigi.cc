@@ -44,18 +44,17 @@
 using namespace dd4hep;
 using namespace DDSegmentation;
 
-// Forward Declaration, gets linked in from DDPandoraPFANewProcessor --- FIXME
-// now declare here, to be linked from DDPandoraPFANewProcessor
-dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) {
+dd4hep::rec::LayeredCalorimeterData* DDCaloDigi::getExtension(unsigned int includeFlag,
+                                                              unsigned int excludeFlag) const {
   dd4hep::rec::LayeredCalorimeterData* theExtension = 0;
 
   dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
   const std::vector<dd4hep::DetElement>& theDetectors =
       dd4hep::DetectorSelector(mainDetector).detectors(includeFlag, excludeFlag);
 
-  std::cout << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
-            << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
-            << "  - first det: " << theDetectors.at(0).name() << std::endl;
+  debug() << " getExtension :  includeFlag: " << dd4hep::DetType(includeFlag)
+          << " excludeFlag: " << dd4hep::DetType(excludeFlag) << "  found : " << theDetectors.size()
+          << "  - first det: " << theDetectors.at(0).name() << endmsg;
 
   if (theDetectors.size() != 1) {
     std::stringstream es;
@@ -179,8 +178,8 @@ StatusCode DDCaloDigi::initialize() {
   m_scEcalDigi->setPixSpread(m_ecal_pixSpread);
   m_scEcalDigi->setElecNoise(m_ecal_elec_noise);
   m_scEcalDigi->setElecRange(m_ecalMaxDynMip);
-  std::cout << "ECAL sc digi:" << std::endl;
-  m_scEcalDigi->printParameters();
+  debug() << "ECAL sc digi:" << endmsg;
+  m_scEcalDigi->printParameters(debug());
 
   m_scHcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi());
   m_scHcalDigi->setPEperMIP(m_hcal_PPD_pe_per_mip);
@@ -190,8 +189,8 @@ StatusCode DDCaloDigi::initialize() {
   m_scHcalDigi->setPixSpread(m_hcal_pixSpread);
   m_scHcalDigi->setElecNoise(m_hcal_elec_noise);
   m_scHcalDigi->setElecRange(m_hcalMaxDynMip);
-  std::cout << "HCAL sc digi:" << std::endl;
-  m_scHcalDigi->printParameters();
+  debug() << "HCAL sc digi:" << endmsg;
+  m_scHcalDigi->printParameters(debug());
 
   // Set up the random engines for ECAL and HCAL dead cells: (could use a steering parameter though)
   if (m_deadCellEcal_keep) {
@@ -221,7 +220,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   //float m_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_correl.value());
 
   std::string colName = m_inputLocations[0][0].key();  // take input collection name
-  std::cout << "looking for collection: " << colName << std::endl;
+  debug() << "looking for collection: " << colName << std::endl;
 
   if (colName.find("dummy") != std::string::npos) {
     debug() << "Ignoring input collection name (looks like dummy name)" << colName << endmsg;

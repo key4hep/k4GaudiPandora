@@ -22,6 +22,9 @@
 #include "CLHEP/Random/RandBinomial.h"
 #include "CLHEP/Random/RandGauss.h"
 #include "CLHEP/Random/RandPoisson.h"
+
+#include "GaudiKernel/MsgStream.h"
+
 using std::cout;
 using std::endl;
 
@@ -33,17 +36,17 @@ using std::endl;
 
 DDScintillatorPpdDigi::DDScintillatorPpdDigi() {}
 
-void DDScintillatorPpdDigi::printParameters() {
-  cout << "--------------------------------" << endl;
-  cout << "DDScintillatorPpdDigi parameters" << endl;
-  cout << " PEperMIP   = " << m_PEperMIP << endl;
-  cout << " calibMIP    = " << m_calibMIP << endl;
-  cout << " Npix         = " << m_Npix << endl;
-  cout << " misCalibNpix = " << m_misCalibNpix << endl;
-  cout << " pixSpread    = " << m_pixSpread << endl;
-  cout << " elecDynRange = " << m_elecMaxDynRange_MIP << endl;
-  cout << " elecNoise    = " << m_elecNoise << endl;
-  cout << "--------------------------------" << endl;
+void DDScintillatorPpdDigi::printParameters(MsgStream& out) {
+  out << "--------------------------------" << endl;
+  out << "DDScintillatorPpdDigi parameters" << endl;
+  out << " PEperMIP   = " << m_PEperMIP << endl;
+  out << " calibMIP    = " << m_calibMIP << endl;
+  out << " Npix         = " << m_Npix << endl;
+  out << " misCalibNpix = " << m_misCalibNpix << endl;
+  out << " pixSpread    = " << m_pixSpread << endl;
+  out << " elecDynRange = " << m_elecMaxDynRange_MIP << endl;
+  out << " elecNoise    = " << m_elecNoise << endl;
+  out << "--------------------------------" << endl;
   return;
 }
 

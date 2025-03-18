@@ -19,6 +19,7 @@
 #ifndef DDCALODIGI_H
 #define DDCALODIGI_H 1
 
+#include "DDRec/DetectorData.h"
 #include "Gaudi/Accumulators/RootHistogram.h"
 #include "Gaudi/Property.h"
 #include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
@@ -414,10 +415,11 @@ private:
   float siliconDigi(float energy) const;
   float scintillatorDigi(float energy, bool isEcal) const;
 
-  std::vector<std::pair<int, int>> getLayerConfig() const;
-  void                             checkConsistency(std::string colName, int layer) const;
-  std::pair<int, int>              getLayerProperties(std::string const& colName, int layer) const;
-  int                              getStripOrientationFromColName(std::string const& colName) const;
+  std::vector<std::pair<int, int>>     getLayerConfig() const;
+  void                                 checkConsistency(std::string colName, int layer) const;
+  std::pair<int, int>                  getLayerProperties(std::string const& colName, int layer) const;
+  int                                  getStripOrientationFromColName(std::string const& colName) const;
+  dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) const;
 
   float m_zOfEcalEndcap = 0.0;
   float m_barrelPixelSizeT[MAX_LAYERS];
