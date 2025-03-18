@@ -39,6 +39,8 @@
 #include "CLHEP/Random/RandGauss.h"
 #include "CLHEP/Random/RandPoisson.h"
 
+#include "k4FWCore/MetadataUtils.h"
+
 using namespace dd4hep;
 using namespace DDSegmentation;
 
@@ -227,12 +229,9 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
 
   CHT::Layout caloLayout = layoutFromString(colName);
 
-  //FIXME: take this from the metadata !!!
-  //std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-  std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
-
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
-                                                                    // check if decoder contains "layer"
+  const auto                            maybeParam = k4FWCore::getParameter<std::string>(colName + "__CellIDEncoding");
+  const auto                            initString = maybeParam.value();
+  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check if decoder contains "layer"
 
   std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS];
   std::vector<int>                             m_calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS];
