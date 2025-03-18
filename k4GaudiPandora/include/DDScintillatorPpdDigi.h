@@ -19,6 +19,9 @@
 #ifndef DDSCINTILLATORPPDDIGI_H
 #define DDSCINTILLATORPPDDIGI_H
 
+//GaudiKernel::MsgStream
+class MsgStream;
+
 class DDScintillatorPpdDigi {
 public:
   DDScintillatorPpdDigi();
@@ -47,7 +50,7 @@ public:
 
   float getDigitisedEnergy(float energy);
 
-  void printParameters();
+  void printParameters(MsgStream&);
 
 private:
   float m_PEperMIP            = -99;
