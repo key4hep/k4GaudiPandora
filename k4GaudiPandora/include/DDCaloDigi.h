@@ -115,6 +115,9 @@ struct DDCaloDigi final : DDCaloDigi_t {
   retType operator()(const edm4hep::SimCalorimeterHitCollection& simCaloHits,
                      const edm4hep::EventHeaderCollection&       headers) const;
 
+  //APS: AFAIU we need a registerCallBack function to make the creation of histograms possible
+  void registerCallBack(Gaudi::StateMachine::Transition, std::function<void()>) {}
+
 private:
   // check if input collection is ECAL or HCAL
   Gaudi::Property<bool> m_inputColIsECAL{
@@ -162,71 +165,77 @@ private:
       this, "HCALModuleGapCorrectionFactor", {0.5}, "Factor applied to module gap correction HCAL"};
 
   // histograms that will be filled --- <1> or <2> is the number of dimensions of the histogram (1D or 2D)
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcal{this, "fEcal", "Ecal time profile", {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcal{this, "fHcal", "Hcal time profile", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcal{this, "fEcal", "Ecal time profile", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fHcal{this, "fHcal", "Hcal time profile", {1000, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC{this, "fEcalC", "Ecal time profile cor", {1000, 0., 1000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC{this, "fHcalC", "Hcal time profile cor", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcalC{
+      this, "fEcalC", "Ecal time profile cor", {1000, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fHcalC{
+      this, "fHcalC", "Hcal time profile cor", {1000, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC1{
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcalC1{
       this, "fEcalC1", "Ecal time profile cor", {100, 0., 1000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC1{
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fHcalC1{
       this, "fHcalC1", "Hcal time profile cor", {100, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalC2{this, "fEcalC2", "Ecal time profile cor", {10, 0., 1000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalC2{this, "fHcalC2", "Hcal time profile cor", {10, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcalC2{
+      this, "fEcalC2", "Ecal time profile cor", {10, 0., 1000.0}};
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fHcalC2{
+      this, "fHcalC2", "Hcal time profile cor", {10, 0., 1000.0}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalCvsE{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalCvsE{
       this, "fHcalCvsE", "Hcal time profile cor", {{100, 0., 500.0}, {100, 0., 10.}}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer1{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer1{
       this, "fHcalLayer1", "Hcal layer 1 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer11{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer11{
       this, "fHcalLayer11", "Hcal layer 11 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer21{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer21{
       this, "fHcalLayer21", "Hcal layer 21 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer31{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer31{
       this, "fHcalLayer31", "Hcal layer 31 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer41{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer41{
       this, "fHcalLayer41", "Hcal layer 41 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer51{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer51{
       this, "fHcalLayer51", "Hcal layer 51 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer61{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer61{
       this, "fHcalLayer61", "Hcal layer 61 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fHcalLayer71{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fHcalLayer71{
       this, "fHcalLayer71", "Hcal layer 71 map", {{300, -4500., 4500.0}, {300, -4500, 4500.}}};
 
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer1{this, "fHcalRLayer1", "Hcal R layer 1", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer11{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer1{
+      this, "fHcalRLayer1", "Hcal R layer 1", {50, 0., 5000.0}};
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer11{
       this, "fHcalRLayer11", "Hcal R layer 11", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer21{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer21{
       this, "fHcalRLayer21", "Hcal R layer 21", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer31{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer31{
       this, "fHcalRLayer31", "Hcal R layer 31", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer41{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer41{
       this, "fHcalRLayer41", "Hcal R layer 41", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer51{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer51{
       this, "fHcalRLayer51", "Hcal R layer 51", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer61{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer61{
       this, "fHcalRLayer61", "Hcal R layer 61", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fHcalRLayer71{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fHcalRLayer71{
       this, "fHcalRLayer71", "Hcal R layer 71", {50, 0., 5000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fHcalRLayerNorm{
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fHcalRLayerNorm{
       this, "fHcalRLayerNorm", "Hcal R layer Norm", {50, 0., 5000.0}};
 
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer1{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fEcalLayer1{
       this, "fEcalLayer1", "Ecal layer 1 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer11{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fEcalLayer11{
       this, "fEcalLayer11", "Ecal layer 11 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
-  mutable Gaudi::Accumulators::RootHistogram<2> fEcalLayer21{
+  mutable Gaudi::Accumulators::StaticHistogram<2> fEcalLayer21{
       this, "fEcalLayer21", "Ecal layer 21 map", {{1800, -4500., 4500.0}, {1800, -4500, 4500.}}};
 
-  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer1{this, "fEcalRLayer1", "Ecal R layer 1", {100, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer11{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fEcalRLayer1{
+      this, "fEcalRLayer1", "Ecal R layer 1", {100, 0., 5000.0}};
+  mutable Gaudi::Accumulators::StaticHistogram<1> fEcalRLayer11{
       this, "fEcalRLayer11", "Ecal R layer 11", {100, 0., 5000.0}};
-  mutable Gaudi::Accumulators::RootHistogram<1> fEcalRLayer21{
+  mutable Gaudi::Accumulators::StaticHistogram<1> fEcalRLayer21{
       this, "fEcalRLayer21", "Ecal R layer 21", {100, 0., 5000.0}};
-  mutable Gaudi::Accumulators::WeightedHistogram<1> fEcalRLayerNorm{
+  mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcalRLayerNorm{
       this, "fEcalRLayerNorm", "Ecal R layer Norm", {100, 0., 5000.0}};
 
   // timing parameters for ECAL
