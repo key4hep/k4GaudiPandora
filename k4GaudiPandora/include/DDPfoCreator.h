@@ -29,6 +29,9 @@
 #include <edm4hep/VertexCollection.h>
 #include <edm4hep/MutableReconstructedParticle.h>
 #include <edm4hep/MutableCluster.h>
+#include <edm4hep/MCParticleCollection.h>
+#include <edm4hep/TrackCollection.h>
+#include <edm4hep/CalorimeterHitCollection.h>
 
 class CollectionMaps;
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,9 +76,16 @@ public:
      *
      */
   pandora::StatusCode CreateParticleFlowObjects(
-      edm4hep::ClusterCollection&               pClusterCollection,
-      edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
-      edm4hep::VertexCollection&                pStartVertexCollection);
+   edm4hep::ClusterCollection&                     pClusterCollection,
+   edm4hep::ReconstructedParticleCollection&       pReconstructedParticleCollection,
+   edm4hep::VertexCollection&                      pStartVertexCollection,
+   std::vector<const edm4hep::MCParticleCollection*>     MCParticleCollections,
+   std::vector<const edm4hep::TrackCollection*>          trackCollections,
+   std::vector<const edm4hep::CalorimeterHitCollection*> eCalCollections,
+   std::vector<const edm4hep::CalorimeterHitCollection*> hCalCollections,
+   std::vector<const edm4hep::CalorimeterHitCollection*> mCalCollections,
+   std::vector<const edm4hep::CalorimeterHitCollection*> lCalCollections,
+   std::vector<const edm4hep::CalorimeterHitCollection*> lhCalCollections) ;
 
 
 private:
@@ -101,12 +111,13 @@ private:
      *  @param  hitX the vector to receive the x position of hits
      *  @param  hitY the vector to receive the y position of hits
      *  @param  hitZ the vector to receive the z position of hits
+     *  @param  calorimeterCollections map of cluster collections by their collection IDs
      */
   void SetClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames,
                                      edm4hep::MutableCluster*       pCluster,
                                      const pandora::CaloHitList&  pandoraCaloHitList, pandora::FloatVector& hitE,
-                                     pandora::FloatVector& hitX,  pandora::FloatVector& hitY,
-                                     pandora::FloatVector& hitZ) const;
+                                     pandora::FloatVector& hitX,  pandora::FloatVector& hitY, pandora::FloatVector& hitZ,
+                                     std::unordered_map<int, const edm4hep::CalorimeterHitCollection*> calorimeterCollections) const;
 
   /**
      *  @brief  Set cluster energies and errors
@@ -141,9 +152,12 @@ private:
      *
      *  @param  pPandoraPfo the address of the pandora pfo
      *  @param  referencePoint a CartesianVector to receive the reference point
+     *  @param  trackCollectionMap map of Track Collections by their IDs
+     * 
      */
   pandora::StatusCode CalculateTrackBasedReferencePoint(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                                        pandora::CartesianVector&                referencePoint) const;
+                                                        pandora::CartesianVector&                referencePoint,
+                                                        std::unordered_map<int, const edm4hep::TrackCollection*> trackCollectionMap) const;
 
   /**
      *  @brief  Set reference point of the reconstructed particle
@@ -159,9 +173,11 @@ private:
      *
      *  @param  pPandoraPfo the address of the pandora pfo
      *  @param  pReconstructedParticle the address of the reconstructed particle to be added tracks
+     *  @param  trackCollectionMap map of Track Collections by their IDs
      */
   void AddTracksToRecoParticle(const pandora::ParticleFlowObject* const pPandoraPfo,
-                               edm4hep::MutableReconstructedParticle*    pReconstructedParticle) const;
+                               edm4hep::MutableReconstructedParticle*    pReconstructedParticle,
+                               std::unordered_map<int, const edm4hep::TrackCollection*> trackCollectionMap) const;
 
   /**
      *  @brief  Set properties of reconstructed particle from pandora pfo

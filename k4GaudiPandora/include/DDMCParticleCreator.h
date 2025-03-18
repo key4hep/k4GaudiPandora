@@ -83,14 +83,20 @@ public:
      *
      */
   pandora::StatusCode CreateTrackToMCParticleRelationships(const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& linkCollections,
-                                                           const TrackVector&    trackVector) const;
+                                                           const TrackVector&    trackVector,
+                                                           const std::vector<const edm4hep::TrackCollection*>& trackCollections) const;
 
   /**
      *  @brief  Create calo hit to mc particle relationships
      *
      */
   pandora::StatusCode CreateCaloHitToMCParticleRelationships(const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& linkCollections,
-                                                             const CalorimeterHitVector& calorimeterHitVector) const;
+                                                             const CalorimeterHitVector& calorimeterHitVector,
+                                                             const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
+                                                             const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
+                                                             const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
+                                                             const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
+                                                             const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections) const;
   /**
      *  @brief  Reset the MCP creator
      */
@@ -99,13 +105,9 @@ public:
 private:
   const Settings          m_settings;  ///< The mc particle creator settings
   const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
-  const float             m_bField;    ///< The bfield
-  std::unique_ptr<std::map<int, std::shared_ptr<edm4hep::MCParticle>>> m_id_pMC_map;
-  
+  const float             m_bField;    ///< The bfield  
 
   IMessageSvc* m_msgSvc;
 };
-
-inline void DDMCParticleCreator::Reset() { m_id_pMC_map->clear(); }
 
 #endif  // #ifndef DDMCPARTICLECREATOR_H

@@ -160,20 +160,17 @@
    MsgStream log(m_msgSvc, "TrackCreator");
 
    for (int colIndex = 0; colIndex < trackCollections.size(); colIndex++) {
+    log << MSG::DEBUG << "Creating Tracks from collection of " << trackCollections[colIndex]->size() << " tracks." << endmsg;
     try {
        const edm4hep::TrackCollection* pTrackCollection =trackCollections[colIndex];
  
        ///FIXME: Should really move to using surfaces
        for (int i = 0, iMax = pTrackCollection->size(); i < iMax; ++i) {
-         std::shared_ptr<edm4hep::Track> pTrack = std::make_shared<edm4hep::Track>(pTrackCollection->at(i));
-         //edm4hep::Track pTrack0 = pTrackCollection->at(i);
-         //edm4hep::Track *pTrack = &pTrack0;
-         edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
- 
-         if (NULL == pTrack)
-           log << MSG::ERROR << "Collection type mismatch" << endmsg;
- 
-         log << MSG::DEBUG
+         edm4hep::Track pTrack = pTrackCollection->at(i);
+
+         edm4hep::TrackState stateAtIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
+  
+         log << MSG::VERBOSE
              << " Warning! Ignoring expected number of hits and other hit number cuts. Should eventually change!"
              << endmsg;
  
@@ -182,9 +179,9 @@
          trackParameters.m_d0             = stateAtIP.D0;
          trackParameters.m_z0             = stateAtIP.Z0;
 
-         std::shared_ptr<void> pTrackVoidPtr = std::static_pointer_cast<void>(pTrack);
-         void* pTrackVoid = pTrackVoidPtr.get(); 
-         trackParameters.m_pParentAddress = pTrackVoid;
+         uint64_t ID = pTrack.getObjectID().collectionID;
+         ID = (ID << 32) | pTrack.getObjectID().index;
+         trackParameters.m_pParentAddress = reinterpret_cast<void*>(ID);     
  
          // By default, assume tracks are charged pions
          const float signedCurvature(stateAtIP.omega);
@@ -192,7 +189,7 @@
          trackParameters.m_mass       = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
  
          // Use particle id information from V0 and Kink finders
-         TrackToPidMap::const_iterator trackPIDiter = m_trackToPidMap.find(pTrack);
+         TrackToPidMap::const_iterator trackPIDiter = m_trackToPidMap.find(ID);
  
          if (trackPIDiter != m_trackToPidMap.end()) {
            trackParameters.m_particleId = trackPIDiter->second;
@@ -217,11 +214,11 @@
  
            PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                                    PandoraApi::Track::Create(m_pandora, trackParameters, *m_lcTrackFactory));
-           m_trackVector.push_back(pTrack);
+           m_trackVector.push_back(ID);
          } catch (pandora::StatusCodeException& statusCodeException) {
            log << MSG::ERROR << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
  
-           log << MSG::DEBUG << " failed track : " << *pTrack << endmsg;
+           log << MSG::DEBUG << " failed track : " << pTrack << endmsg;
          } catch (...) {
            log << MSG::WARNING << "Failed to extract a vertex" << endmsg;
          }
@@ -239,7 +236,7 @@
    return pandora::STATUS_CODE_SUCCESS;
  }
  
- bool DDTrackCreatorCLIC::PassesQualityCuts(std::shared_ptr<edm4hep::Track>            pTrack,
+ bool DDTrackCreatorCLIC::PassesQualityCuts(edm4hep::Track            pTrack,
                                             const PandoraApi::Track::Parameters& trackParameters) const {
    MsgStream log(m_msgSvc, "TrackCreator");
 
@@ -248,11 +245,11 @@
        m_settings.m_minTrackECalDistanceFromIp) {
      log << MSG::WARNING << " Dropping track! Distance at ECAL: "
                             << trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetMagnitude() << endmsg;
-     log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
+     log << MSG::DEBUG << " track : " << pTrack << endmsg;
      return false;
    }
  
-   edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
+   edm4hep::TrackState stateAtIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
    if (stateAtIP.omega == 0.f) {
      log << MSG::ERROR << "Track has Omega = 0 " << endmsg;
      return false;
@@ -264,14 +261,14 @@
  
    if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
      log << MSG::WARNING << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
-                            << sigmaPOverP * (momentumAtDca.GetMagnitude()) << " chi2 = " << pTrack->getChi2() << " "
-                            << pTrack->getNdf() << " from " << pTrack->getTrackerHits().size() << endmsg;
+                            << sigmaPOverP * (momentumAtDca.GetMagnitude()) << " chi2 = " << pTrack.getChi2() << " "
+                            << pTrack.getNdf() << " from " << pTrack.trackerHits_size() << endmsg;
  
-     log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
+     log << MSG::DEBUG << " track : " << pTrack << endmsg;
      return false;
    }
  
-   log << MSG::DEBUG << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << *pTrack << endmsg;
+   log << MSG::DEBUG << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << pTrack << endmsg;
    return true;
  
    // Require reasonable number of Tracker hits
@@ -302,7 +299,7 @@
        nExpectedTrackerHits = frac * m_barrelTrackerLayers;
      }
  
-     podio::RelationRange<std::int32_t> hitsBySubdetector(pTrack->getSubdetectorHitNumbers());
+     podio::RelationRange<std::int32_t> hitsBySubdetector(pTrack.getSubdetectorHitNumbers());
  
      // ---- use hitsInFit :
      //Use flags to access detectors and then access their ids to get hits in fit by ID
@@ -339,7 +336,7 @@
                               << " Number of Tracker hits = " << nBarrelTrackerHits << " < " << minTrackerHits
                               << " nendcapDisk = " << nEndcapTrackerHits << endmsg;
  
-       log << MSG::DEBUG << " track : " << *(pTrack.get()) << endmsg;
+       log << MSG::DEBUG << " track : " << pTrack << endmsg;
        return false;
      }
    }
@@ -349,21 +346,23 @@
  
  //------------------------------------------------------------------------------------------------------------------------------------------
  
- void DDTrackCreatorCLIC::DefineTrackPfoUsage(std::shared_ptr<edm4hep::Track>      pTrack,
+ void DDTrackCreatorCLIC::DefineTrackPfoUsage(edm4hep::Track      pTrack,
                                               PandoraApi::Track::Parameters& trackParameters) const {
    MsgStream log(m_msgSvc, "TrackCreator");
 
    bool canFormPfo(false);
    bool canFormClusterlessPfo(false);
 
-   edm4hep::TrackState stateAtIP = pTrack->getTrackStates(edm4hep::TrackState::AtIP);
+   edm4hep::TrackState stateAtIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
+   uint64_t pTrackID = (static_cast<uint64_t>(pTrack.getObjectID().collectionID) << 32) | pTrack.getObjectID().index;
+
  
-   if (trackParameters.m_reachesCalorimeter.Get() && !this->IsParent(pTrack)) {
+   if (trackParameters.m_reachesCalorimeter.Get() && !this->IsParent(pTrackID)) {
      const float d0(std::fabs(stateAtIP.D0)), z0(std::fabs(stateAtIP.Z0));
  
      float                rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
  
-     for (edm4hep::TrackerHit hit : pTrack->getTrackerHits()) {
+     for (edm4hep::TrackerHit hit : pTrack.getTrackerHits()) {
        const edm4hep::Vector3d& pPosition(hit.getPosition());
        const float   x(pPosition.x), y(pPosition.y), absoluteZ(std::fabs(pPosition.z));
        const float   r(std::sqrt(x * x + y * y));
@@ -384,8 +383,8 @@
        const bool  passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
                                      (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
  
-       const bool isV0(this->IsV0(pTrack));
-       const bool isDaughter(this->IsDaughter(pTrack));
+       const bool isV0(this->IsV0(pTrackID));
+       const bool isDaughter(this->IsDaughter(pTrackID));
  
        // Decide whether track can be associated with a pandora cluster and used to form a charged PFO
        if ((d0 < m_settings.m_d0TrackCut) && (z0 < m_settings.m_z0TrackCut) &&
@@ -413,7 +412,7 @@
            canFormClusterlessPfo = true;
          }
        }
-     } else if (this->IsDaughter(pTrack) || this->IsV0(pTrack)) {
+     } else if (this->IsDaughter(pTrackID) || this->IsV0(pTrackID)) {
        log << MSG::WARNING << "Recovering daughter or v0 track "
                            << trackParameters.m_momentumAtDca.Get().GetMagnitude() << endmsg;
        canFormPfo = true;
@@ -426,7 +425,7 @@
  
  //------------------------------------------------------------------------------------------------------------------------------------------
  
- void DDTrackCreatorCLIC::TrackReachesECAL(std::shared_ptr<edm4hep::Track>      pTrack,
+ void DDTrackCreatorCLIC::TrackReachesECAL(edm4hep::Track      pTrack,
                                            PandoraApi::Track::Parameters& trackParameters) const {
    // Calculate hit position information
    float hitZMin(std::numeric_limits<float>::max());
@@ -437,7 +436,7 @@
    int nEndcapDiskHits(0);
    int maxOccupiedEndcapDiskLayer(0);
  
-   for (edm4hep::TrackerHit hit : pTrack->getTrackerHits()) {
+   for (edm4hep::TrackerHit hit : pTrack.getTrackerHits()) {
      const float x(static_cast<float>(hit.getPosition().x));
      const float y(static_cast<float>(hit.getPosition().y));
      const float z(static_cast<float>(hit.getPosition().z));

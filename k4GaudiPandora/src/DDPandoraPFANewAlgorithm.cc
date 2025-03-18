@@ -190,12 +190,13 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pTrackCreator->CreateTracks(trackCollections));
     PANDORA_THROW_RESULT_IF(
         pandora::STATUS_CODE_SUCCESS, !=,
-        m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(trackerHitLinkCollections, m_pTrackCreator->GetTrackVector()));
+        m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(trackerHitLinkCollections, m_pTrackCreator->GetTrackVector(), trackCollections));
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, 
       m_pCaloHitCreator->CreateCaloHits(eCalCollections, hCalCollections, mCalCollections, lCalCollections, lhCalCollections));
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(
-                              caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector()));
+                              caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector(), 
+                              eCalCollections, hCalCollections, mCalCollections, lCalCollections, lhCalCollections));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora));
 
@@ -204,7 +205,9 @@ std::tuple<edm4hep::ClusterCollection, edm4hep::ReconstructedParticleCollection,
     edm4hep::VertexCollection                pStartVertexCollection;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, 
-      m_pDDPfoCreator->CreateParticleFlowObjects(pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection));
+      m_pDDPfoCreator->CreateParticleFlowObjects(
+        pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection,
+        MCParticleCollections, trackCollections, eCalCollections, hCalCollections, mCalCollections, lCalCollections, lhCalCollections));
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora));
     this->Reset();

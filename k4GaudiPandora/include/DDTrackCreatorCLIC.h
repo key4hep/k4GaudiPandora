@@ -81,7 +81,7 @@
       *  @return boolean
       */
  
-   virtual bool PassesQualityCuts(std::shared_ptr<edm4hep::Track>            pTrack,
+   virtual bool PassesQualityCuts(edm4hep::Track            pTrack,
                                   const PandoraApi::Track::Parameters& trackParameters) const;
  
    /**
@@ -90,7 +90,7 @@
       *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
       */
-   virtual void TrackReachesECAL(std::shared_ptr<edm4hep::Track> pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+   virtual void TrackReachesECAL(edm4hep::Track pTrack, PandoraApi::Track::Parameters& trackParameters) const;
  
    /**
       *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -101,7 +101,7 @@
       *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
       */
-   virtual void DefineTrackPfoUsage(std::shared_ptr<edm4hep::Track>      pTrack,
+   virtual void DefineTrackPfoUsage(edm4hep::Track      pTrack,
                                     PandoraApi::Track::Parameters& trackParameters) const;
  };
  

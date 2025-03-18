@@ -45,9 +45,9 @@
 
 #include <memory>
 
-typedef std::vector<std::shared_ptr<edm4hep::Track>>    TrackVector;
-typedef std::set<std::shared_ptr<edm4hep::Track>> TrackList;
-typedef std::map<std::shared_ptr<edm4hep::Track>, int>  TrackToPidMap;
+typedef std::vector<uint64_t>    TrackVector;
+typedef std::set<uint64_t> TrackList;
+typedef std::map<uint64_t, int>  TrackToPidMap;
 
 namespace lc_content {
   class LCTrackParameters;
@@ -199,7 +199,7 @@ protected:
      *
      *  @return boolean
      */
-  virtual bool PassesQualityCuts(std::shared_ptr<edm4hep::Track> pTrack,
+  virtual bool PassesQualityCuts(edm4hep::Track pTrack,
                                  const PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -208,7 +208,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void TrackReachesECAL(std::shared_ptr<edm4hep::Track> pTrack,
+  virtual void TrackReachesECAL(edm4hep::Track pTrack,
                                 PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -219,7 +219,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void DefineTrackPfoUsage(std::shared_ptr<edm4hep::Track> pTrack,
+  virtual void DefineTrackPfoUsage(edm4hep::Track pTrack,
                                    PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -259,7 +259,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsV0(std::shared_ptr<edm4hep::Track> pTrack) const;
+  bool IsV0(uint64_t pTrack) const;
 
   /**
      *  @brief  Whether a track is a parent track
@@ -268,7 +268,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsParent(std::shared_ptr<edm4hep::Track> pTrack) const;
+  bool IsParent(uint64_t pTrack) const;
 
   /**
      *  @brief  Whether a track is a daughter track
@@ -277,7 +277,7 @@ protected:
      *
      *  @return boolean
      */
-  bool IsDaughter(std::shared_ptr<edm4hep::Track> pTrack) const;
+  bool IsDaughter(uint64_t pTrack) const;
 
   /**
      *  @brief  Copy track states stored in lcio tracks to pandora track parameters
@@ -285,7 +285,7 @@ protected:
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  void GetTrackStates(std::shared_ptr<edm4hep::Track> pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+  void GetTrackStates(edm4hep::Track pTrack, PandoraApi::Track::Parameters& trackParameters) const;
 
   /**
      *  @brief  Copy track state from lcio track state instance to pandora input track state
@@ -293,16 +293,16 @@ protected:
      *  @param  pTrackState the track state instance
      *  @param  inputTrackState the pandora input track state
      */
-  void CopyTrackState(const edm4hep::TrackState *pTrackState, pandora::InputTrackState& inputTrackState) const;
+  void CopyTrackState(const edm4hep::TrackState pTrackState, pandora::InputTrackState& inputTrackState) const;
 
   /**
      *  @brief  Obtain track time when it reaches ECAL
      *
      *  @param  pTrack the track
      */
-  float CalculateTrackTimeAtCalorimeter(std::shared_ptr<edm4hep::Track> pTrack) const;
+  float CalculateTrackTimeAtCalorimeter(edm4hep::Track pTrack) const;
 
-  void GetTrackStatesAtCalo(std::shared_ptr<edm4hep::Track> track, lc_content::LCTrackParameters& trackParameters );
+  void GetTrackStatesAtCalo(edm4hep::Track track, lc_content::LCTrackParameters& trackParameters );
 
 };
 
@@ -322,19 +322,19 @@ inline void DDTrackCreatorBase::Reset() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsV0(std::shared_ptr<edm4hep::Track> pTrack) const {
+inline bool DDTrackCreatorBase::IsV0(uint64_t pTrack) const {
   return (m_v0TrackList.end() != m_v0TrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsParent(std::shared_ptr<edm4hep::Track> pTrack) const {
+inline bool DDTrackCreatorBase::IsParent(uint64_t pTrack) const {
   return (m_parentTrackList.end() != m_parentTrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsDaughter(std::shared_ptr<edm4hep::Track> pTrack) const {
+inline bool DDTrackCreatorBase::IsDaughter(uint64_t pTrack) const {
   return (m_daughterTrackList.end() != m_daughterTrackList.find(pTrack));
 }
 

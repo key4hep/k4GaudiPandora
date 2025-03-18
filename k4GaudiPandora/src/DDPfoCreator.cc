@@ -60,15 +60,34 @@ DDPfoCreator::~DDPfoCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
-    edm4hep::ClusterCollection&              pClusterCollection,
-    edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
-    edm4hep::VertexCollection&                pStartVertexCollection) {
+    edm4hep::ClusterCollection&                     pClusterCollection,
+    edm4hep::ReconstructedParticleCollection&       pReconstructedParticleCollection,
+    edm4hep::VertexCollection&                      pStartVertexCollection,
+    std::vector<const edm4hep::MCParticleCollection*>     MCParticleCollections,
+    std::vector<const edm4hep::TrackCollection*>          trackCollections,
+    std::vector<const edm4hep::CalorimeterHitCollection*> eCalCollections,
+    std::vector<const edm4hep::CalorimeterHitCollection*> hCalCollections,
+    std::vector<const edm4hep::CalorimeterHitCollection*> mCalCollections,
+    std::vector<const edm4hep::CalorimeterHitCollection*> lCalCollections,
+    std::vector<const edm4hep::CalorimeterHitCollection*> lhCalCollections) {
 
   const pandora::PfoList* pPandoraPfoList = NULL;
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList));
 
   pandora::StringVector subDetectorNames;
   this->InitialiseSubDetectorNames(subDetectorNames);
+
+  std::unordered_map<int, const edm4hep::CalorimeterHitCollection*> calorimeterCollectionMap;
+  auto processCollections = [&](const std::vector<const edm4hep::CalorimeterHitCollection*>& collections) {
+    for (auto* collection : collections) { calorimeterCollectionMap[collection->getID()] = collection; }
+  };
+  processCollections(eCalCollections);
+  processCollections(hCalCollections);
+  processCollections(mCalCollections);
+  processCollections(lCalCollections);
+  processCollections(lhCalCollections);
+  std::unordered_map<int, const edm4hep::TrackCollection*> trackCollectionMap;
+  for (auto* collection : trackCollections) { trackCollectionMap[collection->getID()] = collection; }
 
   //pClusterCollection.parameters().setValues("ClusterSubdetectorNames", subDetectorNames);
 
@@ -95,7 +114,7 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
       pandora::FloatVector hitE, hitX, hitY, hitZ;
       edm4hep::MutableCluster     p_Cluster0 = pClusterCollection.create();
       edm4hep::MutableCluster*    p_Cluster  = &p_Cluster0;
-      this->SetClusterSubDetectorEnergies(subDetectorNames, p_Cluster, pandoraCaloHitList, hitE, hitX, hitY, hitZ);
+      this->SetClusterSubDetectorEnergies(subDetectorNames, p_Cluster, pandoraCaloHitList, hitE, hitX, hitY, hitZ, calorimeterCollectionMap);
 
       float clusterCorrectEnergy(0.f);
       this->SetClusterEnergyAndError(pPandoraPfo, pPandoraCluster, p_Cluster, clusterCorrectEnergy);
@@ -124,11 +143,11 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
       }
     } else {
       PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                               this->CalculateTrackBasedReferencePoint(pPandoraPfo, referencePoint));
+                               this->CalculateTrackBasedReferencePoint(pPandoraPfo, referencePoint, trackCollectionMap));
     }
 
     this->SetRecoParticleReferencePoint(referencePoint, pReconstructedParticle);
-    this->AddTracksToRecoParticle(pPandoraPfo, pReconstructedParticle);
+    this->AddTracksToRecoParticle(pPandoraPfo, pReconstructedParticle, trackCollectionMap);
     this->SetRecoParticlePropertiesFromPFO(pPandoraPfo, pReconstructedParticle);
 
     edm4hep::MutableVertex  pStartVertex0 = pStartVertexCollection.create();
@@ -159,30 +178,36 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
                                                  edm4hep::MutableCluster* pCluster,
                                                  const pandora::CaloHitList&    pandoraCaloHitList,
                                                  pandora::FloatVector& hitE, pandora::FloatVector& hitX,
-                                                 pandora::FloatVector& hitY, pandora::FloatVector& hitZ) const {
+                                                 pandora::FloatVector& hitY, pandora::FloatVector& hitZ,
+                                                 std::unordered_map<int, const edm4hep::CalorimeterHitCollection*> calorimeterCollections) const {
+  
   std::vector<float> subDetectorEnergies;
   for (pandora::CaloHitList::const_iterator hIter = pandoraCaloHitList.begin(), hIterEnd = pandoraCaloHitList.end();
        hIter != hIterEnd; ++hIter) {
     const pandora::CaloHit* pPandoraCaloHit = *hIter;
-    const edm4hep::CalorimeterHit* pCalorimeterHit = static_cast<const edm4hep::CalorimeterHit*>(pPandoraCaloHit->GetParentAddress());
-    if (!pCalorimeterHit) {
-      std::cerr << "Error: Retrieved null pointer from GetParentAddress!" << std::endl;
-      std::cout << typeid(pCalorimeterHit).name() << std::endl;
-    }  
-    const edm4hep::CalorimeterHit  pCalorimeterHit0  = *pCalorimeterHit;
 
-    pCluster->addToHits(pCalorimeterHit0);
+    uint64_t storedID = reinterpret_cast<uint64_t>(pPandoraCaloHit->GetParentAddress());
+    int collectionID = static_cast<int>(storedID >> 32);
+    int index = static_cast<int>(storedID & 0xFFFFFFFF);
+    auto it = calorimeterCollections.find(collectionID);
+    if (it == calorimeterCollections.end()) {
+        throw std::runtime_error("Collection ID not found!");
+    }
+    const edm4hep::CalorimeterHitCollection* collection = it->second;
+    edm4hep::CalorimeterHit pCalorimeterHit = collection->at(index);
 
-    const float caloHitEnergy(pCalorimeterHit->getEnergy());
+    pCluster->addToHits(pCalorimeterHit);
+
+    const float caloHitEnergy(pCalorimeterHit.getEnergy());
 
     hitE.push_back(caloHitEnergy);
-    hitX.push_back(pCalorimeterHit->getPosition().x);
-    hitY.push_back(pCalorimeterHit->getPosition().y);
-    hitZ.push_back(pCalorimeterHit->getPosition().z);
+    hitX.push_back(pCalorimeterHit.getPosition().x);
+    hitY.push_back(pCalorimeterHit.getPosition().y);
+    hitZ.push_back(pCalorimeterHit.getPosition().z);
 
     subDetectorEnergies.resize(subDetectorNames.size());
 
-    switch (CHT(pCalorimeterHit->getType()).caloID()) {
+    switch (CHT(pCalorimeterHit.getType()).caloID()) {
       case CHT::ecal:
         subDetectorEnergies[ECAL_INDEX] += caloHitEnergy;
         break;
@@ -205,7 +230,7 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
         MsgStream log(m_msgSvc, "PFOCreator");
         log << MSG::WARNING
             << "DDPfoCreator::SetClusterSubDetectorEnergies: no subdetector found for hit with type: "
-            << pCalorimeterHit->getType() << endmsg;
+            << pCalorimeterHit.getType() << endmsg;
     }
   }
 
@@ -266,7 +291,8 @@ void DDPfoCreator::SetClusterPositionAndError(const unsigned int nHitsInCluster,
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
-    const pandora::ParticleFlowObject* const pPandoraPfo, pandora::CartesianVector& referencePoint) const {
+    const pandora::ParticleFlowObject* const pPandoraPfo, pandora::CartesianVector& referencePoint,
+    std::unordered_map<int, const edm4hep::TrackCollection*> trackCollections) const {
   const pandora::TrackList& trackList(pPandoraPfo->GetTrackList());
 
   float                    totalTrackMomentumAtDca(0.f), totalTrackMomentumAtStart(0.f);
@@ -288,8 +314,16 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
       totalTrackMomentumAtStart += trackStartMomentum;
       hasSiblings = true;
     } else {
-      const edm4hep::Track* const pTrack0 = (edm4hep::Track*)(pPandoraTrack->GetParentAddress());
-      const edm4hep::Track        pTrack  = *pTrack0;
+      uint64_t storedID = reinterpret_cast<uint64_t>(pPandoraTrack->GetParentAddress());
+      int collectionID = static_cast<int>(storedID >> 32);
+      int index = static_cast<int>(storedID & 0xFFFFFFFF);
+      auto it = trackCollections.find(collectionID);
+      if (it == trackCollections.end()) {
+          throw std::runtime_error("Collection ID not found!");
+      }
+      const edm4hep::TrackCollection* collection = it->second;
+      edm4hep::Track pTrack = collection->at(index);
+    
       edm4hep::TrackState stateIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
 
       const float              z0(pPandoraTrack->GetZ0());
@@ -427,14 +461,25 @@ void DDPfoCreator::SetRecoParticleReferencePoint(const pandora::CartesianVector&
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPfoCreator::AddTracksToRecoParticle(const pandora::ParticleFlowObject* const     pPandoraPfo,
-                                           edm4hep::MutableReconstructedParticle* pReconstructedParticle) const {
+                                           edm4hep::MutableReconstructedParticle* pReconstructedParticle,
+                                           std::unordered_map<int, const edm4hep::TrackCollection*> trackCollections) const {
   const pandora::TrackList& trackList(pPandoraPfo->GetTrackList());
 
   for (pandora::TrackList::const_iterator tIter = trackList.begin(), tIterEnd = trackList.end(); tIter != tIterEnd;
        ++tIter) {
     const pandora::Track* const pTrack0(*tIter);
-    const edm4hep::Track* const pTrack1 = (edm4hep::Track*)(pTrack0->GetParentAddress());
-    const edm4hep::Track        pTrack  = *pTrack1;
+    uint64_t storedID = reinterpret_cast<uint64_t>(pTrack0->GetParentAddress());
+    int collectionID = static_cast<int>(storedID >> 32);
+    int index = static_cast<int>(storedID & 0xFFFFFFFF);
+    auto it = trackCollections.find(collectionID);
+    if (it == trackCollections.end()) {
+        throw std::runtime_error("Collection ID not found!");
+    }
+    const edm4hep::TrackCollection* collection = it->second;
+    edm4hep::Track pTrack = collection->at(index);
+
+    MsgStream log(m_msgSvc, "PFOs");
+    log << MSG::DEBUG << pTrack << endmsg;
     pReconstructedParticle->addToTracks(pTrack);
   }
 }
