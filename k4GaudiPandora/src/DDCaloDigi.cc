@@ -192,18 +192,6 @@ StatusCode DDCaloDigi::initialize() {
   debug() << "HCAL sc digi:" << endmsg;
   m_scHcalDigi->printParameters(debug());
 
-  // Set up the random engines for ECAL and HCAL dead cells: (could use a steering parameter though)
-  if (m_deadCellEcal_keep) {
-    m_randomEngineDeadCellEcal = new CLHEP::MTwistEngine(0, 0);
-  } else {
-    m_randomEngineDeadCellEcal = 0;
-  }
-  if (m_deadCellHcal_keep) {
-    m_randomEngineDeadCellHcal = new CLHEP::MTwistEngine(0, 0);
-  } else {
-    m_randomEngineDeadCellHcal = 0;
-  }
-
   return StatusCode::SUCCESS;
 }
 
@@ -215,6 +203,13 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   auto Relcol =
       edm4hep::CaloHitSimCaloHitLinkCollection();  // create relation collection CalorimeterHit-SimCalorimeterHit
 
+  auto uid = m_uidSvc->getUniqueID(headers, name());
+
+  // Set up the random engines for ECAL and HCAL dead cells: (could use a steering parameter though)
+
+  // APS: Why where there two engines?
+  auto randomEngine = std::make_unique<CLHEP::MTwistEngine>(0, 0);
+  randomEngine->setSeed(uid, 23);
   // decide on this event's correlated miscalibration
   //float m_event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_correl.value());
   //float m_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_correl.value());
@@ -399,7 +394,8 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
               fEcalC2[timei - dt] += energyi * calibr_coeff;
 
               // apply extra energy digitisation effects
-              energyi = ecalEnergyDigi(energyi, cellID);  // this only uses the current subhit "timecluster"!
+              energyi = ecalEnergyDigi(energyi, cellID, randomEngine);  // this only uses the current subhit
+                                                                        // "timecluster"!
 
               if (energyi > m_thresholdEcal) {  // now would be the correct time to do threshold comparison
                 float timeCor = 0;
@@ -450,7 +446,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
           float energyi = hit.getEnergy();
 
           // apply extra energy digitisation effects
-          energyi = ecalEnergyDigi(energyi, cellID);
+          energyi = ecalEnergyDigi(energyi, cellID, randomEngine);
 
           calHit.setCellID(cellID);
           if (m_digitalEcal) {
@@ -616,7 +612,8 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
               //timei carries the time of the earliest hit within this window
 
               // apply extra energy digitisation effects
-              energyi = hcalEnergyDigi(energyi, cellID);  //this only uses the current subhit "timecluster"!
+              energyi = hcalEnergyDigi(energyi, cellID, randomEngine);  //this only uses the current subhit
+                                                                        //"timecluster"!
 
               if (energyi > m_thresholdHcal[0]) {  //now would be the correct time to do threshold comparison
                 float timeCor = 0;
@@ -655,7 +652,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
           float energyi = hit.getEnergy();
 
           // apply realistic digitisation
-          energyi = hcalEnergyDigi(energyi, cellID);
+          energyi = hcalEnergyDigi(energyi, cellID, randomEngine);
 
           if (m_digitalHcal) {
             calHit.setEnergy(calibr_coeff);
@@ -679,18 +676,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   return std::make_tuple(std::move(col), std::move(Relcol));
 }
 
-StatusCode DDCaloDigi::finalize() {
-  //delete randomengines if needed
-  if (m_randomEngineDeadCellHcal != 0) {
-    delete m_randomEngineDeadCellHcal;
-  }
-
-  if (m_randomEngineDeadCellEcal != 0) {
-    delete m_randomEngineDeadCellEcal;
-  }
-
-  return StatusCode::SUCCESS;
-}
+StatusCode DDCaloDigi::finalize() { return StatusCode::SUCCESS; }
 
 void DDCaloDigi::fillECALGaps(
     std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS],
@@ -953,7 +939,8 @@ float DDCaloDigi::analogueEcalCalibCoeff(int layer) const {
   return calib_coeff;
 }
 
-float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
+float DDCaloDigi::ecalEnergyDigi(float energy, int id,
+                                 std::unique_ptr<CLHEP::MTwistEngine>& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by m_applyEcalDigi = 0 (none), 1 (silicon), 2 (scintillator)
 
@@ -961,9 +948,9 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
 
   float e_out = energy;
   if (m_applyEcalDigi == 1) {
-    e_out = siliconDigi(energy);  // silicon digi
+    e_out = siliconDigi(energy, randomEngine);  // silicon digi
   } else if (m_applyEcalDigi == 2) {
-    e_out = scintillatorDigi(energy, true);  // scintillator digi
+    e_out = scintillatorDigi(energy, true, randomEngine);  // scintillator digi
   }
   // add electronics dynamic range
   // Sept 2015: Daniel moved this to the ScintillatorDigi part, so it is applied before unfolding of sipm response
@@ -978,12 +965,12 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
           m_ECAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
         miscal = m_ECAL_cell_miscalibs.at(id);
       } else {  // we haven't seen this one yet, get a miscalib for it
-        miscal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_uncorrel);
+        miscal = CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, m_misCalibEcal_uncorrel);
         // FIXME: this is storing miscalibration globally for a run???
         // FIXME _ECAL_cell_miscalibs[id] = miscal; ???
       }
     } else {
-      miscal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_uncorrel);
+      miscal = CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, m_misCalibEcal_uncorrel);
     }
     e_out *= miscal;
   }
@@ -1001,7 +988,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
           e_out = 0;
         }
       } else {  // we haven't seen this one yet, get a miscalib for it
-        bool thisDead = (CLHEP::RandFlat::shoot(m_randomEngineDeadCellEcal, .0, 1.0) < m_deadCellFractionEcal);
+        bool thisDead = (CLHEP::RandFlat::shoot(randomEngine.get(), .0, 1.0) < m_deadCellFractionEcal);
         // FIXME global map ???
         //_ECAL_cell_dead[id] = thisDead; ???
         if (thisDead == true) {
@@ -1010,7 +997,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
       }
 
     } else {
-      if (CLHEP::RandFlat::shoot(0.0, 1.0) < m_deadCellFractionEcal)
+      if (CLHEP::RandFlat::shoot(randomEngine.get(), 0.0, 1.0) < m_deadCellFractionEcal)
         e_out = 0;
     }
   }
@@ -1018,7 +1005,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id) const {
   return e_out;
 }
 
-float DDCaloDigi::hcalEnergyDigi(float energy, int id) const {
+float DDCaloDigi::hcalEnergyDigi(float energy, int id,std::unique_ptr<CLHEP::MTwistEngine>& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by _applyHcalDigi = 0 (none), 1 (scintillator/SiPM)
 
@@ -1026,14 +1013,14 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id) const {
 
   float e_out(energy);
   if (m_applyHcalDigi == 1)
-    e_out = scintillatorDigi(energy, false);  // scintillator digi
+    e_out = scintillatorDigi(energy, false, randomEngine);  // scintillator digi
 
   // add electronics dynamic range
   // Sept 2015: Daniel moved this to the ScintillatorDigi part, so it is applied before unfolding of sipm response
   //  if (_hcalMaxDynMip>0) e_out = min (e_out, _hcalMaxDynMip*_calibHcalMip);
 
   // random miscalib
-  //  if (_misCalibHcal_uncorrel>0) e_out*=CLHEP::RandGauss::shoot( 1.0, _misCalibHcal_uncorrel );
+  //  if (_misCalibHcal_uncorrel>0) e_out*=CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, _misCalibHcal_uncorrel );
   if (m_misCalibHcal_uncorrel > 0) {
     float miscal(0);
     if (m_misCalibHcal_uncorrel_keep) {
@@ -1042,12 +1029,12 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id) const {
           m_HCAL_cell_miscalibs.end()) {  // this cell was previously seen, and a miscalib stored
         miscal = m_HCAL_cell_miscalibs.at(id);
       } else {  // we haven't seen this one yet, get a miscalib for it
-        miscal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_uncorrel);
+        miscal = CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, m_misCalibHcal_uncorrel);
         // FIXME: same as above
         //_HCAL_cell_miscalibs[id] = miscal; ???
       }
     } else {
-      miscal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_uncorrel);
+      miscal = CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, m_misCalibHcal_uncorrel);
     }
     e_out *= miscal;
   }
@@ -1065,7 +1052,7 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id) const {
           e_out = 0;
         }
       } else {  // we haven't seen this one yet, get a miscalib for it
-        bool thisDead = (CLHEP::RandFlat::shoot(m_randomEngineDeadCellHcal, .0, 1.0) < m_deadCellFractionHcal);
+        bool thisDead = (CLHEP::RandFlat::shoot(randomEngine.get(), .0, 1.0) < m_deadCellFractionHcal);
         // FIXME globally dead cell map???
         //FIXME _HCAL_cell_dead[id] = thisDead; ???
         if (thisDead == true) {
@@ -1074,21 +1061,21 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id) const {
       }
 
     } else {
-      if (CLHEP::RandFlat::shoot(0.0, 1.0) < m_deadCellFractionHcal)
+      if (CLHEP::RandFlat::shoot(randomEngine.get(), 0.0, 1.0) < m_deadCellFractionHcal)
         e_out = 0;
     }
   }
   return e_out;
 }
 
-float DDCaloDigi::siliconDigi(float energy) const {
+float DDCaloDigi::siliconDigi(float energy, std::unique_ptr<CLHEP::MTwistEngine>& randomEngine) const {
   // applies extra digitisation to silicon hits
 
   // calculate #e-h pairs
   float nehpairs = 1.0e9 * energy / m_ehEnergy;  // check units of energy! m_ehEnergy is in eV, energy in GeV
 
   // fluctuate it by Poisson
-  float smeared_energy = energy * CLHEP::RandPoisson::shoot(nehpairs) / nehpairs;
+  float smeared_energy = energy * CLHEP::RandPoisson::shoot(randomEngine.get(), nehpairs) / nehpairs;
 
   // limited electronics dynamic range // Daniel moved electronics dyn range to here
   if (m_ecalMaxDynMip > 0)
@@ -1096,12 +1083,12 @@ float DDCaloDigi::siliconDigi(float energy) const {
 
   // add electronics noise
   if (m_ecal_elec_noise > 0)
-    smeared_energy += CLHEP::RandGauss::shoot(0, m_ecal_elec_noise * m_calibEcalMip);
+    smeared_energy += CLHEP::RandGauss::shoot(randomEngine.get(), 0, m_ecal_elec_noise * m_calibEcalMip);
 
   return smeared_energy;
 }
 
-float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) const {
+float DDCaloDigi::scintillatorDigi(float energy, bool isEcal, std::unique_ptr<CLHEP::MTwistEngine>& randomEngine) const {
   // this applies some extra digitisation to scintillator+PPD hits (PPD=SiPM, MPPC)
   // - poisson fluctuates the number of photo-electrons according to #PEs/MIP
   // - applies PPD saturation according to #pixels
@@ -1109,9 +1096,9 @@ float DDCaloDigi::scintillatorDigi(float energy, bool isEcal) const {
 
   float digiEn(0);
   if (isEcal) {
-    digiEn = m_scEcalDigi->getDigitisedEnergy(energy);  //CHECK!!!
+    digiEn = m_scEcalDigi->getDigitisedEnergy(energy, randomEngine);  //CHECK!!!
   } else {
-    digiEn = m_scHcalDigi->getDigitisedEnergy(energy);
+    digiEn = m_scHcalDigi->getDigitisedEnergy(energy, randomEngine);
   }
   return digiEn;
 }

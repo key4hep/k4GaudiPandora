@@ -50,7 +50,7 @@ void DDScintillatorPpdDigi::printParameters(MsgStream& out) {
   return;
 }
 
-float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
+float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, std::unique_ptr<CLHEP::MTwistEngine>& randomEngine) {
   float correctedEnergy(energy);
 
   if (m_PEperMIP <= 0 || m_calibMIP <= 0 || m_Npix <= 0) {
@@ -95,12 +95,12 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
 
       //apply binomial smearing
       float p = Npe / m_Npix;                           // fraction of hit pixels on SiPM
-      Npe     = CLHEP::RandBinomial::shoot(m_Npix, p);  // # photoelectrons now quantised to integer pixels
+      Npe     = CLHEP::RandBinomial::shoot(randomEngine.get(), m_Npix, p);  // # photoelectrons now quantised to integer pixels
     }
 
     if (m_pixSpread > 0) {
       // variations in pixel capacitance
-      Npe *= CLHEP::RandGauss::shoot(1., m_pixSpread / sqrt(Npe));
+      Npe *= CLHEP::RandGauss::shoot(randomEngine.get(), 1., m_pixSpread / sqrt(Npe));
     }
 
     if (m_elecMaxDynRange_MIP > 0) {
@@ -111,13 +111,13 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy) {
 
     if (m_elecNoise > 0) {
       // add electronics noise
-      Npe += CLHEP::RandGauss::shoot(0., m_elecNoise * m_PEperMIP);
+      Npe += CLHEP::RandGauss::shoot(randomEngine.get(), 0., m_elecNoise * m_PEperMIP);
     }
 
     if (m_Npix > 0) {
       // 4. unfold the saturation
       // - miscalibration of Npix
-      float smearedNpix = m_misCalibNpix > 0 ? m_Npix * CLHEP::RandGauss::shoot(1.0, m_misCalibNpix) : m_Npix;
+      float smearedNpix = m_misCalibNpix > 0 ? m_Npix * CLHEP::RandGauss::shoot(randomEngine.get(), 1.0, m_misCalibNpix) : m_Npix;
 
       //oh: commented out daniel's implmentation of dealing with hits>smearedNpix. using linearisation of saturation-reconstruction for high amplitude hits instead.
       /*
