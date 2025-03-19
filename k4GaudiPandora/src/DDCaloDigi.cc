@@ -288,7 +288,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
           calibr_coeff = this->analogueEcalCalibCoeff(layer);
         }
         // if(fabs(hit->getPosition()[2])>=_zOfEcalEndcap)calibr_coeff *= m_ecalEndcapCorrectionFactor;
-        if (caloLayout != CHT::endcap) {
+        if (caloLayout != CHT::barrel) {
           calibr_coeff *= m_ecalEndcapCorrectionFactor;  // more robust
         }
 
