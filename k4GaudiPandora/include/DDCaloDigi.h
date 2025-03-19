@@ -409,8 +409,8 @@ private:
   float digitalHcalCalibCoeff(CHT::Layout, float energy) const;
   float analogueHcalCalibCoeff(CHT::Layout, int layer) const;
 
-  float ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine&) const;
-  float hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine&) const;
+  float ecalEnergyDigi(float energy, int id, float event_correl_miscalib_ecal, CLHEP::MTwistEngine&) const;
+  float hcalEnergyDigi(float energy, int id, float event_correl_miscalib_hcal, CLHEP::MTwistEngine&) const;
 
   float siliconDigi(float energy, CLHEP::MTwistEngine&) const;
   float scintillatorDigi(float energy, bool isEcal, CLHEP::MTwistEngine&) const;
@@ -434,9 +434,6 @@ private:
   // internal variables
   mutable int m_countWarnings = 0;
   std::string m_ecalLayout    = "";
-
-  float                m_event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_correl);
-  float                m_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_correl);
 
   std::map<int, float> m_ECAL_cell_miscalibs{};
   std::map<int, bool>  m_ECAL_cell_dead{};
