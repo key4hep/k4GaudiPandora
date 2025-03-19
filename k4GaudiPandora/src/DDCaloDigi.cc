@@ -17,13 +17,6 @@
  * limitations under the License.
  */
 #include "DDCaloDigi.h"
-#include <assert.h>
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/DetType.h"
 #include "DD4hep/Detector.h"
@@ -40,6 +33,14 @@
 #include "CLHEP/Random/RandPoisson.h"
 
 #include "k4FWCore/MetadataUtils.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 using namespace dd4hep;
 using namespace DDSegmentation;
@@ -148,7 +149,7 @@ StatusCode DDCaloDigi::initialize() {
     m_thresholdEcal.value() *= m_ecal_PPD_pe_per_mip.value() * m_calibEcalMip.value();
   } else {
     error() << "Could not identify ECAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting." << endmsg;
-    assert(0);
+    return StatusCode::FAILURE;
   }
 
   // Convert HCAL thresholds to GeV units
@@ -166,7 +167,7 @@ StatusCode DDCaloDigi::initialize() {
     }
   } else {
     error() << "Could not identify HCAL threshold unit. Please use \"GeV\", \"MIP\" or \"px\"! Aborting." << endmsg;
-    assert(0);
+    return StatusCode::FAILURE;
   }
 
   // Set up the scintillator/MPPC digitizer
