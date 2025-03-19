@@ -210,8 +210,8 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   auto randomEngine = CLHEP::MTwistEngine(uid);
 
   // decide on this event's correlated miscalibration
-  //float m_event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(1.0, m_misCalibEcal_correl.value());
-  //float m_event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(1.0, m_misCalibHcal_correl.value());
+  float event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(&randomEngine, 1.0, m_misCalibEcal_correl.value());
+  float event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(&randomEngine, 1.0, m_misCalibHcal_correl.value());
 
   std::string colName = m_inputLocations[0][0].key();  // take input collection name
   debug() << "looking for collection: " << colName << std::endl;
@@ -391,8 +391,9 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
               fEcalC2[timei - dt] += energyi * calibr_coeff;
 
               // apply extra energy digitisation effects
-              energyi = ecalEnergyDigi(energyi, cellID, randomEngine);  // this only uses the current subhit
-                                                                        // "timecluster"!
+              energyi = ecalEnergyDigi(energyi, cellID, event_correl_miscalib_ecal,
+                                       randomEngine);  // this only uses the current subhit
+                                                       // "timecluster"!
 
               if (energyi > m_thresholdEcal) {  // now would be the correct time to do threshold comparison
                 float timeCor = 0;
@@ -443,7 +444,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
           float energyi = hit.getEnergy();
 
           // apply extra energy digitisation effects
-          energyi = ecalEnergyDigi(energyi, cellID, randomEngine);
+          energyi = ecalEnergyDigi(energyi, cellID, event_correl_miscalib_ecal, randomEngine);
 
           calHit.setCellID(cellID);
           if (m_digitalEcal) {
@@ -609,8 +610,9 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
               //timei carries the time of the earliest hit within this window
 
               // apply extra energy digitisation effects
-              energyi = hcalEnergyDigi(energyi, cellID, randomEngine);  //this only uses the current subhit
-                                                                        //"timecluster"!
+              energyi = hcalEnergyDigi(energyi, cellID, event_correl_miscalib_hcal,
+                                       randomEngine);  //this only uses the current subhit
+              //"timecluster"!
 
               if (energyi > m_thresholdHcal[0]) {  //now would be the correct time to do threshold comparison
                 float timeCor = 0;
@@ -649,7 +651,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
           float energyi = hit.getEnergy();
 
           // apply realistic digitisation
-          energyi = hcalEnergyDigi(energyi, cellID, randomEngine);
+          energyi = hcalEnergyDigi(energyi, cellID, event_correl_miscalib_hcal, randomEngine);
 
           if (m_digitalHcal) {
             calHit.setEnergy(calibr_coeff);
@@ -936,7 +938,8 @@ float DDCaloDigi::analogueEcalCalibCoeff(int layer) const {
   return calib_coeff;
 }
 
-float DDCaloDigi::ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& randomEngine) const {
+float DDCaloDigi::ecalEnergyDigi(float energy, int id, float event_correl_miscalib_ecal,
+                                 CLHEP::MTwistEngine& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by m_applyEcalDigi = 0 (none), 1 (silicon), 2 (scintillator)
 
@@ -971,7 +974,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   }
 
   if (m_misCalibEcal_correl > 0)
-    e_out *= m_event_correl_miscalib_ecal;
+    e_out *= event_correl_miscalib_ecal;
 
   // random cell kill
   if (m_deadCellFractionEcal > 0) {
@@ -998,7 +1001,8 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   return e_out;
 }
 
-float DDCaloDigi::hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& randomEngine) const {
+float DDCaloDigi::hcalEnergyDigi(float energy, int id, float event_correl_miscalib_hcal,
+                                 CLHEP::MTwistEngine& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by _applyHcalDigi = 0 (none), 1 (scintillator/SiPM)
 
@@ -1032,7 +1036,7 @@ float DDCaloDigi::hcalEnergyDigi(float energy, int id, CLHEP::MTwistEngine& rand
   }
 
   if (m_misCalibHcal_correl > 0)
-    e_out *= m_event_correl_miscalib_hcal;
+    e_out *= event_correl_miscalib_hcal;
 
   // random cell kill
   if (m_deadCellFractionHcal > 0) {
