@@ -229,8 +229,6 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS];
   std::vector<int>                             m_calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS];
 
-  int orientation = getStripOrientationFromColName(colName);
-
   //
   // * Reading Collections of ECAL Simulated Hits *
   //
