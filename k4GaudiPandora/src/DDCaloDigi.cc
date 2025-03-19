@@ -171,7 +171,7 @@ StatusCode DDCaloDigi::initialize() {
   }
 
   // Set up the scintillator/MPPC digitizer
-  m_scEcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi());
+  m_scEcalDigi = std::make_unique<DDScintillatorPpdDigi>();
   m_scEcalDigi->setPEperMIP(m_ecal_PPD_pe_per_mip);
   m_scEcalDigi->setCalibMIP(m_calibEcalMip);
   m_scEcalDigi->setNPix(m_ecal_PPD_n_pixels);
@@ -182,7 +182,7 @@ StatusCode DDCaloDigi::initialize() {
   debug() << "ECAL sc digi:" << endmsg;
   m_scEcalDigi->printParameters(debug());
 
-  m_scHcalDigi = std::unique_ptr<DDScintillatorPpdDigi>(new DDScintillatorPpdDigi());
+  m_scHcalDigi = std::make_unique<DDScintillatorPpdDigi>();
   m_scHcalDigi->setPEperMIP(m_hcal_PPD_pe_per_mip);
   m_scHcalDigi->setCalibMIP(m_calibHcalMip);
   m_scHcalDigi->setNPix(m_hcal_PPD_n_pixels);
