@@ -21,6 +21,15 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					src/CalorimeterHitType.cc
                     src/DDCaloDigi.cc
                     src/DDScintillatorPpdDigi.cc
+					src/DDBFieldPlugin.cc
+					# src/DDCaloDigi.cc
+					src/DDCaloHitCreator.cc
+					# src/DDExternalClusteringAlgorithm.cc
+			 		# src/DDGeometryCreator.cc
+					src/DDMCParticleCreator.cc
+					# src/DDPandoraPFANewProcessor.cc
+					src/DDPfoCreator.cc
+					# src/DDScintillatorPpdDigi.cc
 					src/DDSimpleMuonDigi.cc
 					)
 
@@ -33,8 +42,11 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       DD4hep::DDRec
                       DD4hep::DDCore
                       CLHEP::CLHEP
-                      )
-target_include_directories(k4GaudiPandoraPlugins PRIVATE include)
+                      ${PandoraSDK_LIBRARIES}
+                    )
+target_include_directories(k4GaudiPandoraPlugins PRIVATE include
+  ${PandoraSDK_INCLUDE_DIRS}
+)
 install(TARGETS k4GaudiPandoraPlugins
   EXPORT ${CMAKE_PROJECT_NAME}Targets
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT bin
