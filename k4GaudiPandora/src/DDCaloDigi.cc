@@ -204,7 +204,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   auto Relcol =
       edm4hep::CaloHitSimCaloHitLinkCollection();  // create relation collection CalorimeterHit-SimCalorimeterHit
 
-  auto uid = m_uidSvc->getUniqueID(headers, name());
+  auto uid = m_uidSvc->getUniqueID(headers[0].getEventNumber(), headers[0].getRunNumber(), name());
 
   // Set up the random engines for ECAL and HCAL dead cells: (could use a steering parameter though)
   // APS: Why were there two engines?
