@@ -27,7 +27,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					src/DDCaloHitCreator.cc
 					# src/DDExternalClusteringAlgorithm.cc
 			 		src/DDGeometryCreator.cc
-					# src/DDMCParticleCreator.cc
+					src/DDMCParticleCreator.cc
 					# src/DDPandoraPFANewProcessor.cc
 					src/DDPfoCreator.cc
 					# src/DDScintillatorPpdDigi.cc
