@@ -22,7 +22,7 @@ from k4FWCore import ApplicationMgr
 from k4FWCore import IOSvc
 
 iosvc = IOSvc("IOSvc")
-iosvc.output = "output_k4test_exampledata.root"
+iosvc.Output = "output_k4test_exampledata.root"
 iosvc.outputCommands = ["keep *"]
 
 producer = CreateExampleEventData()
