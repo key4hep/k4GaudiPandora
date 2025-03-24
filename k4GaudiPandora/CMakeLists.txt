@@ -19,8 +19,9 @@ limitations under the License.
 
 set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					src/CalorimeterHitType.cc
-					src/DDCaloDigi.cc
-					src/DDScintillatorPpdDigi.cc
+set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
+                    src/DDCaloDigi.cc
+                    src/DDScintillatorPpdDigi.cc
 					src/DDSimpleMuonDigi.cc
 					)
 
