@@ -23,14 +23,12 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
                     src/DDCaloDigi.cc
                     src/DDScintillatorPpdDigi.cc
 					src/DDBFieldPlugin.cc
-					# src/DDCaloDigi.cc
 					src/DDCaloHitCreator.cc
 					# src/DDExternalClusteringAlgorithm.cc
 			 		src/DDGeometryCreator.cc
 					src/DDMCParticleCreator.cc
 					# src/DDPandoraPFANewProcessor.cc
 					src/DDPfoCreator.cc
-					# src/DDScintillatorPpdDigi.cc
 					src/DDSimpleMuonDigi.cc
 					)
 
