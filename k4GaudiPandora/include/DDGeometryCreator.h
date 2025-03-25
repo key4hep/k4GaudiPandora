@@ -28,6 +28,7 @@
 #ifndef DDGEOMETRY_CREATOR_H
 #define DDGEOMETRY_CREATOR_H 1
 
+#include <k4FWCore/Transformer.h>
 #include "Api/PandoraApi.h"
 
 #include "DDRec/DetectorData.h"
@@ -61,7 +62,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora, IMessageSvc* msgSvc);
 
   /**
      *  @brief  Destructor
@@ -153,6 +154,7 @@ private:
 
   const Settings          m_settings;  ///< The geometry creator settings
   const pandora::Pandora& m_pPandora;  ///< Address of the pandora object to create the geometry
+  IMessageSvc* m_msgSvc;
 };
 
 #endif  // #ifndef GEOMETRY_CREATOR_H
