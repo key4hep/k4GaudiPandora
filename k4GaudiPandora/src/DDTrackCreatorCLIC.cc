@@ -18,7 +18,7 @@
  */
 
 /**
- *  @file   DDMarlinPandora/src/DDTrackCreatorCLIC.cc
+ *  @file   k4GaudiPandora/src/DDTrackCreatorCLIC.cc
  *
  *  @brief  Implementation of the track creator class for a CLIC all silicon tracker.
  *
