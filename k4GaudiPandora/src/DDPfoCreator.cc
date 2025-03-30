@@ -70,6 +70,8 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
     std::vector<const edm4hep::CalorimeterHitCollection*> mCalCollections,
     std::vector<const edm4hep::CalorimeterHitCollection*> lCalCollections,
     std::vector<const edm4hep::CalorimeterHitCollection*> lhCalCollections) {
+  MsgStream log(m_msgSvc, "PFOCreator");
+  log << MSG::DEBUG << "Creating PFOs." << endmsg;
 
   const pandora::PfoList* pPandoraPfoList = NULL;
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList));
@@ -134,7 +136,6 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
 
     if (!hasTrack) {
       if (clustersTotalEnergy < std::numeric_limits<float>::epsilon()) {
-        MsgStream log(m_msgSvc, "PFOCreator");
         log << MSG::WARNING << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
                                << clustersTotalEnergy << endmsg;
         throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
@@ -194,7 +195,9 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector&   
         throw std::runtime_error("Collection ID not found!");
     }
     const edm4hep::CalorimeterHitCollection* collection = it->second;
-    edm4hep::CalorimeterHit pCalorimeterHit = collection->at(index);
+    MsgStream log(m_msgSvc, "PFOCreator");
+    log << MSG::DEBUG << "PFO Calo index: " << index << endmsg;
+    edm4hep::CalorimeterHit pCalorimeterHit = collection->at(index );
 
     pCluster->addToHits(pCalorimeterHit);
 
@@ -322,7 +325,7 @@ pandora::StatusCode DDPfoCreator::CalculateTrackBasedReferencePoint(
           throw std::runtime_error("Collection ID not found!");
       }
       const edm4hep::TrackCollection* collection = it->second;
-      edm4hep::Track pTrack = collection->at(index);
+      edm4hep::Track pTrack = collection->at(index );
     
       edm4hep::TrackState stateIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
 
@@ -476,10 +479,8 @@ void DDPfoCreator::AddTracksToRecoParticle(const pandora::ParticleFlowObject* co
         throw std::runtime_error("Collection ID not found!");
     }
     const edm4hep::TrackCollection* collection = it->second;
-    edm4hep::Track pTrack = collection->at(index);
+    edm4hep::Track pTrack = collection->at(index );
 
-    MsgStream log(m_msgSvc, "PFOs");
-    log << MSG::DEBUG << pTrack << endmsg;
     pReconstructedParticle->addToTracks(pTrack);
   }
 }

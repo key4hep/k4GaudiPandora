@@ -59,7 +59,7 @@
        m_tanLambdaEndcapDisk(0.f)
  
  {
-  MsgStream log(m_msgSvc, "TrackCreator");
+   MsgStream log(m_msgSvc, "TrackCreator");
    m_trackerInnerR = getTrackingRegionExtent()[0];
    m_trackerOuterR = getTrackingRegionExtent()[1];
    m_trackerZmax   = getTrackingRegionExtent()[2];
@@ -162,8 +162,9 @@
    for (int colIndex = 0; colIndex < trackCollections.size(); colIndex++) {
     log << MSG::DEBUG << "Creating Tracks from collection of " << trackCollections[colIndex]->size() << " tracks." << endmsg;
     try {
-       const edm4hep::TrackCollection* pTrackCollection =trackCollections[colIndex];
- 
+       const edm4hep::TrackCollection* pTrackCollection = trackCollections[colIndex];
+       uint64_t collectionID = pTrackCollection->getID();
+
        ///FIXME: Should really move to using surfaces
        for (int i = 0, iMax = pTrackCollection->size(); i < iMax; ++i) {
          edm4hep::Track pTrack = pTrackCollection->at(i);
@@ -179,10 +180,10 @@
          trackParameters.m_d0             = stateAtIP.D0;
          trackParameters.m_z0             = stateAtIP.Z0;
 
-         uint64_t ID = pTrack.getObjectID().collectionID;
-         ID = (ID << 32) | pTrack.getObjectID().index;
-         trackParameters.m_pParentAddress = reinterpret_cast<void*>(ID);     
- 
+         uint64_t ID = (collectionID << 32) | i;
+         trackParameters.m_pParentAddress = reinterpret_cast<void*>(ID);     /// INSTEAD OF THIS, USE i and pTrackCollection id!
+         log << MSG::DEBUG << "Track Added with ID: " << ID << "  index: " << i << endmsg;
+
          // By default, assume tracks are charged pions
          const float signedCurvature(stateAtIP.omega);
          trackParameters.m_particleId = (signedCurvature > 0) ? pandora::PI_PLUS : pandora::PI_MINUS;
@@ -210,7 +211,7 @@
            this->GetTrackStates(pTrack, trackParameters);
            this->TrackReachesECAL(pTrack, trackParameters);
            this->GetTrackStatesAtCalo(pTrack, trackParameters);
-           this->DefineTrackPfoUsage(pTrack, trackParameters);
+           this->DefineTrackPfoUsage(pTrack, trackParameters, ID);
  
            PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                                    PandoraApi::Track::Create(m_pandora, trackParameters, *m_lcTrackFactory));
@@ -268,7 +269,7 @@
      return false;
    }
  
-   log << MSG::DEBUG << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << pTrack << endmsg;
+   log << MSG::VERBOSE << " TEMPORARILY ACCEPT TRACK WITHOUT CUTS (should change!)" << pTrack << endmsg;
    return true;
  
    // Require reasonable number of Tracker hits
@@ -347,16 +348,15 @@
  //------------------------------------------------------------------------------------------------------------------------------------------
  
  void DDTrackCreatorCLIC::DefineTrackPfoUsage(edm4hep::Track      pTrack,
-                                              PandoraApi::Track::Parameters& trackParameters) const {
+                                              PandoraApi::Track::Parameters& trackParameters,
+                                              uint64_t pTrackID) const {
    MsgStream log(m_msgSvc, "TrackCreator");
 
    bool canFormPfo(false);
    bool canFormClusterlessPfo(false);
 
    edm4hep::TrackState stateAtIP = pTrack.getTrackStates(edm4hep::TrackState::AtIP);
-   uint64_t pTrackID = (static_cast<uint64_t>(pTrack.getObjectID().collectionID) << 32) | pTrack.getObjectID().index;
 
- 
    if (trackParameters.m_reachesCalorimeter.Get() && !this->IsParent(pTrackID)) {
      const float d0(std::fabs(stateAtIP.D0)), z0(std::fabs(stateAtIP.Z0));
  

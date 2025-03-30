@@ -94,6 +94,8 @@ pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(
 
 pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   MsgStream log(m_msgSvc, "TrackCreator");
+  log << MSG::DEBUG << "Extracting Kinks" << endmsg;
+
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pKinkCollection =vertexCollections[colIndex];
@@ -190,6 +192,8 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const std::vector<const edm
 pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongCollections, 
                                                                const std::vector<const edm4hep::VertexCollection*>& splitCollections) {
   MsgStream log(m_msgSvc, "TrackCreator");
+  log << MSG::DEBUG << "Extracting Prongs and Splits." << endmsg;
+
   std::vector<const edm4hep::VertexCollection*> vertexCollections;
   vertexCollections.insert(vertexCollections.end(), prongCollections.begin(), prongCollections.end());
   vertexCollections.insert(vertexCollections.end(), splitCollections.begin(), splitCollections.end());
@@ -257,6 +261,8 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector
 
 pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& vertexCollections) {
   MsgStream log(m_msgSvc, "TrackCreator");
+  log << MSG::DEBUG << "Extracting V0s." << endmsg;
+
   for (int colIndex = 0; colIndex < vertexCollections.size(); colIndex++) {
     try {
       const edm4hep::VertexCollection* pV0Collection = vertexCollections[colIndex];
@@ -464,7 +470,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track track, lc_content::
       return;
   }
   
-  log << MSG::DEBUG << "Original" << *trackAtCalo << endmsg;
+  log << MSG::DEBUG << "Original " << *trackAtCalo << endmsg;
   
   edm4hep::Vector3f tsPosition = trackAtCalo->referencePoint;
   
@@ -495,7 +501,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track track, lc_content::
     trkHit->setPosition(pos);
 
     if( marlintrk->addHit(trkHit)  != MarlinTrk::IMarlinTrack::success  )
-      log << MSG::DEBUG << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add tracker hit " << *trkHit<< endmsg;
+      log << MSG::DEBUG << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add tracker hit \n" << *trkHit << endmsg;
   }
   
   bool tanL_is_positive = trackAtCalo->tanLambda>0;

@@ -100,9 +100,11 @@
       *
       *  @param  pTrack the  track
       *  @param  trackParameters the track parameters
+      *  @param  pTrackID the id of the track
       */
    virtual void DefineTrackPfoUsage(edm4hep::Track      pTrack,
-                                    PandoraApi::Track::Parameters& trackParameters) const;
+                                    PandoraApi::Track::Parameters& trackParameters,
+                                    uint64_t pTrackID) const;
  };
  
  #endif  // #ifndef DDTRACK_CREATOR_CLIC_H

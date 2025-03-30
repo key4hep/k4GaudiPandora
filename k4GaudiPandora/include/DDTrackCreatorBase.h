@@ -218,9 +218,11 @@ protected:
      *
      *  @param  pTrack the track
      *  @param  trackParameters the track parameters
+     *  @param  pTrackID the id of the track
      */
   virtual void DefineTrackPfoUsage(edm4hep::Track pTrack,
-                                   PandoraApi::Track::Parameters& trackParameters) const = 0;
+                                   PandoraApi::Track::Parameters& trackParameters,
+                                   uint64_t pTrackID) const = 0;
 
   /**
      *  @brief  Extract kink information from specified collections

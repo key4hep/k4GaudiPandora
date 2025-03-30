@@ -52,15 +52,17 @@ DDMCParticleCreator::~DDMCParticleCreator() {}
 
 pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const std::vector<const edm4hep::MCParticleCollection*>& MCParticleCollections) {
   MsgStream log(m_msgSvc, "MCParticleCreator");
+  log << MSG::DEBUG << "Creating MCParticles particles" << endmsg;
+
   for (int colIndex = 0; colIndex < MCParticleCollections.size(); colIndex++) {
     try {
       const edm4hep::MCParticleCollection* pMCParticleCollection = MCParticleCollections[colIndex];
+      uint64_t collectionID = MCParticleCollections[colIndex]->getID();
       const int nElements(pMCParticleCollection->size());
 
       if (0 == nElements)
         continue;
 
-      log << MSG::DEBUG << "Creating MCParticles particles" << endmsg;
       for (int i = 0, iMax = nElements; i < iMax; ++i) {
         try {
           edm4hep::MCParticle pMcParticle = pMCParticleCollection->at(i);
@@ -71,9 +73,9 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const std::vector<con
           mcParticleParameters.m_mcParticleType = pandora::MC_3D;
 
           
-          uint64_t ID = pMcParticle.getObjectID().collectionID;
-          ID = (ID << 32) | pMcParticle.getObjectID().index;
-          mcParticleParameters.m_pParentAddress = reinterpret_cast<void*>(ID);     
+          uint64_t ID = (collectionID << 32) | i;
+          mcParticleParameters.m_pParentAddress = reinterpret_cast<void*>(ID);
+          log << MSG::DEBUG << "Creating MCP with ID: " << ID << endmsg;  
 
           mcParticleParameters.m_momentum       = pandora::CartesianVector(
               pMcParticle.getMomentum().x, pMcParticle.getMomentum().y, pMcParticle.getMomentum().z);
@@ -110,20 +112,22 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
                                                                               const TrackVector&    trackVector,
                                                                               const std::vector<const edm4hep::TrackCollection*>& trackCollections) const {
   MsgStream log(m_msgSvc, "MCParticleCreator");
+  log << MSG::DEBUG << "Creating Track-MCParticle Links." << endmsg;
+
   std::unordered_map<int, const edm4hep::TrackCollection*> trackCollectionMap;
   for (auto* collection : trackCollections) { trackCollectionMap[collection->getID()] = collection; }
   
   for (unsigned ik = 0; ik < trackVector.size(); ik++) {
-    ///////FINISH THIS////////
     uint64_t trackID = trackVector.at(ik);
     int collectionID = static_cast<int>(trackID >> 32);
     int index = static_cast<int>(trackID & 0xFFFFFFFF);
+
     auto it = trackCollectionMap.find(collectionID);
     if (it == trackCollectionMap.end()) {
         throw std::runtime_error("Collection ID not found!");
     }
     const edm4hep::TrackCollection* collection = it->second;
-    edm4hep::Track pTrack = collection->at(index);
+    edm4hep::Track pTrack = collection->at(index );
 
     // Get reconstructed momentum at dca
     edm4hep::TrackState stateAtIP = pTrack.getTrackStates(0);
@@ -161,6 +165,7 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
 
       if (0 == pBestMCParticle)
         continue;
+      log << MSG::DEBUG << "Linking Track: " << trackID << " with MCP: " << pBestMCParticle << endmsg;
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::SetTrackToMCParticleRelationship(
         m_pandora, reinterpret_cast<void*>(trackID), reinterpret_cast<void*>(pBestMCParticle)));
     } catch (pandora::StatusCodeException& statusCodeException) {
@@ -182,6 +187,8 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
                                                                                 const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
                                                                                 const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections) const {
   MsgStream log(m_msgSvc, "MCParticleCreator");
+  log << MSG::DEBUG << "Creating CalorimeterHit-MCParticle Links." << endmsg;
+
   std::unordered_map<int, const edm4hep::CalorimeterHitCollection*> calorimeterCollectionMap;
   auto processCollections = [&](const std::vector<const edm4hep::CalorimeterHitCollection*>& collections) {
     for (auto* collection : collections) { calorimeterCollectionMap[collection->getID()] = collection; }

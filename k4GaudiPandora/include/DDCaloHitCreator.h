@@ -213,11 +213,14 @@ private:
      *
      *  @param  pCaloHit the lcio calorimeter hit
      *  @param  caloHitParameters the calo hit parameters to populate
+     *  @param  collectionID the ID of the collection
+     *  @param  index the index of the hit in the collection
      * 
      *  @return Calo ID to store in vector
      */
   uint64_t GetCommonCaloHitProperties(edm4hep::CalorimeterHit pCaloHit,
-                                      PandoraApi::CaloHit::Parameters&   caloHitParameters) const;
+                                      PandoraApi::CaloHit::Parameters&   caloHitParameters,
+                                      uint64_t collectionID, int index) const;
 
   /**
      *  @brief  Get end cap specific calo hit properties: cell size, absorber radiation and interaction lengths, normal vector
