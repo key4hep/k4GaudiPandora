@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 #include "DDScintillatorPpdDigi.h"
-#include <assert.h>
-#include <iostream>
 #include "CLHEP/Random/RandBinomial.h"
 #include "CLHEP/Random/RandGauss.h"
-#include "CLHEP/Random/RandPoisson.h"
 
 #include "GaudiKernel/MsgStream.h"
+
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
 
 using std::cout;
 using std::endl;
@@ -33,8 +34,6 @@ using std::endl;
 // - applies PPD saturation according to #pixels
 // Daniel Jeans, Jan/Feb 2014.
 // (split off from ILDCaloDigi Aug'14.)
-
-DDScintillatorPpdDigi::DDScintillatorPpdDigi() {}
 
 void DDScintillatorPpdDigi::printParameters(MsgStream& out) {
   out << "--------------------------------" << endl;
@@ -47,10 +46,9 @@ void DDScintillatorPpdDigi::printParameters(MsgStream& out) {
   out << " elecDynRange = " << m_elecMaxDynRange_MIP << endl;
   out << " elecNoise    = " << m_elecNoise << endl;
   out << "--------------------------------" << endl;
-  return;
 }
 
-float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngine& randomEngine) {
+float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngine& randomEngine) const {
   float correctedEnergy(energy);
 
   if (m_PEperMIP <= 0 || m_calibMIP <= 0 || m_Npix <= 0) {
@@ -60,7 +58,7 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
             "digitisation!!"
          << endl;
     cout << "Refusing to proceed!" << endl;
-    assert(0);
+    throw std::invalid_argument("DDScintillatorPpdDigi: invalid parameters");
   } else {
     // 1. convert energy to expected # photoelectrons (via MIPs)
     float Npe = m_PEperMIP * energy / m_calibMIP;
@@ -91,7 +89,7 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
 
     if (m_Npix > 0) {
       // apply average SiPM saturation behaviour
-      Npe = m_Npix * (1.0 - exp(-Npe / m_Npix));
+      Npe = m_Npix * (1.0 - std::exp(-Npe / m_Npix));
 
       //apply binomial smearing
       float p = Npe / m_Npix;                                      // fraction of hit pixels on SiPM
