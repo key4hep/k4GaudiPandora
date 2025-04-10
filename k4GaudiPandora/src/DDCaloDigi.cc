@@ -720,18 +720,18 @@ void DDCaloDigi::fillECALGaps(
 
         for (unsigned int i = 0; i < m_calHitsByStaveLayer[is][il].size() - 1; ++i) {
           edm4hep::MutableCalorimeterHit* hiti    = m_calHitsByStaveLayer[is][il][i];
-          int                             modulei = m_calHitsByStaveLayerModule[is][il][i];
-          float                           xi      = hiti->getPosition()[0];
-          float                           yi      = hiti->getPosition()[1];
-          float                           zi      = hiti->getPosition()[2];
+          const int                             modulei = m_calHitsByStaveLayerModule[is][il][i];
+          const float                           xi      = hiti->getPosition()[0];
+          const float                           yi      = hiti->getPosition()[1];
+          const float                           zi      = hiti->getPosition()[2];
 
           for (unsigned int j = i + 1; j < m_calHitsByStaveLayer[is][il].size(); ++j) {
             edm4hep::MutableCalorimeterHit* hitj    = m_calHitsByStaveLayer[is][il][j];
-            int                             modulej = m_calHitsByStaveLayerModule[is][il][j];
-            float                           xj      = hitj->getPosition()[0];
-            float                           yj      = hitj->getPosition()[1];
-            float                           zj      = hitj->getPosition()[2];
-            float                           dz      = std::abs(zi - zj);
+            const int                             modulej = m_calHitsByStaveLayerModule[is][il][j];
+            const float                           xj      = hitj->getPosition()[0];
+            const float                           yj      = hitj->getPosition()[1];
+            const float                           zj      = hitj->getPosition()[2];
+            const float                           dz      = std::abs(zi - zj);
             // *** BARREL CORRECTION ***
             if (std::abs(zi) < m_zOfEcalEndcap && std::abs(zj) < m_zOfEcalEndcap) {
               // account for stave directions using normals
@@ -862,27 +862,27 @@ float DDCaloDigi::digitalHcalCalibCoeff(CHT::Layout caloLayout, float energy) co
 
   switch (caloLayout) {
     case CHT::barrel:
-      if (ilevel > m_calibrCoeffHcalBarrel.value().size() - 1) {
+      if (ilevel > m_calibrCoeffHcalBarrel.size() - 1) {
         error() << " Semi-digital level " << ilevel << " greater than number of HCAL Calibration Constants ("
-                << m_calibrCoeffHcalBarrel.value().size() << ")" << std::endl;
+                << m_calibrCoeffHcalBarrel.size() << ")" << std::endl;
       } else {
-        calib_coeff = m_calibrCoeffHcalBarrel.value()[ilevel];
+        calib_coeff = m_calibrCoeffHcalBarrel[ilevel];
       }
       break;
     case CHT::endcap:
-      if (ilevel > m_calibrCoeffHcalEndcap.value().size() - 1) {
+      if (ilevel > m_calibrCoeffHcalEndcap.size() - 1) {
         error() << " Semi-digital level " << ilevel << " greater than number of HCAL Calibration Constants ("
-                << m_calibrCoeffHcalEndcap.value().size() << ")" << std::endl;
+                << m_calibrCoeffHcalEndcap.size() << ")" << std::endl;
       } else {
-        calib_coeff = m_calibrCoeffHcalEndcap.value()[ilevel];
+        calib_coeff = m_calibrCoeffHcalEndcap[ilevel];
       }
       break;
     case CHT::plug:
-      if (ilevel > m_calibrCoeffHcalOther.value().size() - 1) {
+      if (ilevel > m_calibrCoeffHcalOther.size() - 1) {
         error() << " Semi-digital level " << ilevel << " greater than number of HCAL Calibration Constants ("
-                << m_calibrCoeffHcalOther.value().size() << ")" << std::endl;
+                << m_calibrCoeffHcalOther.size() << ")" << std::endl;
       } else {
-        calib_coeff = m_calibrCoeffHcalOther.value()[ilevel];
+        calib_coeff = m_calibrCoeffHcalOther[ilevel];
       }
       break;
     default:
@@ -946,7 +946,7 @@ float DDCaloDigi::ecalCalibCoeff(long layer) const {
   return calib_coeff;
 }
 
-float DDCaloDigi::ecalEnergyDigi(float energy, int id, float event_correl_miscalib_ecal,
+float DDCaloDigi::ecalEnergyDigi(float energy, long id, float event_correl_miscalib_ecal,
                                  CLHEP::MTwistEngine& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by m_applyEcalDigi = 0 (none), 1 (silicon), 2 (scintillator)
@@ -1009,7 +1009,7 @@ float DDCaloDigi::ecalEnergyDigi(float energy, int id, float event_correl_miscal
   return e_out;
 }
 
-float DDCaloDigi::hcalEnergyDigi(float energy, int id, float event_correl_miscalib_hcal,
+float DDCaloDigi::hcalEnergyDigi(float energy, long id, float event_correl_miscalib_hcal,
                                  CLHEP::MTwistEngine& randomEngine) const {
   // some extra digi effects (daniel)
   // controlled by _applyHcalDigi = 0 (none), 1 (scintillator/SiPM)
@@ -1162,8 +1162,8 @@ std::pair<int, int> DDCaloDigi::getLayerProperties(std::string_view colName, lon
 }
 
 int DDCaloDigi::getStripOrientationFromColName(std::string_view colName) const {
-  int         orientation(-99);
-  std::string colNameLow(colName);
+  int         orientation = -99;
+  std::string colNameLow{colName};
   std::ranges::transform(colNameLow, colNameLow.begin(), ::tolower);
   if (colNameLow.find("trans") != std::string::npos) {
     orientation = STRIP_ALIGN_ACROSS_SLAB;

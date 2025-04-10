@@ -428,8 +428,8 @@ private:
   float digitalHcalCalibCoeff(CHT::Layout, float energy) const;
   float analogueHcalCalibCoeff(CHT::Layout, long layer) const;
 
-  float ecalEnergyDigi(float energy, int id, float event_correl_miscalib_ecal, CLHEP::MTwistEngine&) const;
-  float hcalEnergyDigi(float energy, int id, float event_correl_miscalib_hcal, CLHEP::MTwistEngine&) const;
+  float ecalEnergyDigi(float energy, long id, float event_correl_miscalib_ecal, CLHEP::MTwistEngine&) const;
+  float hcalEnergyDigi(float energy, long id, float event_correl_miscalib_hcal, CLHEP::MTwistEngine&) const;
 
   float siliconDigi(float energy, CLHEP::MTwistEngine&) const;
   float scintillatorDigi(float energy, bool isEcal, CLHEP::MTwistEngine&) const;
