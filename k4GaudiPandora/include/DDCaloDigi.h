@@ -162,9 +162,9 @@ private:
   Gaudi::Property<std::vector<int>>   m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
   Gaudi::Property<std::vector<float>> m_calibrCoeffEcal{
       this, "CalibrECAL", {40.91f, 81.81f}, "Calibration coefficients for ECAL"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffHcalBarrel{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffHcalBarrel{
       this, "CalibrHCALBarrel", {0.0}, "Calibration coefficients for Barrel HCAL"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffHcalEndcap{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffHcalEndcap{
       this, "CalibrHCALEndcap", {0.0}, "Calibration coefficients for Endcap HCAL"};
   Gaudi::Property<std::vector<double>> m_calibrCoeffHcalOther{
       this, "CalibrHCALOther", {0.0}, "Calibration coefficients for Other HCAL"};
