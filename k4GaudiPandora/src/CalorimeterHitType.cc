@@ -19,6 +19,8 @@
 #include "CalorimeterHitType.h"
 
 #include <algorithm>
+#include <iostream>
+#include <string>
 
 /** detailed string for calo type */
 std::ostream& operator<<(std::ostream& os, const CHT& cht) {

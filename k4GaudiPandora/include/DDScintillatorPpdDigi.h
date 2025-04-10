@@ -21,13 +21,16 @@
 
 #include "CLHEP/Random/MTwistEngine.h"
 
-//GaudiKernel::MsgStream
 class MsgStream;
 
 class DDScintillatorPpdDigi {
 public:
-  DDScintillatorPpdDigi();
-  ~DDScintillatorPpdDigi() {}
+  DDScintillatorPpdDigi() = default;
+  DDScintillatorPpdDigi(const DDScintillatorPpdDigi&) = delete;
+  DDScintillatorPpdDigi& operator=(const DDScintillatorPpdDigi&) = delete;
+  DDScintillatorPpdDigi(DDScintillatorPpdDigi&&) = default;
+  DDScintillatorPpdDigi& operator=(DDScintillatorPpdDigi&&) = default;
+  ~DDScintillatorPpdDigi() = default;
 
   // expected # photoelectrons / MIP
   void setPEperMIP(float x) { m_PEperMIP = x; }
@@ -50,14 +53,14 @@ public:
   // electronics dynamic range (in MIP units)
   void setElecRange(float x) { m_elecMaxDynRange_MIP = x; }
 
-  float getDigitisedEnergy(float energy, CLHEP::MTwistEngine&);
+  float getDigitisedEnergy(float energy, CLHEP::MTwistEngine&) const;
 
   void printParameters(MsgStream&);
 
 private:
   float m_PEperMIP            = -99;
   float m_calibMIP            = -99;
-  float m_Npix                = -99;
+  int   m_Npix                = -99;
   float m_misCalibNpix        = 0;
   float m_pixSpread           = 0;
   float m_elecNoise           = 0;
