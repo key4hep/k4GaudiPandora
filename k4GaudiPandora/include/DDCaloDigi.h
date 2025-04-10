@@ -160,7 +160,7 @@ private:
       "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
   Gaudi::Property<std::vector<int>>   m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECAL Layers"};
   Gaudi::Property<std::vector<int>>   m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffEcal{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffEcal{
       this, "CalibrECAL", {40.91f, 81.81f}, "Calibration coefficients for ECAL"};
   Gaudi::Property<std::vector<double>> m_calibrCoeffHcalBarrel{
       this, "CalibrHCALBarrel", {0.0}, "Calibration coefficients for Barrel HCAL"};
