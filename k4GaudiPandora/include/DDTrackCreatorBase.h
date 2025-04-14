@@ -30,42 +30,29 @@
 
 #include "lcio.h"
 
-#include "IMPL/LCCollectionVec.h"
-#include "IMPL/LCFlagImpl.h"
+#include "edm4hep/VertexCollection.h"
+#include "edm4hep/Track.h"
+#include "edm4hep/Vertex.h"
+#include "DDSegmentation/BitFieldCoder.h"
+#include <MarlinTrk/Factory.h>
+#include <MarlinTrk/IMarlinTrack.h>
 
-#include "EVENT/LCEvent.h"
-#include "EVENT/Track.h"
+#include <k4FWCore/Transformer.h>
+#include <edm4hep/TrackCollection.h>
 
 #include "Api/PandoraApi.h"
 #include "Objects/Helix.h"
 
-#include <UTIL/ILDConf.h>
-
 #include <memory>
 
-typedef std::vector<EVENT::Track*>    TrackVector;
-typedef std::set<const EVENT::Track*> TrackList;
-typedef std::map<EVENT::Track*, int>  TrackToPidMap;
+typedef std::vector<uint64_t>    TrackVector;
+typedef std::set<uint64_t> TrackList;
+typedef std::map<uint64_t, int>  TrackToPidMap;
 
 namespace lc_content {
   class LCTrackParameters;
   class LCTrackFactory;
 }  // namespace lc_content
-namespace MarlinTrk {
-  class IMarlinTrkSystem;
-}
-
-inline IMPL::LCCollectionVec* newTrkCol(const std::string& name, EVENT::LCEvent* evt, bool isSubset) {
-  IMPL::LCCollectionVec* col = new IMPL::LCCollectionVec(EVENT::LCIO::TRACK);
-
-  IMPL::LCFlagImpl hitFlag(0);
-  hitFlag.setBit(EVENT::LCIO::TRBIT_HITS);
-  col->setFlag(hitFlag.getFlag());
-  evt->addCollection(col, name);
-  col->setSubset(isSubset);
-
-  return col;
-}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -87,13 +74,6 @@ public:
          */
     Settings();
 
-    StringVector m_trackCollections;        ///< The reconstructed track collections
-    StringVector m_kinkVertexCollections;   ///< The kink vertex collections
-    StringVector m_prongVertexCollections;  ///< The prong vertex collections
-    StringVector m_splitVertexCollections;  ///< The split vertex collections
-    StringVector m_v0VertexCollections;     ///< The v0 vertex collections
-
-    StringVector m_prongSplitVertexCollections;  ///< Concatenated list of prong and split vertex collections
     int m_shouldFormTrackRelationships;          ///< Whether to form pandora track relationships using v0 and kink info
 
     int m_minTrackHits;     ///< Track quality cut: the minimum number of track hits
@@ -134,6 +114,7 @@ public:
     float
         m_trackStateTolerance;  ///< distance below tracker ecal radius the second trackstate in the ecal endcap is still passed to pandora
     std::string m_trackingSystemName;  ///< name of the tracking system used for getting new track states
+    std::string m_trackingEncodingString; ///< encoding string for the tracking system
 
     ///Nikiforos: Moved from main class
 
@@ -152,7 +133,7 @@ public:
      *  @param  settings the creator settings
      *  @param  pPandora address of the relevant pandora instance
      */
-  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora, IMessageSvc* msgSvc);
 
   /**
      *  @brief  Destructor
@@ -162,16 +143,22 @@ public:
   /**
      *  @brief  Create associations between tracks, V0s, kinks, etc
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  kinkCollections the Vertex collections of kinks
+     *  @param  prongCollections the Vertex collections of prongs
+     *  @param  splitCollections the Vertex collections of splits
+     *  @param  v0Collections the Vertex collections of V0s
      */
-  pandora::StatusCode CreateTrackAssociations(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode CreateTrackAssociations(
+   const std::vector<const edm4hep::VertexCollection*>& kinkCollections,
+   const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+   const std::vector<const edm4hep::VertexCollection*>& splitCollections,
+   const std::vector<const edm4hep::VertexCollection*>& v0Collections
+  );
 
   /**
      *  @brief  Create tracks, insert user code here. Implement accordin to detector model
-     *
-     *  @param  pLCEvent the lcio event
      */
-  virtual pandora::StatusCode CreateTracks(EVENT::LCEvent* pLCEvent) = 0;
+  virtual pandora::StatusCode CreateTracks(const std::vector<const edm4hep::TrackCollection*>& trackCollections) = 0;
 
   /**
      *  @brief  Get the track vector
@@ -179,14 +166,6 @@ public:
      *  @return The track vector
      */
   const TrackVector& GetTrackVector() const;
-
-  /**
-     *  @brief  Calculate possible second track state at the ECal Endcap
-     *
-     *  @param track lcio track
-     *  @param trackParameters pandora LCTrackParameters
-     */
-  virtual void GetTrackStatesAtCalo(EVENT::Track* track, lc_content::LCTrackParameters& trackParameters);
 
   /**
      *  @brief  Reset the track creator
@@ -203,30 +182,33 @@ protected:
   TrackList     m_daughterTrackList;  ///< The list of daughter tracks
   TrackToPidMap m_trackToPidMap;      ///< The map from track addresses to particle ids, where set by kinks/V0s
   float         m_minimalTrackStateRadiusSquared;                      ///< minimal track state radius, derived value
-  std::shared_ptr<MarlinTrk::IMarlinTrkSystem> m_trackingSystem = {};  ///< Tracking system used for track states
-  std::shared_ptr<UTIL::BitField64>            m_encoder        = {};  ///< cell ID encoder
+  std::shared_ptr<MarlinTrk::IMarlinTrkSystem> m_trackingSystem={}; ///< Tracking system used for track states
   std::shared_ptr<lc_content::LCTrackFactory>  m_lcTrackFactory = {};  ///< LCTrackFactor for creating LCTracks
+
+  dd4hep::DDSegmentation::BitFieldCoder m_encoder;
+  IMessageSvc* m_msgSvc;
+
 
   ///Nikiforos: Need to implement following abstract functions according to detector model
 
   /**
      *  @brief  Whether track passes the quality cuts required in order to be used to form a pfo
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      *
      *  @return boolean
      */
-  virtual bool PassesQualityCuts(const EVENT::Track* const            pTrack,
+  virtual bool PassesQualityCuts(edm4hep::Track pTrack,
                                  const PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
      *  @brief  Decide whether track reaches the ecal surface
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  virtual void TrackReachesECAL(const EVENT::Track* const      pTrack,
+  virtual void TrackReachesECAL(edm4hep::Track pTrack,
                                 PandoraApi::Track::Parameters& trackParameters) const = 0;
 
   /**
@@ -234,89 +216,96 @@ protected:
      *          1) if the track proves to be associated with a cluster, OR
      *          2) if the track proves to have no cluster associations
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *  @param  trackParameters the track parameters
+     *  @param  pTrackID the id of the track
      */
-  virtual void DefineTrackPfoUsage(const EVENT::Track* const      pTrack,
-                                   PandoraApi::Track::Parameters& trackParameters) const = 0;
+  virtual void DefineTrackPfoUsage(edm4hep::Track pTrack,
+                                   PandoraApi::Track::Parameters& trackParameters,
+                                   uint64_t pTrackID) const = 0;
 
   /**
-     *  @brief  Extract kink information from specified lcio collections
+     *  @brief  Extract kink information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractKinks(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
-     *  @brief  Extract prong and split information from specified lcio collections
+     *  @brief  Extract prong and split information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractProngsAndSplits(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongCollections,
+                                             const std::vector<const edm4hep::VertexCollection*>& splitCollections
+  );
 
   /**
-     *  @brief  Extract v0 information from specified lcio collections
+     *  @brief  Extract v0 information from specified collections
      *
-     *  @param  pLCEvent the lcio event
+     *  @param  vertexCollections the vertex Collections
      */
-  pandora::StatusCode ExtractV0s(const EVENT::LCEvent* const pLCEvent);
+  pandora::StatusCode ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& vertexCollections);
 
   /**
      *  @brief  Whether the track vertex conflicts with previously provided relationship information
      *
      *  @param  trackVec the vector of tracks associated with the vertex
      */
-  bool IsConflictingRelationship(const EVENT::TrackVec& trackVec) const;
+  bool IsConflictingRelationship(const edm4hep::ReconstructedParticle pReconstructedParticle) const;
 
   /**
      *  @brief  Whether a track is a v0 track
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the  track
      *
      *  @return boolean
      */
-  bool IsV0(const EVENT::Track* const pTrack) const;
+  bool IsV0(uint64_t pTrack) const;
 
   /**
      *  @brief  Whether a track is a parent track
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *
      *  @return boolean
      */
-  bool IsParent(const EVENT::Track* const pTrack) const;
+  bool IsParent(uint64_t pTrack) const;
 
   /**
      *  @brief  Whether a track is a daughter track
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *
      *  @return boolean
      */
-  bool IsDaughter(const EVENT::Track* const pTrack) const;
+  bool IsDaughter(uint64_t pTrack) const;
 
   /**
      *  @brief  Copy track states stored in lcio tracks to pandora track parameters
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      *  @param  trackParameters the track parameters
      */
-  void GetTrackStates(const EVENT::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+  void GetTrackStates(edm4hep::Track pTrack, PandoraApi::Track::Parameters& trackParameters) const;
 
   /**
      *  @brief  Copy track state from lcio track state instance to pandora input track state
      *
-     *  @param  pTrackState the lcio track state instance
+     *  @param  pTrackState the track state instance
      *  @param  inputTrackState the pandora input track state
      */
-  void CopyTrackState(const EVENT::TrackState* const pTrackState, pandora::InputTrackState& inputTrackState) const;
+  void CopyTrackState(const edm4hep::TrackState pTrackState, pandora::InputTrackState& inputTrackState) const;
 
   /**
      *  @brief  Obtain track time when it reaches ECAL
      *
-     *  @param  pTrack the lcio track
+     *  @param  pTrack the track
      */
-  float CalculateTrackTimeAtCalorimeter(const EVENT::Track* const pTrack) const;
+  float CalculateTrackTimeAtCalorimeter(edm4hep::Track pTrack) const;
+
+  void GetTrackStatesAtCalo(edm4hep::Track track, lc_content::LCTrackParameters& trackParameters );
+
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -335,19 +324,19 @@ inline void DDTrackCreatorBase::Reset() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsV0(const EVENT::Track* const pTrack) const {
+inline bool DDTrackCreatorBase::IsV0(uint64_t pTrack) const {
   return (m_v0TrackList.end() != m_v0TrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsParent(const EVENT::Track* const pTrack) const {
+inline bool DDTrackCreatorBase::IsParent(uint64_t pTrack) const {
   return (m_parentTrackList.end() != m_parentTrackList.find(pTrack));
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-inline bool DDTrackCreatorBase::IsDaughter(const EVENT::Track* const pTrack) const {
+inline bool DDTrackCreatorBase::IsDaughter(uint64_t pTrack) const {
   return (m_daughterTrackList.end() != m_daughterTrackList.find(pTrack));
 }
 
