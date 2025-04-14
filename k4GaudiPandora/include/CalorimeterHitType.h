@@ -19,7 +19,8 @@
 #ifndef CalorimeterHitType_h
 #define CalorimeterHitType_h 1
 
-#include <iostream>
+#include <ostream>
+#include <string>
 
 /** Helper class for decoding/encoding lcio::CalorimeterHit types for the ILD
  *  detector. The encoding is: caloType + 10 * caloID + 1000 * layout + 10000 * layerNum <br>
@@ -79,13 +80,13 @@ public:
       : m_type(c * fCaloType + n * fCaloID + l * fLayout + lay * fLayer) {}
 
   /** calorimeter type: CHT::em , CHT::had, CHT::muon */
-  CaloType caloType() const { return (CaloType)(m_type % fCaloID); }
+  CaloType caloType() const { return static_cast<CaloType>(m_type % fCaloID); }
 
   /** calo ID - see enum CaloID for allowed values */
-  CaloID caloID() const { return (CaloID)((m_type % fLayout) / fCaloID); }
+  CaloID caloID() const { return static_cast<CaloID>((m_type % fLayout) / fCaloID); }
 
   /** calo layout - see enum layout for allowed values */
-  Layout layout() const { return (Layout)((m_type % fLayer) / fLayout); }
+  Layout layout() const { return static_cast<Layout>((m_type % fLayer) / fLayout); }
 
   /** calo layer of hit  */
   unsigned layer() const { return unsigned(m_type) / fLayer; }

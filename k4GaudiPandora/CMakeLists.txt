@@ -28,6 +28,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                  SOURCES ${_plugin_sources}
                  LINK Gaudi::GaudiKernel
                       k4FWCore::k4FWCore
+                      k4FWCore::k4Interface
                       EDM4HEP::edm4hep
                       DD4hep::DDRec
                       DD4hep::DDCore
@@ -42,13 +43,6 @@ install(TARGETS k4GaudiPandoraPlugins
   COMPONENT dev)
 
 include(CTest)
-
-#--- The genConf directory has been renamed to genConfDir in Gaudi 35r1
-#--- See https://gitlab.cern.ch/gaudi/Gaudi/-/merge_requests/1158
-set(GAUDI_GENCONF_DIR "genConfDir")
-if (${Gaudi_VERSION} VERSION_LESS 35.1)
-  set(GAUDI_GENCONF_DIR "genConf")
-endif()
 
 function(set_test_env _testname)
   set_property(TEST ${_testname} APPEND PROPERTY ENVIRONMENT
