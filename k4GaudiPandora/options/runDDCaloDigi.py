@@ -89,7 +89,7 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
     )
     # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
     calodigicol.OutputCaloHitCollection = outputcol
-    calodigicol.RelCollection = relcol
+    calodigicol.RelationOutputCollection = relcol
 
     calodigicol.CalibrECAL = [37.5227197175, 37.5227197175]
     calodigicol.ECALEndcapCorrectionFactor = 1.03245503522

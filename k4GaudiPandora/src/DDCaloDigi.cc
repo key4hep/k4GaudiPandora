@@ -74,7 +74,7 @@ DDCaloDigi::DDCaloDigi(const std::string& aName, ISvcLocator* aSvcLoc)
                            KeyValues("HeaderName", {"EventHeader"}),
                        },
                        {KeyValues("OutputCaloHitCollection", {"ECalorimeterHit1"}),
-                        KeyValues("RelCollection", {"RelationCaloHit"})}) {
+                        KeyValues("RelationOutputCollection", {"RelationCaloHit"})}) {
 }
 
 StatusCode DDCaloDigi::initialize() {
