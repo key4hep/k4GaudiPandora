@@ -16,7 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ]]
-CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
 
 
 project(k4GaudiPandora)
@@ -45,8 +45,12 @@ include(cmake/Key4hepConfig.cmake)
 
 include(GNUInstallDirs)
 
-include(CTest)
 
 add_subdirectory(k4GaudiPandora)
+
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 include(cmake/CreateProjectConfig.cmake)

@@ -19,29 +19,26 @@
 #ifndef DDCALODIGI_H
 #define DDCALODIGI_H 1
 
-#include "DDRec/DetectorData.h"
-#include "Gaudi/Accumulators/RootHistogram.h"
-#include "Gaudi/Property.h"
-#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/EventHeaderCollection.h"
-#include "edm4hep/SimCalorimeterHitCollection.h"
-#include "k4FWCore/DataHandle.h"
-#include "k4FWCore/MetaDataHandle.h"
-#include "k4FWCore/Transformer.h"
-#include "k4Interface/IGeoSvc.h"
-#include "k4Interface/IUniqueIDGenSvc.h"
-
 #include "CalorimeterHitType.h"
 #include "DDScintillatorPpdDigi.h"
 
-#include "CLHEP/Random/MTwistEngine.h"
-#include "CLHEP/Random/RandGauss.h"
-#include "TFile.h"
-#include "TH1.h"
-#include "TH2.h"
+#include <DDRec/DetectorData.h>
 
-#include <random>
+#include <Gaudi/Accumulators/RootHistogram.h>
+#include <Gaudi/Property.h>
+
+#include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+#include <edm4hep/EventHeaderCollection.h>
+#include <edm4hep/SimCalorimeterHitCollection.h>
+
+#include <k4FWCore/Transformer.h>
+#include <k4Interface/IGeoSvc.h>
+#include <k4Interface/IUniqueIDGenSvc.h>
+
+
+#include <CLHEP/Random/MTwistEngine.h>
+
 #include <string>
 #include <vector>
 
@@ -138,10 +135,9 @@ struct DDCaloDigi final : DDCaloDigi_t {
   DDCaloDigi(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize() override;
-  StatusCode finalize() override;
 
   retType operator()(const edm4hep::SimCalorimeterHitCollection& simCaloHits,
-                     const edm4hep::EventHeaderCollection&       headers) const;
+                     const edm4hep::EventHeaderCollection&       headers) const override;
 
 private:
   // check if input collection is ECAL or HCAL
@@ -149,14 +145,14 @@ private:
       this, "InputColIsECAL", {true}, "Input SimCalorimeterHit collection is ECAL? If false, then is HCAL."};
 
   // digitazing parameters for ECAL and HCAL
-  Gaudi::Property<float>       m_thresholdEcal{this, "ECALThreshold", {5.0e-5}, "Threshold for ECAL Hits in GeV"};
+  Gaudi::Property<float>       m_thresholdEcal{this, "ECALThreshold", {5.0e-5f}, "Threshold for ECAL Hits in GeV"};
   Gaudi::Property<std::string> m_unitThresholdEcal{
       this,
       "ECALThresholdUnit",
       {"GeV"},
       "Unit for ECAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
   Gaudi::Property<std::vector<float>> m_thresholdHcal{
-      this, "HCALThreshold", {0.00004}, "Threshold for ECAL Hits in GeV"};
+      this, "HCALThreshold", {0.00004f}, "Threshold for ECAL Hits in GeV"};
   Gaudi::Property<std::string> m_unitThresholdHcal{
       this,
       "HCALThresholdUnit",
@@ -164,13 +160,13 @@ private:
       "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
   Gaudi::Property<std::vector<int>>   m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECAL Layers"};
   Gaudi::Property<std::vector<int>>   m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffEcal{
-      this, "CalibrECAL", {40.91, 81.81}, "Calibration coefficients for ECAL"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffHcalBarrel{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffEcal{
+      this, "CalibrECAL", {40.91f, 81.81f}, "Calibration coefficients for ECAL"};
+  Gaudi::Property<std::vector<double>> m_calibrCoeffHcalBarrel{
       this, "CalibrHCALBarrel", {0.0}, "Calibration coefficients for Barrel HCAL"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffHcalEndcap{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffHcalEndcap{
       this, "CalibrHCALEndcap", {0.0}, "Calibration coefficients for Endcap HCAL"};
-  Gaudi::Property<std::vector<float>> m_calibrCoeffHcalOther{
+  Gaudi::Property<std::vector<double>> m_calibrCoeffHcalOther{
       this, "CalibrHCALOther", {0.0}, "Calibration coefficients for Other HCAL"};
   Gaudi::Property<int> m_digitalEcal{this, "IfDigitalEcal", {0}, "Digital ECAL"};
   Gaudi::Property<int> m_mapsEcalCorrection{
@@ -179,9 +175,9 @@ private:
   Gaudi::Property<int>   m_ecalGapCorrection{this, "ECALGapCorrection", {1}, "Correct for ECAL gaps"};
   Gaudi::Property<int>   m_hcalGapCorrection{this, "HCALGapCorrection", {1}, "Correct for HCAL gaps"};
   Gaudi::Property<float> m_ecalEndcapCorrectionFactor{
-      this, "ECALEndcapCorrectionFactor", {1.025}, "Energy correction for ECAL endcap"};
+      this, "ECALEndcapCorrectionFactor", {1.025f}, "Energy correction for ECAL endcap"};
   Gaudi::Property<float> m_hcalEndcapCorrectionFactor{
-      this, "HCALEndcapCorrectionFactor", {1.025}, "Energy correction for HCAL endcap"};
+      this, "HCALEndcapCorrectionFactor", {1.025f}, "Energy correction for HCAL endcap"};
   Gaudi::Property<float> m_ecalGapCorrectionFactor{
       this, "ECALGapCorrectionFactor", {1.0}, "Factor applied to gap correction"};
   Gaudi::Property<float> m_ecalModuleGapCorrectionFactor{
@@ -305,7 +301,7 @@ private:
 
   // parameters for extra ECAL digitization effects
   Gaudi::Property<float> m_calibEcalMip{
-      this, "CalibECALMIP", {1.0e-4}, "Calibration to convert ECAL deposited energy to MIPs"};
+      this, "CalibECALMIP", {1.0e-4f}, "Calibration to convert ECAL deposited energy to MIPs"};
   Gaudi::Property<int> m_applyEcalDigi{
       this,
       "ECALApplyRealisticDigi",
@@ -321,7 +317,7 @@ private:
   Gaudi::Property<float> m_ecal_misCalibNpix{
       this,
       "ECAL_PPD_N_Pixels_uncertainty",
-      {0.05},
+      {0.05f},
       "ECAL fractional uncertainty of effective total number of MPPC/SiPM pixels"};
   Gaudi::Property<float> m_misCalibEcal_uncorrel{
       this,
@@ -348,11 +344,11 @@ private:
   Gaudi::Property<float> m_strip_abs_length{
       this, "ECAL_strip_absorbtionLength", {1000000.0}, "Length scale for absorbtion along scintillator strip (mm)"};
   Gaudi::Property<float> m_ecal_pixSpread{
-      this, "ECAL_pixel_spread", {0.05}, "Variation of MPPC/SiPM pixels capacitance in ECAL (as a fraction: 0.01=1%)"};
+      this, "ECAL_pixel_spread", {0.05f}, "Variation of MPPC/SiPM pixels capacitance in ECAL (as a fraction: 0.01=1%)"};
   Gaudi::Property<float> m_ecal_elec_noise{
       this, "ECAL_elec_noise_mips", {0.0}, "Typical electronics noise for ECAL (in MIP units)"};
   Gaudi::Property<float> m_ehEnergy{
-      this, "energyPerEHpair", {3.6}, "Energy required to create e-h pair in silicon (in eV)"};
+      this, "energyPerEHpair", {3.6f}, "Energy required to create e-h pair in silicon (in eV)"};
   Gaudi::Property<float> m_ecalMaxDynMip{
       this, "ECAL_maxDynamicRange_MIP", {2500.0}, "Maximum of electronis dynamic range for ECAL (in MIPs)"};
   Gaudi::Property<int> m_ecalStrip_default_nVirt{
@@ -365,7 +361,7 @@ private:
 
   // parameters for extra HCAL digitization effects
   Gaudi::Property<float> m_calibHcalMip{
-      this, "CalibHCALMIP", {1.0e-4}, "Calibration to convert HCAL deposited energy to MIPs"};
+      this, "CalibHCALMIP", {1.0e-4f}, "Calibration to convert HCAL deposited energy to MIPs"};
   Gaudi::Property<int> m_applyHcalDigi{
       this,
       "HCALApplyRealisticDigi",
@@ -384,7 +380,7 @@ private:
   Gaudi::Property<float> m_hcal_misCalibNpix{
       this,
       "HCAL_PPD_N_Pixels_uncertainty",
-      {0.05},
+      {0.05f},
       "HCAL fractional uncertainty of effective total number of MPPC/SiPM pixels"};
   Gaudi::Property<float> m_misCalibHcal_uncorrel{
       this,
@@ -409,7 +405,7 @@ private:
       {false},
       "Store dead HCAL cells in memory? (WARNING: Can take a lot of memory if used...)"};
   Gaudi::Property<float> m_hcal_pixSpread{
-      this, "HCAL_pixel_spread", {0.05}, "Variation of MPPC/SiPM pixels capacitance in HCAL (as a fraction: 0.01=1%)"};
+      this, "HCAL_pixel_spread", {0.05f}, "Variation of MPPC/SiPM pixels capacitance in HCAL (as a fraction: 0.01=1%)"};
   Gaudi::Property<float> m_hcal_elec_noise{
       this, "HCAL_elec_noise_mips", {0.}, "Typical electronics noise for HCAL (in MIP units)"};
   Gaudi::Property<float> m_hcalMaxDynMip{
@@ -427,22 +423,20 @@ private:
   virtual void fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS],
                             std::vector<int> m_calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS]) const;
 
-  float digitalEcalCalibCoeff(int layer) const;
-  float analogueEcalCalibCoeff(int layer) const;
+  float ecalCalibCoeff(long layer) const;
 
   float digitalHcalCalibCoeff(CHT::Layout, float energy) const;
-  float analogueHcalCalibCoeff(CHT::Layout, int layer) const;
+  float analogueHcalCalibCoeff(CHT::Layout, long layer) const;
 
-  float ecalEnergyDigi(float energy, int id, float event_correl_miscalib_ecal, CLHEP::MTwistEngine&) const;
-  float hcalEnergyDigi(float energy, int id, float event_correl_miscalib_hcal, CLHEP::MTwistEngine&) const;
+  float ecalEnergyDigi(float energy, long id, float event_correl_miscalib_ecal, CLHEP::MTwistEngine&) const;
+  float hcalEnergyDigi(float energy, long id, float event_correl_miscalib_hcal, CLHEP::MTwistEngine&) const;
 
   float siliconDigi(float energy, CLHEP::MTwistEngine&) const;
   float scintillatorDigi(float energy, bool isEcal, CLHEP::MTwistEngine&) const;
 
-  std::vector<std::pair<int, int>>     getLayerConfig() const;
-  void                                 checkConsistency(std::string colName, int layer) const;
-  std::pair<int, int>                  getLayerProperties(std::string const& colName, int layer) const;
-  int                                  getStripOrientationFromColName(std::string const& colName) const;
+  void                                 checkConsistency(std::string_view colName, long layer) const;
+  std::pair<int, int>                  getLayerProperties(std::string_view colName, long layer) const;
+  int                                  getStripOrientationFromColName(std::string_view colName) const;
   dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) const;
 
   float m_zOfEcalEndcap = 0.0;
@@ -452,8 +446,8 @@ private:
   float m_endcapPixelSizeY[MAX_LAYERS];
   float m_barrelStaveDir[MAX_STAVES][2];
 
-  std::unique_ptr<DDScintillatorPpdDigi> m_scEcalDigi{};
-  std::unique_ptr<DDScintillatorPpdDigi> m_scHcalDigi{};
+  DDScintillatorPpdDigi m_scEcalDigi{};
+  DDScintillatorPpdDigi m_scHcalDigi{};
 
   // internal variables
   mutable int m_countWarnings = 0;
@@ -463,6 +457,8 @@ private:
   std::map<int, bool>  m_ECAL_cell_dead{};
   std::map<int, float> m_HCAL_cell_miscalibs{};
   std::map<int, bool>  m_HCAL_cell_dead{};
+
+  std::vector<std::pair<int, int>> m_layerTypes;
 
   enum { SQUARE, STRIP_ALIGN_ALONG_SLAB, STRIP_ALIGN_ACROSS_SLAB, SIECAL = 0, SCECAL };
 };
