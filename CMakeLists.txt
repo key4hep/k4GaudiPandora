@@ -48,8 +48,8 @@ include(GNUInstallDirs)
 
 add_subdirectory(k4GaudiPandora)
 
+include(CTest)
 if(BUILD_TESTING)
-  include(CTest)
   add_subdirectory(test)
 endif()
 
