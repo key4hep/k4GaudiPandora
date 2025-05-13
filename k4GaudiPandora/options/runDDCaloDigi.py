@@ -27,141 +27,149 @@ from Configurables import RootHistSvc
 from Configurables import Gaudi__Histograming__Sink__Root as RootHistoSink
 import os
 
+iosvc = IOSvc()
+iosvc.Input = "output_REC.edm4hep.root"
+iosvc.Output = "output_calo_digi.root"
+
 id_service = UniqueIDGenSvc("UniqueIDGenSvc")
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/CLD/compact/CLD_o2_v06/CLD_o2_v06.xml"]
+geoservice.detectors = [
+    os.environ["K4GEO"] + "/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"
+]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
-calodigi = [DDCaloDigi("ECALBarrelDigi"),
-            DDCaloDigi("ECALEndcapDigi"),
-            DDCaloDigi("HCALBarrelDigi"),
-            DDCaloDigi("HCALEndcapDigi"),
-            DDCaloDigi("HCALRingDigi")]
+calodigi = [
+    DDCaloDigi("ECALBarrelDigi"),
+    DDCaloDigi("ECALEndcapDigi"),
+    DDCaloDigi("HCALBarrelDigi"),
+    DDCaloDigi("HCALEndcapDigi"),
+    DDCaloDigi("HCALRingDigi"),
+]
 
-ECALorHCAL = [True, True, False, False, False]
+ECALorHCAL = [
+    True,
+    True,
+    False,
+    False,
+    False
+]
 
-inputcollections = [["ECalBarrelCollection"],
-                    ["ECalEndcapCollection"],
-                    ["HCalBarrelCollection"],
-                    ["HCalEndcapCollection"],
-                    ["HCalRingCollection"]]
+inputcollections = [
+    ["ECalBarrelCollection"],
+    ["ECalEndcapCollection"],
+    ["HCalBarrelCollection"],
+    ["HCalEndcapCollection"],
+    ["HCalRingCollection"],
+]
 
-outputcollections = [["ECALBarrel"],
-                     ["ECALEndcap"],
-                     ["HCALBarrel"],
-                     ["HCALEndcap"],
-                     ["HCALRing"]]
+outputcollections = [
+    ["GaudiECALBarrel"],
+    ["GaudiECALEndcap"],
+    ["GaudiHCALBarrel"],
+    ["GaudiHCALEndcap"],
+    ["GaudiHCALRing"],
+]
 
-relcollections = [["RelationCaloHitECALBarrel"],
-                  ["RelationCaloHitECALEndcap"],
-                  ["RelationCaloHitHCALBarrel"],
-                  ["RelationCaloHitHCALEndcap"],
-                  ["RelationCaloHitHCALRing"]]
+relcollections = [
+    ["GaudiRelationCaloHitECALBarrel"],
+    ["GaudiRelationCaloHitECALEndcap"],
+    ["GaudiRelationCaloHitHCALBarrel"],
+    ["GaudiRelationCaloHitHCALEndcap"],
+    ["GaudiRelationCaloHitHCALRing"],
+]
 
-#set properties
-for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(calodigi, ECALorHCAL, inputcollections, outputcollections, relcollections):
-
-    calodigicol.InputColIsECAL = ecalorhcal                 # True -- ECAL // False -- HCAL
-    calodigicol.InputCaloHitCollection = inputcol           # "ECalBarrelCollection","ECalEndcapCollection"
-                                                            # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
+for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
+    calodigi, ECALorHCAL, inputcollections, outputcollections, relcollections
+):
+    calodigicol.InputColIsECAL = ecalorhcal  # True -- ECAL // False -- HCAL
+    calodigicol.InputCaloHitCollection = (
+        inputcol  # "ECalBarrelCollection","ECalEndcapCollection"
+    )
+    # "HCalBarrelCollection","HCalEndcapCollection","HCalRingCollection"
     calodigicol.OutputCaloHitCollection = outputcol
-    calodigicol.RelCollection = relcol
+    calodigicol.RelationOutputCollection = relcol
 
-    # digitazing parameters for ECAL and HCAL
-    calodigicol.ECALThreshold = 5.0e-5
-    calodigicol.ECALThresholdUnit = "GeV"
-    calodigicol.HCALThreshold = [0.00025]
-    calodigicol.HCALThresholdUnit = "GeV"
-    calodigicol.ECALLayers = [41,100]
-    calodigicol.HCALLayers = [100]
     calodigicol.CalibrECAL = [37.5227197175, 37.5227197175]
+    calodigicol.ECALEndcapCorrectionFactor = 1.03245503522
+    calodigicol.ECALBarrelTimeWindowMax = 10.0
+    calodigicol.ECALEndcapTimeWindowMax = 10.0
     calodigicol.CalibrHCALBarrel = [45.9956826061]
     calodigicol.CalibrHCALEndcap = [46.9252540291]
     calodigicol.CalibrHCALOther = [57.4588011802]
-    calodigicol.IfDigitalEcal = 0
-    calodigicol.MapsEcalCorrection = 0
-    calodigicol.IfDigitalHcal = 0
-    calodigicol.ECALGapCorrection = 1
-    calodigicol.HCALGapCorrection = 1
-    calodigicol.ECALEndcapCorrectionFactor = 1.03245503522
-    calodigicol.HCALEndcapCorrectionFactor = 1.000
-    calodigicol.ECALGapCorrectionFactor = 1.0
-    calodigicol.ECALModuleGapCorrectionFactor = 0.0
-    calodigicol.HCALModuleGapCorrectionFactor = 0.5
+    calodigicol.HCALBarrelTimeWindowMax = 10.0
+    calodigicol.HCALEndcapTimeWindowMax = 10.0
 
-    # timing parameters for ECAL
+    calodigicol.energyPerEHpair = 3.6
+    # ECAL
+    calodigicol.IfDigitalEcal = 0
+    calodigicol.ECALLayers = [41, 100]
+    calodigicol.ECAL_default_layerConfig = "000000000000000"
+    calodigicol.StripEcal_default_nVirtualCells = 9
+    calodigicol.CalibECALMIP = 0.0001
+    calodigicol.ECALThreshold = 5.0e-5
+    calodigicol.ECALThresholdUnit = "GeV"
+    calodigicol.ECALGapCorrection = 1
+    calodigicol.ECALGapCorrectionFactor = 1
+    calodigicol.ECALModuleGapCorrectionFactor = 0.0
+    calodigicol.MapsEcalCorrection = 0
+    calodigicol.ECAL_PPD_N_Pixels = 10000
+    calodigicol.ECAL_PPD_N_Pixels_uncertainty = 0.05
+    calodigicol.ECAL_PPD_PE_per_MIP = 7.0
+    calodigicol.ECALApplyRealisticDigi = 0
+    calodigicol.ECAL_deadCellRate = 0.0
+    calodigicol.ECAL_deadCell_memorise = False
+    calodigicol.ECAL_elec_noise_mips = 0.0
+    calodigicol.ECAL_maxDynamicRange_MIP = 2500.0
+    calodigicol.ECAL_miscalibration_correl = 0.0
+    calodigicol.ECAL_miscalibration_uncorrel = 0.0
+    calodigicol.ECAL_miscalibration_uncorrel_memorise = False
+    calodigicol.ECAL_pixel_spread = 0.05
+    calodigicol.ECAL_strip_absorbtionLength = 1.0e6
     calodigicol.UseEcalTiming = 1
     calodigicol.ECALCorrectTimesForPropagation = 1
     calodigicol.ECALTimeWindowMin = -1.0
-    calodigicol.ECALEndcapTimeWindowMax = 10.0
-    calodigicol.ECALBarrelTimeWindowMax = 10.0
+    calodigicol.ECALSimpleTimingCut = True
     calodigicol.ECALDeltaTimeHitResolution = 10.0
     calodigicol.ECALTimeResolution = 10.0
-    calodigicol.ECALSimpleTimingCut = True
-
-    # timing parameters for HCAL
+    # HCAL
+    calodigicol.IfDigitalHcal = 0
+    calodigicol.HCALLayers = [100]
+    calodigicol.CalibHCALMIP = 1.0e-4
+    calodigicol.HCALThreshold = [0.00025]
+    calodigicol.HCALThresholdUnit = "GeV"
+    calodigicol.HCALEndcapCorrectionFactor = 1.000
+    calodigicol.HCALGapCorrection = 1
+    calodigicol.HCALModuleGapCorrectionFactor = 0.5
+    calodigicol.HCAL_PPD_N_Pixels = 400
+    calodigicol.HCAL_PPD_N_Pixels_uncertainty = 0.05
+    calodigicol.HCAL_PPD_PE_per_MIP = 10.0
+    calodigicol.HCALApplyRealisticDigi = 0
+    calodigicol.HCAL_deadCellRate = 0.0
+    calodigicol.HCAL_deadCell_memorise = False
+    calodigicol.HCAL_elec_noise_mips = 0.0
+    calodigicol.HCAL_maxDynamicRange_MIP = 200.0
+    calodigicol.HCAL_miscalibration_correl = 0.0
+    calodigicol.HCAL_miscalibration_uncorrel = 0.0
+    calodigicol.HCAL_miscalibration_uncorrel_memorise = False
+    calodigicol.HCAL_pixel_spread = 0.0
     calodigicol.UseHcalTiming = 1
     calodigicol.HCALCorrectTimesForPropagation = 1
     calodigicol.HCALTimeWindowMin = -1.0
-    calodigicol.HCALEndcapTimeWindowMax = 10.0
-    calodigicol.HCALBarrelTimeWindowMax = 10.0
+    calodigicol.HCALSimpleTimingCut = True
     calodigicol.HCALDeltaTimeHitResolution = 10.0
     calodigicol.HCALTimeResolution = 10.0
-    calodigicol.HCALSimpleTimingCut = True
 
-    # parameters for extra ECAL digitization effects
-    calodigicol.CalibECALMIP = 1.0e-4
-    calodigicol.ECALApplyRealisticDigi = 0
-    calodigicol.ECAL_PPD_PE_per_MIP = 7.0
-    calodigicol.ECAL_PPD_N_Pixels = 10000
-    calodigicol.ECAL_PPD_N_Pixels_uncertainty = 0.05
-    calodigicol.ECAL_miscalibration_uncorrel = 0.0
-    calodigicol.ECAL_miscalibration_uncorrel_memorise = False
-    calodigicol.ECAL_miscalibration_correl = 0.0
-    calodigicol.ECAL_deadCellRate = 0.0
-    calodigicol.ECAL_deadCell_memorise = False
-    calodigicol.ECAL_strip_absorbtionLength = 1.0e6
-    calodigicol.ECAL_pixel_spread = 0.05
-    calodigicol.ECAL_elec_noise_mips = 0.0
-    calodigicol.energyPerEHpair = 3.6
-    calodigicol.ECAL_maxDynamicRange_MIP = 2500.0
-    calodigicol.StripEcal_default_nVirtualCells = 9
-    calodigicol.ECAL_default_layerConfig = "000000000000000"
-
-    # parameters for extra HCAL digitization effects
-    calodigicol.CalibHCALMIP = 1.0e-4
-    calodigicol.HCALApplyRealisticDigi = 0
-    calodigicol.HCAL_PPD_PE_per_MIP = 10.0
-    calodigicol.HCAL_PPD_N_Pixels = 400
-    calodigicol.HCAL_PPD_N_Pixels_uncertainty = 0.05
-    calodigicol.HCAL_miscalibration_uncorrel = 0.0
-    calodigicol.HCAL_miscalibration_uncorrel_memorise = False
-    calodigicol.HCAL_miscalibration_correl = 0.0
-    calodigicol.HCAL_deadCellRate = 0.0
-    calodigicol.HCAL_deadCell_memorise = False
-    calodigicol.HCAL_pixel_spread = 0.0
-    calodigicol.HCAL_elec_noise_mips = 0.0
-    calodigicol.HCAL_maxDynamicRange_MIP = 200.0
-
-
-#
-iosvc = IOSvc()
-iosvc.Input = "../simulation/sim_partgun_1000.root"
-iosvc.Output = "../outputfiles/DDCaloDigi/outputCaloDigi_Gaudi.root"
 
 hps = RootHistSvc("HistogramPersistencySvc")
 root_hist_svc = RootHistoSink("RootHistoSink")
-root_hist_svc.FileName = "../outputfiles/DDCaloDigi/ddcalodigi_hist.root"
+root_hist_svc.FileName = "ddcalodigi_hist.root"
 
-ApplicationMgr(TopAlg=[calodigi[0],
-                       calodigi[1],
-                       calodigi[2],
-                       calodigi[3],
-                       calodigi[4]],
-               EvtSel="NONE",
-               EvtMax=-1,
-               ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],
-               OutputLevel=INFO,
-               )
+ApplicationMgr(
+    TopAlg=calodigi,
+    EvtSel="NONE",
+    EvtMax=-1,
+    ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],
+    OutputLevel=INFO,
+)
