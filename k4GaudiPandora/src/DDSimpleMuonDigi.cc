@@ -111,7 +111,7 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   // check if decoder contains "layer"
 
   for (const auto& hit : SimCaloHits) {
-    const int cellID = hit.getCellID();
+    const auto cellID = hit.getCellID();
     float     energy = hit.getEnergy();
     //Get the layer number
     unsigned int layer = bitFieldCoder.get(cellID, "layer");
