@@ -17,16 +17,16 @@
  * limitations under the License.
  */
 #include "DDSimpleMuonDigi.h"
-#include <cctype>
-#include <cstdlib>  // abs
-#include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/Detector.h"
 #include "DDRec/DetectorData.h"
 #include "GaudiKernel/MsgStream.h"
 #include "edm4hep/CalorimeterHit.h"
-#include "edm4hep/Constants.h"
 
-DECLARE_COMPONENT(DDSimpleMuonDigi)
+#include <cctype>
+#include <cstdlib>
+#include <functional>
+#include <ranges>
+#include <utility>
 
 DDSimpleMuonDigi::DDSimpleMuonDigi(const std::string& aName, ISvcLocator* aSvcLoc)
     : MultiTransformer(aName, aSvcLoc,
@@ -36,17 +36,18 @@ DDSimpleMuonDigi::DDSimpleMuonDigi(const std::string& aName, ISvcLocator* aSvcLo
                        },
                        {KeyValues("MUONOutputCollections", {"CalorimeterHit"}),
                         KeyValues("RelationOutputCollection", {"RelationMuonHit"})}) {
-  m_uidSvc = service<IUniqueIDGenSvc>("UniqueIDGenSvc", true);
-  if (!m_uidSvc) {
-    error() << "Unable to get UniqueIDGenSvc" << endmsg;
-  }
-
-  m_geoSvc = serviceLocator()->service("GeoSvc");  // important to initialize m_geoSvc
 }
 
 StatusCode DDSimpleMuonDigi::initialize() {
+
+  m_geoSvc = serviceLocator()->service("GeoSvc");
+  if (!m_geoSvc) {
+    error() << "Unable to retrieve GeoSvc" << endmsg;
+    return StatusCode::FAILURE;
+  }
+
   //Get the number of Layers in the Endcap and Barrel
-  int layersEndcap = 0, layersBarrel = 0;
+  size_t layersEndcap = 0, layersBarrel = 0;
   try {
     const auto                                 mainDetector = m_geoSvc->getDetector();
     dd4hep::DetElement                         theDetector  = mainDetector->detector(m_detectorNameBarrel);
@@ -75,7 +76,7 @@ StatusCode DDSimpleMuonDigi::initialize() {
   if (m_layersToKeepBarrelVec.size() > 0) {
     //layers start at 0
     m_useLayersBarrelVec = std::vector<bool>(layersBarrel, false);
-    for (int k : m_layersToKeepBarrelVec) {
+    for (const auto k : m_layersToKeepBarrelVec) {
       m_useLayersBarrelVec[k - 1] = true;
     }
     // for the check
@@ -84,7 +85,7 @@ StatusCode DDSimpleMuonDigi::initialize() {
   if (m_layersToKeepEndCapVec.size() > 0) {
     //layers start at 0
     m_useLayersEndcapVec = std::vector<bool>(layersEndcap, false);
-    for (int k : m_layersToKeepEndCapVec) {
+    for (const auto k : m_layersToKeepEndCapVec) {
       m_useLayersEndcapVec[k - 1] = true;
     }
     // just for check
@@ -100,13 +101,11 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   auto muoncol    = edm4hep::CalorimeterHitCollection();
   auto muonRelcol = edm4hep::CaloHitSimCaloHitLinkCollection();
 
-  std::string initString;
-
-  std::string colName    = m_muonCollections;
+  const auto colName    = inputLocations(0)[0];
   CHT::Layout caloLayout = layoutFromString(colName);
 
   //auto col   = headers[0].getCollection(m_muonCollections[i].c_str());
-  initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+  std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
   // check if decoder contains "layer"
 
@@ -114,7 +113,7 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
     const auto cellID = hit.getCellID();
     float     energy = hit.getEnergy();
     //Get the layer number
-    unsigned int layer = bitFieldCoder.get(cellID, "layer");
+    const auto layer = static_cast<size_t>(bitFieldCoder.get(cellID, "layer"));
     //Check if we want to use this later, else go to the next hit
     if (!useLayer(caloLayout, layer))
       continue;
@@ -141,19 +140,17 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   return std::make_tuple(std::move(muoncol), std::move(muonRelcol));
 }
 
-//StatusCode DDSimpleMuonDigi::finalize() { return StatusCode::SUCCESS; }
-
 //If the vectors are empty, we are keeping everything
-bool DDSimpleMuonDigi::useLayer(CHT::Layout caloLayout, unsigned int layer) const {
+bool DDSimpleMuonDigi::useLayer(const CHT::Layout caloLayout, const size_t layer) const {
   switch (caloLayout) {
     case CHT::barrel:
       if (layer > m_useLayersBarrelVec.size() || m_useLayersBarrelVec.size() == 0)
         return true;
-      return m_useLayersBarrelVec[layer];  //break not needed, because of return
+      return m_useLayersBarrelVec[layer];
     case CHT::endcap:
       if (layer > m_useLayersEndcapVec.size() || m_useLayersEndcapVec.size() == 0)
         return true;
-      return m_useLayersEndcapVec[layer];  //break not needed, because of return
+      return m_useLayersEndcapVec[layer];
       //For all other cases, always keep the hit
     default:
       return true;
@@ -166,25 +163,25 @@ float DDSimpleMuonDigi::computeHitTime(const edm4hep::SimCalorimeterHit& h) cons
   // threshold is reached. The hit time is then estimated at this position in the array
   using entry_type = std::pair<float, float>;
   std::vector<entry_type> timeToEnergyMapping{};
-  //for(const auto& ih : h) {
-  auto singleHit = h.getContributions();
+  timeToEnergyMapping.reserve(h.getContributions().size());
 
-  const unsigned int nContribs = singleHit.size();
-  timeToEnergyMapping.reserve(nContribs);
+  std::ranges::transform(
+      h.getContributions(), std::back_inserter(timeToEnergyMapping),
+      [](const auto& singleHit) { return std::make_pair(singleHit.getTime(), singleHit.getEnergy()); });
+  std::ranges::sort(timeToEnergyMapping, std::less<>{},
+                [](const auto& entry) { return entry.first; });  // sort by time
 
-  for (unsigned int c = 0; c < nContribs; ++c) {
-    timeToEnergyMapping.push_back({singleHit[c].getTime(), singleHit[c].getEnergy()});
-  }
-  std::sort(timeToEnergyMapping.begin(), timeToEnergyMapping.end(),
-            [this](entry_type& lhs, entry_type& rhs) { return lhs.first < rhs.first; });
   float energySum = 0.f;
-  for (auto& entry : timeToEnergyMapping) {
+  for (const auto& entry : timeToEnergyMapping) {
     energySum += entry.second * m_calibrCoeffMuon;
     if (energySum > m_timeThresholdMuon) {
       return entry.first;
     }
   }
-  //}
+
+
   // default case. That should not happen ...
   return 0.f;
 }
+
+DECLARE_COMPONENT(DDSimpleMuonDigi)
