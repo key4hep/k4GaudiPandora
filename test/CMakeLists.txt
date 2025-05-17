@@ -25,31 +25,44 @@ function(set_test_env testname)
   set_property(TEST ${testname} APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}/${PROJECT_NAME}/genConfDir:$ENV{PYTHONPATH}")
 endfunction()
 
-add_test(NAME "Clone CLDConfig"
+add_test(NAME "clone_CLDConfig"
   COMMAND bash -c "git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* ."
 )
-set_test_env("Clone CLDConfig")
+set_test_env("clone_CLDConfig")
 
-add_test(NAME "Run ddsim"
+add_test(NAME "run_ddsim"
   COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml -G --numberOfEvents 3 --outputFile sim.edm4hep.root --gun.energy '10*GeV' --gun.particle 'mu-' --gun.distribution uniform --gun.multiplicity 10"
   )
-set_test_env("Run ddsim")
+set_test_env("run_ddsim")
 
-add_test(NAME "Run the Marlin wrapper"
+add_test(NAME "run_marlin_wrapper"
   COMMAND k4run CLDConfig/CLDConfig/CLDReconstruction.py --inputFiles sim.edm4hep.root
 )
-set_test_env("Run the Marlin wrapper")
-set_tests_properties("Run the Marlin wrapper" PROPERTIES DEPENDS "Clone CLDConfig;Run ddsim")
+set_test_env("run_marlin_wrapper")
+set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "Clone CLDConfig;Run ddsim")
 
-add_test(NAME "Run the DDCaloDigi algorithm"
+add_test(NAME "run_DDCaloDigi"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runDDCaloDigi.py
 )
-set_test_env("Run the DDCaloDigi algorithm")
-set_tests_properties("Run the DDCaloDigi algorithm" PROPERTIES DEPENDS "Run the Marlin wrapper")
+set_test_env("run_DDCaloDigi")
+set_tests_properties("run_DDCaloDigi" PROPERTIES DEPENDS "run_marlin_wrapper")
 
-add_test(NAME "Compare calorimeter hits between Marlin and Gaudi"
+add_test(NAME "compare_DDCaloDigi"
   COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py"
 )
-set_test_env("Compare calorimeter hits between Marlin and Gaudi")
-set_tests_properties("Compare calorimeter hits between Marlin and Gaudi" PROPERTIES DEPENDS "Run the DDCaloDigi algorithm")
+set_test_env("compare_DDCaloDigi")
+set_tests_properties("compare_DDCaloDigi" PROPERTIES DEPENDS "run_DDCaloDigi")
+
+
+add_test(NAME "run_DDSimpleMuonDigi"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runDDSimpleMuonDigi.py
+)
+set_test_env("run_DDSimpleMuonDigi")
+set_tests_properties("run_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_marlin_wrapper")
+
+add_test(NAME "compare_DDSimpleMuonDigi"
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py"
+)
+set_test_env("compare_DDSimpleMuonDigi")
+set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimpleMuonDigi")
 
