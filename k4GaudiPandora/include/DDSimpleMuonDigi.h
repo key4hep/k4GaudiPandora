@@ -19,15 +19,17 @@
 #ifndef DDSimpleMuonDigi_H
 #define DDSimpleMuonDigi_H
 
-#include "Gaudi/Property.h"
-#include "edm4hep/CaloHitSimCaloHitLinkCollection.h"
-#include "edm4hep/CalorimeterHitCollection.h"
-#include "edm4hep/EventHeaderCollection.h"
-#include "edm4hep/SimCalorimeterHitCollection.h"
-
 #include "CalorimeterHitType.h"
-#include "k4FWCore/Transformer.h"
-#include "k4Interface/IGeoSvc.h"
+
+#include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+#include <edm4hep/EventHeaderCollection.h>
+#include <edm4hep/SimCalorimeterHitCollection.h>
+
+#include <Gaudi/Property.h>
+
+#include <k4FWCore/Transformer.h>
+#include <k4Interface/IGeoSvc.h>
 
 #include <string>
 #include <tuple>
@@ -40,7 +42,6 @@ struct DDSimpleMuonDigi final
   DDSimpleMuonDigi(const std::string& name, ISvcLocator* svcLoc);
 
   StatusCode initialize() override;
-  //StatusCode finalize() override;
 
   std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection> operator()(
       const edm4hep::SimCalorimeterHitCollection& simCaloHits,
@@ -75,5 +76,4 @@ private:
   bool  useLayer(const CHT::Layout caloLayout, const size_t layer) const;
   float computeHitTime(const edm4hep::SimCalorimeterHit& h) const;
 };
-DECLARE_COMPONENT(DDSimpleMuonDigi)
 #endif

@@ -17,12 +17,15 @@
  * limitations under the License.
  */
 #include "DDSimpleMuonDigi.h"
-#include "DD4hep/Detector.h"
-#include "DDRec/DetectorData.h"
-#include "GaudiKernel/MsgStream.h"
-#include "edm4hep/CalorimeterHit.h"
 
-#include <cctype>
+#include <DD4hep/Detector.h>
+#include <GaudiKernel/MsgStream.h>
+
+#include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+#include <edm4hep/EventHeaderCollection.h>
+#include <edm4hep/SimCalorimeterHitCollection.h>
+
 #include <cstdlib>
 #include <functional>
 #include <ranges>
