@@ -19,6 +19,7 @@
 #include "DDSimpleMuonDigi.h"
 
 #include <DD4hep/Detector.h>
+#include <DDRec/DetectorData.h>
 #include <GaudiKernel/MsgStream.h>
 
 #include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
@@ -75,24 +76,20 @@ StatusCode DDSimpleMuonDigi::initialize() {
     debug() << "  oops - no Yoke Endcap available: " << e.what() << std::endl;
   }
 
-  //If the vectors are empty, we are keeping everything
+  // If the vectors are empty, we are keeping everything
   if (m_layersToKeepBarrelVec.size() > 0) {
-    //layers start at 0
+    // layers start at 0
     m_useLayersBarrelVec = std::vector<bool>(layersBarrel, false);
     for (const auto k : m_layersToKeepBarrelVec) {
       m_useLayersBarrelVec[k - 1] = true;
     }
-    // for the check
-    //for (auto elem : m_useLayersBarrelVec) { std::cout << "m_useLayersBarrelVec " << elem << std::endl; }
   }
   if (m_layersToKeepEndCapVec.size() > 0) {
-    //layers start at 0
+    // layers start at 0
     m_useLayersEndcapVec = std::vector<bool>(layersEndcap, false);
     for (const auto k : m_layersToKeepEndCapVec) {
       m_useLayersEndcapVec[k - 1] = true;
     }
-    // just for check
-    //for (auto elem : m_useLayersEndcapVec) { std::cout << "m_useLayersEndCapVec " << elem << std::endl; }
   }
   return StatusCode::SUCCESS;
 }
@@ -110,7 +107,6 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   //auto col   = headers[0].getCollection(m_muonCollections[i].c_str());
   std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
-  // check if decoder contains "layer"
 
   for (const auto& hit : SimCaloHits) {
     const auto cellID = hit.getCellID();
@@ -128,7 +124,7 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
       hitEnergy = m_maxHitEnergyMuon;
     }
     if (hitEnergy > m_thresholdMuon) {
-      edm4hep::MutableCalorimeterHit calHit = muoncol.create();
+      auto calHit = muoncol.create();
       calHit.setCellID(cellID);
       calHit.setEnergy(hitEnergy);
       calHit.setPosition(hit.getPosition());
