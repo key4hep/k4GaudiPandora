@@ -20,49 +20,61 @@ from Gaudi.Configuration import INFO
 from k4FWCore import ApplicationMgr, IOSvc
 from Configurables import EventDataSvc
 from Configurables import DDSimpleMuonDigi
+from Configurables import CollectionMerger
 
 from Configurables import GeoSvc
-from Configurables import UniqueIDGenSvc
-from Configurables import RootHistSvc
-from Configurables import Gaudi__Histograming__Sink__Root as RootHistoSink
 import os
 
-id_service = UniqueIDGenSvc("UniqueIDGenSvc")
+iosvc = IOSvc()
+iosvc.Input = "output_REC.edm4hep.root"
+iosvc.Output = "output_muon_digi.root"
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/CLD/compact/CLD_o2_v06/CLD_o2_v06.xml"]
+geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
-digi = DDSimpleMuonDigi()
+input_collections = ["YokeBarrelCollection", "YokeEndcapCollection"]
+output_collections = ["GaudiMuonYokeBarrelCollection", "GaudiMuonYokeEndcapCollection"]
+output_relation = ["GaudiRelationMuonYokeBarrelHit", "GaudiRelationMuonYokeEndcapHit"]
 
-digi.SubDetectorName = "VXD"
-digi.KeepBarrelLayersVec = []
-digi.KeepEndcapLayersVec = []
-digi.muonCollections = "ECalBarrelCollection"    # "ECalBarrelCollection","ECalEndcapCollection","HCalBarrelCollection","HCalEndcapCollection",
-                                                 # "HCalRingCollection","LumiCalCollection","YokeBarrelCollection","YokeEndcapCollection"
-digi.outputRelCollection = "RelationMuonHit"
-digi.outputMuonCollection = "CalorimeterHit"
-digi.EncodingStringParameterName = "GlobalTrackerReadoutID"
-digi.CellIDLayerString = "layer"
-digi.MuonThreshold = 0.025
-digi.timethresholdMuon = 0.025
-digi.calibrationCoeffmuon = 120000.0
-digi.maxMuonHitEnergy = 2.0
-digi.detectornameB = "YokeBarrel"
-digi.detectornameE = "YokeEndcap"
+digi = [
+    DDSimpleMuonDigi("MuonYokeBarrelDigi"),
+    DDSimpleMuonDigi("MuonYokeEndcapDigi"),
+]
 
-iosvc = IOSvc()
-iosvc.Input = "../simulation/sim_partgun_1000.root"
-iosvc.Output = "../outputfiles/output_Gaudi.root"
+for alg, inputcol, outputcol, outrel in zip(digi, input_collections, output_collections, output_relation):
 
-hps = RootHistSvc("HistogramPersistencySvc")
-root_hist_svc = RootHistoSink("RootHistoSink")
-root_hist_svc.FileName = "../outputfiles/ddmuondigi_hist.root"
+    alg.SubDetectorName = "VXD"
+    alg.KeepBarrelLayersVec = []
+    alg.KeepEndcapLayersVec = []
 
-ApplicationMgr(TopAlg=[digi],
+    alg.MUONCollection = [inputcol]
+    alg.RelationOutputCollection = [outrel]
+    alg.MUONOutputCollections = [outputcol]
+
+    alg.EncodingStringParameterName = "GlobalTrackerReadoutID"
+    alg.CellIDLayerString = "layer"
+
+    alg.timethresholdMuon = 0.025
+
+    alg.calibrationCoeffmuon = 70.1
+    alg.MaxMuonHitEnergy = 2.0
+    alg.MuonThreshold = 1e-6
+
+# Merge the output collections to make it easy to compare to
+# the single one that is obtained by original Marlin processor
+merger = CollectionMerger("MuonYokeMerger")
+merger.InputCollections = output_collections
+merger.OutputCollection = ["GaudiMUON"]
+
+relation_merger = CollectionMerger("MuonRelationMerger")
+relation_merger.InputCollections = output_relation
+relation_merger.OutputCollection = ["GaudiRelationMUON"]
+
+ApplicationMgr(TopAlg=digi + [merger, relation_merger],
                EvtSel="NONE",
                EvtMax=-1,
-               ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],
+               ExtSvc=[EventDataSvc("EventDataSvc")],
                OutputLevel=INFO,
                )
