@@ -48,7 +48,7 @@ set_test_env("run_DDCaloDigi")
 set_tests_properties("run_DDCaloDigi" PROPERTIES DEPENDS "run_marlin_wrapper")
 
 add_test(NAME "compare_DDCaloDigi"
-  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py"
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py" --relation-collections-are-merged
 )
 set_test_env("compare_DDCaloDigi")
 set_tests_properties("compare_DDCaloDigi" PROPERTIES DEPENDS "run_DDCaloDigi")
