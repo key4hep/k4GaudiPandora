@@ -61,7 +61,7 @@ set_test_env("run_DDSimpleMuonDigi")
 set_tests_properties("run_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_marlin_wrapper")
 
 add_test(NAME "compare_DDSimpleMuonDigi"
-  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py" --gaudi-collections GaudiMUON --marlin-collections MUON --gaudi-file output_muon_digi.root  --marlin-file output_REC.edm4hep.root --gaudi-relation GaudiRelationMUON --marlin-relation RelationMuonHit
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-calohits.py" --gaudi-collections GaudiMUON --marlin-collections MUON --gaudi-file output_muon_digi.root  --marlin-file output_REC.edm4hep.root --gaudi-relation GaudiRelationMUON --marlin-relation RelationMuonHit --relation-collections-are-merged
 )
 set_test_env("compare_DDSimpleMuonDigi")
 set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimpleMuonDigi")
