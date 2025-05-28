@@ -59,7 +59,7 @@ parser.add_argument(
 parser.add_argument(
     "--gaudi-relation",
     default=[
-        "GaudiRelationECALBarrel",
+        "GaudiRelationCaloHit",
     ],
     nargs="+",
     help="Gaudi relation collection",
@@ -68,7 +68,7 @@ parser.add_argument(
 parser.add_argument(
     "--marlin-relation",
     default=[
-        "RelationECALBarrel",
+        "RelationCaloHit",
     ],
     nargs="+",
     help="Marlin relation collection",
@@ -101,26 +101,26 @@ for i, frame_gaudi in enumerate(events_gaudi):
         hits_gaudi = frame_gaudi.get(collection_gaudi)
         hits_marlin = frame_marlin.get(collection_marlin)
         print(f"Checking event {i} with {len(hits_gaudi)} hits")
-        assert len(hits_gaudi) == len(hits_marlin), (
-            f"Number of hits differ: {len(hits_gaudi)} vs {len(hits_marlin)}"
-        )
+        assert len(hits_gaudi) == len(
+            hits_marlin
+        ), f"Number of hits differ: {len(hits_gaudi)} vs {len(hits_marlin)}"
         for j, (hit_gaudi, hit_marlin) in enumerate(zip(hits_gaudi, hits_marlin)):
             print(f"Checking hit {j}")
-            assert hit_gaudi.getCellID() == hit_marlin.getCellID(), (
-                f"CellID differ for hit {j}: {hit_gaudi.getCellID()} vs {hit_marlin.getCellID()}"
-            )
-            assert hit_gaudi.getEnergy() == hit_marlin.getEnergy(), (
-                f"Energy differ for hit {j}: {hit_gaudi.getEnergy()} vs {hit_marlin.getEnergy()}"
-            )
-            assert hit_gaudi.getEnergyError() == hit_marlin.getEnergyError(), (
-                f"EnergyError differ for hit {j}: {hit_gaudi.getEnergyError()} vs {hit_marlin.getEnergyError()}"
-            )
-            assert hit_gaudi.getTime() == hit_marlin.getTime(), (
-                f"Time differ for hit {j}: {hit_gaudi.getTime()} vs {hit_marlin.getTime()}"
-            )
-            assert hit_gaudi.getPosition() == hit_marlin.getPosition(), (
-                f"Position differ for hit {j}: {hit_gaudi.getPosition()} vs {hit_marlin.getPosition()}"
-            )
+            assert (
+                hit_gaudi.getCellID() == hit_marlin.getCellID()
+            ), f"CellID differ for hit {j}: {hit_gaudi.getCellID()} vs {hit_marlin.getCellID()}"
+            assert (
+                hit_gaudi.getEnergy() == hit_marlin.getEnergy()
+            ), f"Energy differ for hit {j}: {hit_gaudi.getEnergy()} vs {hit_marlin.getEnergy()}"
+            assert (
+                hit_gaudi.getEnergyError() == hit_marlin.getEnergyError()
+            ), f"EnergyError differ for hit {j}: {hit_gaudi.getEnergyError()} vs {hit_marlin.getEnergyError()}"
+            assert (
+                hit_gaudi.getTime() == hit_marlin.getTime()
+            ), f"Time differ for hit {j}: {hit_gaudi.getTime()} vs {hit_marlin.getTime()}"
+            assert (
+                hit_gaudi.getPosition() == hit_marlin.getPosition()
+            ), f"Position differ for hit {j}: {hit_gaudi.getPosition()} vs {hit_marlin.getPosition()}"
             # assert (
             #     hit_gaudi.getType() == hit_marlin.getType()
             # ), f"Type differ for hit {j}: {hit_gaudi.getType()} vs {hit_marlin.getType()}"
@@ -134,9 +134,9 @@ for i, frame_gaudi in enumerate(events_gaudi):
         relations_gaudi = frame_gaudi.get(relation_gaudi)
         relations_marlin = frame_marlin.get(relation_marlin)
         print(f"Checking event {i} with {len(relations_gaudi)} relations")
-        assert len(relations_gaudi) == len(relations_marlin), (
-            f"Number of relations differ: {len(relations_gaudi)} vs {len(relations_marlin)}"
-        )
+        assert len(relations_gaudi) == len(
+            relations_marlin
+        ), f"Number of relations differ: {len(relations_gaudi)} vs {len(relations_marlin)}"
 
         # Let's sort the relations from Marlin since they are not sorted
         rel = dict(
@@ -154,18 +154,18 @@ for i, frame_gaudi in enumerate(events_gaudi):
         ):
             print(f"Checking relation {j}")
             if not args.relation_collections_are_merged:
+                print(relation_gaudi.getFrom().id().index)
+                print(relation_marlin.getFrom().id().index)
+                print(relation_gaudi.getTo().id().index)
+                print(relation_marlin.getTo().id().index)
                 assert (
                     relation_gaudi.getFrom().id().index
                     == relation_marlin.getFrom().id().index
-                ), (
-                    f"From differ for relation {j}: {relation_gaudi.getFrom().id().index} vs {relation_marlin.getFrom().id().index}"
-                )
+                ), f"From differ for relation {j}: {relation_gaudi.getFrom().id().index} vs {relation_marlin.getFrom().id().index}"
                 assert (
                     relation_gaudi.getTo().id().index
                     == relation_marlin.getTo().id().index
-                ), (
-                    f"To differ for relation {j}: {relation_gaudi.getTo().id().index} vs {relation_marlin.getTo().id().index}"
-                )
+                ), f"To differ for relation {j}: {relation_gaudi.getTo().id().index} vs {relation_marlin.getTo().id().index}"
             else:
                 if id == -1:
                     id = relation_gaudi.getFrom().id().collectionID
@@ -175,6 +175,4 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 assert (
                     relation_gaudi.getFrom().id().index + counter
                     == relation_marlin.getFrom().id().index
-                ), (
-                    f"From differ for relation {j}: {relation_gaudi.getFrom().id().index} vs {relation_marlin.getFrom().id().index}"
-                )
+                ), f"From differ for relation {j}: {relation_gaudi.getFrom().id().index} vs {relation_marlin.getFrom().id().index}"
