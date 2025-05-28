@@ -19,7 +19,7 @@ limitations under the License.
 CMAKE_MINIMUM_REQUIRED(VERSION 3.19)
 
 
-project(k4GaudiPandora)
+project(k4GaudiPandora LANGUAGES CXX)
 
 # please keep this layout for version setting, used by the automatic tagging script
 set(PACKAGE_VERSION_MAJOR 1)
