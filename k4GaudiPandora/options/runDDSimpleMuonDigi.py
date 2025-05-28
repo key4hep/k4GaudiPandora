@@ -30,7 +30,9 @@ iosvc.Input = "output_REC.edm4hep.root"
 iosvc.Output = "output_muon_digi.root"
 
 geoservice = GeoSvc("GeoSvc")
-geoservice.detectors = [os.environ["K4GEO"]+"/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"]
+geoservice.detectors = [
+    os.environ["K4GEO"] + "/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"
+]
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
@@ -43,7 +45,9 @@ digi = [
     DDSimpleMuonDigi("MuonYokeEndcapDigi"),
 ]
 
-for alg, inputcol, outputcol, outrel in zip(digi, input_collections, output_collections, output_relation):
+for alg, inputcol, outputcol, outrel in zip(
+    digi, input_collections, output_collections, output_relation
+):
 
     alg.SubDetectorName = "VXD"
     alg.KeepBarrelLayersVec = []
@@ -72,9 +76,10 @@ relation_merger = CollectionMerger("MuonRelationMerger")
 relation_merger.InputCollections = output_relation
 relation_merger.OutputCollection = ["GaudiRelationMUON"]
 
-ApplicationMgr(TopAlg=digi + [merger, relation_merger],
-               EvtSel="NONE",
-               EvtMax=-1,
-               ExtSvc=[EventDataSvc("EventDataSvc")],
-               OutputLevel=INFO,
-               )
+ApplicationMgr(
+    TopAlg=digi + [merger, relation_merger],
+    EvtSel="NONE",
+    EvtMax=-1,
+    ExtSvc=[EventDataSvc("EventDataSvc")],
+    OutputLevel=INFO,
+)
