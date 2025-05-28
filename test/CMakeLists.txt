@@ -39,7 +39,7 @@ add_test(NAME "run_marlin_wrapper"
   COMMAND k4run CLDConfig/CLDConfig/CLDReconstruction.py --inputFiles sim.edm4hep.root
 )
 set_test_env("run_marlin_wrapper")
-set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "Clone CLDConfig;Run ddsim")
+set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim")
 
 add_test(NAME "run_DDCaloDigi"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runDDCaloDigi.py
