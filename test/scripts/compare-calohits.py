@@ -106,24 +106,17 @@ for i, frame_gaudi in enumerate(events_gaudi):
         ), f"Number of hits differ: {len(hits_gaudi)} vs {len(hits_marlin)}"
         for j, (hit_gaudi, hit_marlin) in enumerate(zip(hits_gaudi, hits_marlin)):
             print(f"Checking hit {j}")
-            assert (
-                hit_gaudi.getCellID() == hit_marlin.getCellID()
-            ), f"CellID differ for hit {j}: {hit_gaudi.getCellID()} vs {hit_marlin.getCellID()}"
-            assert (
-                hit_gaudi.getEnergy() == hit_marlin.getEnergy()
-            ), f"Energy differ for hit {j}: {hit_gaudi.getEnergy()} vs {hit_marlin.getEnergy()}"
-            assert (
-                hit_gaudi.getEnergyError() == hit_marlin.getEnergyError()
-            ), f"EnergyError differ for hit {j}: {hit_gaudi.getEnergyError()} vs {hit_marlin.getEnergyError()}"
-            assert (
-                hit_gaudi.getTime() == hit_marlin.getTime()
-            ), f"Time differ for hit {j}: {hit_gaudi.getTime()} vs {hit_marlin.getTime()}"
-            assert (
-                hit_gaudi.getPosition() == hit_marlin.getPosition()
-            ), f"Position differ for hit {j}: {hit_gaudi.getPosition()} vs {hit_marlin.getPosition()}"
-            # assert (
-            #     hit_gaudi.getType() == hit_marlin.getType()
-            # ), f"Type differ for hit {j}: {hit_gaudi.getType()} vs {hit_marlin.getType()}"
+            for attr in [
+                "CellID",
+                "Energy",
+                "EnergyError",
+                "Time",
+                "Position",
+                # "Type",
+            ]:
+                assert (
+                    getattr(hit_gaudi, f"get{attr}")() == getattr(hit_marlin, f"get{attr}")()
+                ), f"{attr} differ for hit {j}: {getattr(hit_gaudi, f'get{attr}')()} vs {getattr(hit_marlin, f'get{attr}')()}"
 
     for relation_marlin, relation_gaudi in zip(
         args.marlin_relation, args.gaudi_relation
