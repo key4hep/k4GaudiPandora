@@ -65,9 +65,10 @@ DDTrackCreatorBase::~DDTrackCreatorBase() {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(const edm4hep::VertexCollection& kinkCollection,
-                                                                const edm4hep::VertexCollection& prongsCollection,
-                                                                const edm4hep::VertexCollection& v0Collection) {
+pandora::StatusCode
+DDTrackCreatorBase::CreateTrackAssociations(const edm4hep::ReconstructedParticleCollection& kinkCollection,
+                                            const edm4hep::ReconstructedParticleCollection& prongsCollection,
+                                            const edm4hep::ReconstructedParticleCollection& v0Collection) {
   // FIXME: this should be optional for all collections
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractKinks(kinkCollection));
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(prongsCollection));
@@ -78,14 +79,10 @@ pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(const edm4hep::V
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::VertexCollection& kinkCollection) {
-  for (const auto&& pVertex : kinkCollection) {
+pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::ReconstructedParticleCollection& kinkCollection) {
+  for (const auto&& pReconstructedParticle : kinkCollection) {
 
-    // FIXME: this needs the link collection?  We need the particle that represents the incoming particle of this
-    // vertex,
-    //  not the particle that comes out of this vertex, which is what getParticles would give me?
-    const auto& pReconstructedParticle = edm4hep::ReconstructedParticle(); // pVertex.getAssociactedParticles();
-    const auto& trackVec = TrackVector();                                  // pReconstructedParticle.getTracks();
+    const auto& trackVec = pReconstructedParticle.getTracks();
 
     if (this->IsConflictingRelationship(trackVec))
       continue;
@@ -96,7 +93,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::VertexCollec
     size_t iTrack = -1;
     for (auto const& pTrack : trackVec) {
       iTrack++;
-      (iTrack == 0) ? m_parentTrackList.insert(pTrack) : m_daughterTrackList.insert(pTrack);
+      (iTrack == 0) ? m_parentTrackList.insert(GetTrackID(pTrack)) : m_daughterTrackList.insert(GetTrackID(pTrack));
       // streamlog_out(DEBUG) << "KinkTrack " << iTrack << ", nHits " << pTrack->getTrackerHits().size()
       //                      << std::endl;
 
@@ -128,7 +125,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::VertexCollec
         }
       }
 
-      m_trackToPidMap.insert(TrackToPidMap::value_type(pTrack, trackPdgCode));
+      m_trackToPidMap.insert(TrackToPidMap::value_type(GetTrackID(pTrack), trackPdgCode));
 
       if (0 == m_settings.m_shouldFormTrackRelationships) {
         continue;
@@ -138,14 +135,14 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::VertexCollec
       if (iTrack == 0) {
         for (size_t jTrack = iTrack + 1; jTrack < trackVec.size(); ++jTrack) {
           PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                   PandoraApi::SetTrackParentDaughterRelationship(m_pandora, &pTrack, // (FIXME)
-                                                                                  &trackVec[jTrack]));
+                                   PandoraApi::SetTrackParentDaughterRelationship(m_pandora, GetTrackIDStar(pTrack),
+                                                                                  GetTrackIDStar(trackVec[jTrack])));
         }
       } else { // Make track sibling relationships
         for (size_t jTrack = iTrack + 1; jTrack < trackVec.size(); ++jTrack) {
           PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                   PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, // (FIXME)
-                                                                           &trackVec[jTrack]));
+                                   PandoraApi::SetTrackSiblingRelationship(m_pandora, GetTrackIDStar(pTrack),
+                                                                           GetTrackIDStar(trackVec[jTrack])));
         }
       }
     }
@@ -155,12 +152,11 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::VertexCollec
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::VertexCollection& prongsCollection) {
-  for (const auto&& pVertex : prongsCollection) {
+pandora::StatusCode
+DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::ReconstructedParticleCollection& prongsCollection) {
+  for (const auto&& pReconstructedParticle : prongsCollection) {
 
-    // FIXME: this needs the link collection
-    const auto& pReconstructedParticle = edm4hep::ReconstructedParticle(); // pVertex.getAssociactedParticles();
-    const auto& trackVec = TrackVector();                                  // pReconstructedParticle.getTracks();
+    const auto& trackVec = pReconstructedParticle.getTracks();
 
     if (this->IsConflictingRelationship(trackVec))
       continue;
@@ -170,7 +166,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::Ve
     size_t iTrack = -1;
     for (auto const& pTrack : trackVec) {
       iTrack++;
-      (0 == iTrack) ? m_parentTrackList.insert(pTrack) : m_daughterTrackList.insert(pTrack);
+      (0 == iTrack) ? m_parentTrackList.insert(GetTrackID(pTrack)) : m_daughterTrackList.insert(GetTrackID(pTrack));
       // streamlog_out(DEBUG) << "Prong or Split Track " << iTrack << ", nHits " << pTrack->getTrackerHits().size()
       //                      << std::endl;
 
@@ -180,18 +176,18 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::Ve
       // Make track parent-daughter relationships
       if (0 == iTrack) {
         for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
-          PANDORA_RETURN_RESULT_IF(
-              pandora::STATUS_CODE_SUCCESS, !=,
-              PandoraApi::SetTrackParentDaughterRelationship(m_pandora, &pTrack, &trackVec[jTrack])); // fixme
+          PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                   PandoraApi::SetTrackParentDaughterRelationship(m_pandora, GetTrackIDStar(pTrack),
+                                                                                  GetTrackIDStar(trackVec[jTrack])));
         }
       }
 
       // Make track sibling relationships
       else {
         for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
-          PANDORA_RETURN_RESULT_IF(
-              pandora::STATUS_CODE_SUCCESS, !=,
-              PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, &trackVec[jTrack])); // fixme
+          PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                   PandoraApi::SetTrackSiblingRelationship(m_pandora, GetTrackIDStar(pTrack),
+                                                                           GetTrackIDStar(trackVec[jTrack])));
         }
       }
     }
@@ -202,12 +198,10 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::Ve
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::VertexCollection& v0Collection) {
-  for (const auto&& pVertex : v0Collection) {
+pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::ReconstructedParticleCollection& v0Collection) {
+  for (const auto&& pReconstructedParticle : v0Collection) {
 
-    // FIXME: this needs the link collection
-    const auto& pReconstructedParticle = edm4hep::ReconstructedParticle(); // pVertex.getAssociactedParticles();
-    const auto& trackVec = TrackVector();                                  // pReconstructedParticle.getTracks();
+    const auto& trackVec = pReconstructedParticle.getTracks();
 
     if (this->IsConflictingRelationship(trackVec))
       continue;
@@ -217,7 +211,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::VertexCollecti
     const size_t nTracks = trackVec.size();
     size_t iTrack = -1;
     for (auto const& pTrack : trackVec) {
-      m_v0TrackList.insert(pTrack);
+      m_v0TrackList.insert(GetTrackID(pTrack));
       // streamlog_out(DEBUG) << "V0Track " << iTrack << ", nHits " << pTrack->getTrackerHits().size() << std::endl;
 
       int trackPdgCode = pandora::UNKNOWN_PARTICLE_TYPE;
@@ -240,16 +234,16 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::VertexCollecti
         break;
       }
 
-      m_trackToPidMap.insert(TrackToPidMap::value_type(pTrack, trackPdgCode));
+      m_trackToPidMap.insert(TrackToPidMap::value_type(GetTrackID(pTrack), trackPdgCode));
 
       if (0 == m_settings.m_shouldFormTrackRelationships)
         continue;
 
       // Make track sibling relationships
       for (unsigned int jTrack = iTrack + 1; jTrack < nTracks; ++jTrack) {
-        PANDORA_RETURN_RESULT_IF(
-            pandora::STATUS_CODE_SUCCESS, !=,
-            PandoraApi::SetTrackSiblingRelationship(m_pandora, &pTrack, &trackVec[jTrack])); // FIXME
+        PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                 PandoraApi::SetTrackSiblingRelationship(m_pandora, GetTrackIDStar(pTrack),
+                                                                         GetTrackIDStar(trackVec[jTrack])));
       }
     }
   }
@@ -259,7 +253,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::VertexCollecti
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-bool DDTrackCreatorBase::IsConflictingRelationship(TrackVector const& trackVec) const {
+bool DDTrackCreatorBase::IsConflictingRelationship(TrackRange const& trackVec) const {
   for (unsigned int iTrack = 0, nTracks = trackVec.size(); iTrack < nTracks; ++iTrack) {
     const auto& pTrack = trackVec[iTrack];
 
