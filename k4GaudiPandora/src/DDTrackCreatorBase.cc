@@ -50,13 +50,12 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
   // wrap in shared_ptr with a dummy destructor
-  //  m_trackingSystem = std::shared_ptr<MarlinTrk::IMarlinTrkSystem>(
-  //      MarlinTrk::Factory::createMarlinTrkSystem(settings.m_trackingSystemName, nullptr, ""),
-  //      [](MarlinTrk::IMarlinTrkSystem*) {});
-  //  m_trackingSystem->init();
+  // FIXME: pass the algorithm or something gaudi like to get printouts in GaudiDDKaltest
+  m_trackingSystem = std::make_shared<GaudiDDKalTest>(nullptr);
+  m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("foo:2");
-  // m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
+  m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -331,43 +330,48 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   }
 
   // FIXME: use marlintrk ported
-  //  auto                        marlintrk  =
-  //  std::unique_ptr<MarlinTrk::IMarlinTrack>(m_trackingSystem->createTrack()); const EVENT::TrackerHitVec& trkHits =
-  //  track->getTrackerHits(); const int                   nHitsTrack = trkHits.size();
+  // FIXME: pass correct algorithm or gaudi thing instead of nullptr
+  GaudiDDKalTestTrack trk(nullptr, m_trackingSystem.get());
+  const auto& trkHits = track.getTrackerHits();
+  const int nHitsTrack = trkHits.size();
 
-  // for (int iHit = 0; iHit < nHitsTrack; ++iHit) {
-  //   EVENT::TrackerHit* trkHit = trkHits[iHit];
-  //   if (UTIL::BitSet32(
-  //           trkHit->getType())[UTIL::ILDTrkHitTypeBit::COMPOSITE_SPACEPOINT]) {  //it is a composite spacepoint
-  //     //Split it up and add both hits to the MarlinTrk
-  //     const EVENT::LCObjectVec& rawObjects = trkHit->getRawHits();
-  //     for (unsigned k = 0; k < rawObjects.size(); k++) {
-  //       EVENT::TrackerHit* rawHit = static_cast<EVENT::TrackerHit*>(rawObjects[k]);
-  //       if (marlintrk->addHit(rawHit) != MarlinTrk::IMarlinTrack::success) {
-  //         //streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add strip hit " << *rawHit
-  //                               << std::endl;
-  //       }
-  //     }
-  //   } else {
-  //     if (marlintrk->addHit(trkHits[iHit]) != MarlinTrk::IMarlinTrack::success)
-  //       //streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add tracker hit " << *trkHit
-  //                             << std::endl;
-  //   }
-  // }
+  for (int iHit = 0; iHit < nHitsTrack; ++iHit) {
+    auto const& trkHit = trkHits[iHit];
+    // FIXME: there are now rawhits anymore...
+    //  if (UTIL::BitSet32(
+    //          trkHit.getType())[UTIL::ILDTrkHitTypeBit::COMPOSITE_SPACEPOINT]) {  //it is a composite spacepoint
+    //    //Split it up and add both hits to the MarlinTrk
+    //    const EVENT::LCObjectVec& rawObjects = trkHit->getRawHits();
+    //    for (unsigned k = 0; k < rawObjects.size(); k++) {
+    //      EVENT::TrackerHit* rawHit = static_cast<EVENT::TrackerHit*>(rawObjects[k]);
+    //      if (marlintrk->addHit(rawHit) != MarlinTrk::IMarlinTrack::success) {
+    //        //streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add strip hit " << *rawHit
+    //        // << std::endl;
+    //      }
+    //    }
+    //  } else
+    {
+      // FIXME: this does not work with TrackerHit, only TrackerHitPlane for now
+      // if (trk.addHit(trkHits[iHit]) != MarlinTrk::IMarlinTrack::success)
+      {
+        // streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to add tracker hit " << *trkHit
+        //<< std::endl;
+      }
+    }
+  }
+
   // ENDFIXME: use marlintrk ported
 
   bool tanL_is_positive = trackAtCalo.tanLambda > 0;
 
-  // FIXME: use ported marlintrk
-  //  auto trackState = TrackStateImpl(*trackAtCalo);
-  int return_error = -1; // FIXME
-  // int return_error = marlintrk->initialise(trackState, m_settings.m_bField, MarlinTrk::IMarlinTrack::modeForward);
-  // if (return_error != MarlinTrk::IMarlinTrack::success) {
-  //   //streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to initialize track for endcap track
-  //   : "
-  //                         << std::endl;
-  //   return;
-  // }
+  edm4hep::TrackState trackState;
+  int return_error = trk.initialise(trackState, true /* is this forward? FIXME */);
+  if (return_error != 1 /* success */) {
+    // streamlog_out(DEBUG4) << "DDTrackCreatorBase::GetTrackStatesAtCalo failed to initialize track for endcap track
+    //   : "
+    //                         << std::endl;
+    return;
+  }
 
   double chi2 = -DBL_MAX;
   int ndf = 0;
@@ -383,12 +387,12 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   // (*m_encoder)[lcio::LCTrackerCellID::layer()]  = 0;
 
   // FIXME use ported marlintrk
-  //  return_error = marlintrk->propagateToLayer(m_encoder->lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
-  //                                             MarlinTrk::IMarlinTrack::modeForward);
+  // FIXME: this does not exist with this signature
+  // return_error = trk.propagateToLayer(m_encoder.lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
+  //                                     true /* is this forward? FIXME */);
   // streamlog_out(DEBUG5) << "Found trackState at endcap? Error code: " << return_error << std::endl;
 
-  // FIXME  if (return_error == MarlinTrk::IMarlinTrack::success) {
-  if (true) {
+  if (return_error == 1 /* is this success */) {
     // streamlog_out(DEBUG3) << "Endcap" << toString(&trackStateAtCaloEndcap) << std::endl;
     const auto& tsEP = trackStateAtCaloEndcap.referencePoint;
     const double radSquared = (tsEP[0] * tsEP[0] + tsEP[1] * tsEP[1]);
@@ -413,7 +417,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track& track) const {
-  // APS: get the trackstate at IP?
+
   auto const& ts = track.getTrackStates(edm4hep::TrackState::AtIP);
   const pandora::Helix helix(ts.phi, ts.D0, ts.Z0, ts.omega, ts.tanLambda, m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
