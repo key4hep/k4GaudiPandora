@@ -30,6 +30,9 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 					# src/DDPandoraPFANewProcessor.cc
 					src/DDPfoCreator.cc
 					src/DDSimpleMuonDigi.cc
+					src/DDTrackCreatorBase.cc
+					# src/DDTrackCreatorCLIC.cc
+					# src/DDTrackCreatorILD.cc
 					)
 
 gaudi_add_module(k4GaudiPandoraPlugins
@@ -43,10 +46,11 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       CLHEP::CLHEP
                       GSL::gsl
                       ${PandoraSDK_LIBRARIES}
+                      ${LCContent_LIBRARIES}
                     )
 target_include_directories(k4GaudiPandoraPlugins PRIVATE include)
 
-target_include_directories(k4GaudiPandoraPlugins SYSTEM PUBLIC ${PandoraSDK_INCLUDE_DIRS})
+target_include_directories(k4GaudiPandoraPlugins SYSTEM PUBLIC ${PandoraSDK_INCLUDE_DIRS} ${LCContent_INCLUDE_DIRS})
 
 install(TARGETS k4GaudiPandoraPlugins
   EXPORT ${CMAKE_PROJECT_NAME}Targets
