@@ -62,8 +62,8 @@ for alg, inputcol, outputcol, outrel in zip(
 
     alg.timethresholdMuon = 0.025
 
-    alg.calibrationCoeffmuon = 70.1
-    alg.MaxMuonHitEnergy = 2.0
+    alg.CalibrMUON = 70.1
+    alg.MaxHitEnergyMUON = 2.0
     alg.MuonThreshold = 1e-6
 
 # Merge the output collections to make it easy to compare to
