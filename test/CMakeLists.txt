@@ -26,7 +26,7 @@ function(set_test_env testname)
 endfunction()
 
 add_test(NAME "clone_CLDConfig"
-  COMMAND bash -c "git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* . && sed '/Overlay\/Overlay/d'"
+  COMMAND bash -c "git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* . && sed '/Overlay\/Overlay/d' CLDReconstruction.py"
 )
 set_test_env("clone_CLDConfig")
 
