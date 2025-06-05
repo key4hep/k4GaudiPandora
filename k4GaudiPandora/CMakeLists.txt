@@ -45,6 +45,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       DD4hep::DDCore
                       CLHEP::CLHEP
                       GSL::gsl
+                      k4Reco::GaudiTrkUtils
                       ${PandoraSDK_LIBRARIES}
                       ${LCContent_LIBRARIES}
                     )
