@@ -35,6 +35,8 @@
 // From Pandora LCContent
 #include <LCObjects/LCTrack.h>
 
+#include <Gaudi/Algorithm.h>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -42,16 +44,16 @@
 // forward declaration
 std::vector<double> getTrackingRegionExtent();
 
-DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pandora(*pPandora), m_trackVector(0), m_v0TrackList(TrackList()),
-      m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()), m_trackToPidMap(TrackToPidMap()),
-      m_minimalTrackStateRadiusSquared(0.f) {
+DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora,
+                                       const Gaudi::Algorithm* pAlgorithm)
+    : m_settings(settings), m_pandora(*pPandora), m_algorithm(*pAlgorithm), m_trackVector(0),
+      m_v0TrackList(TrackList()), m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()),
+      m_trackToPidMap(TrackToPidMap()), m_minimalTrackStateRadiusSquared(0.f) {
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
   // wrap in shared_ptr with a dummy destructor
-  // FIXME: pass the algorithm or something gaudi like to get printouts in GaudiDDKaltest
-  m_trackingSystem = std::make_shared<GaudiDDKalTest>(nullptr);
+  m_trackingSystem = std::make_shared<GaudiDDKalTest>(&m_algorithm);
   m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("foo:2");
@@ -93,8 +95,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const edm4hep::Reconstructe
     for (auto const& pTrack : trackVec) {
       iTrack++;
       (iTrack == 0) ? m_parentTrackList.insert(GetTrackID(pTrack)) : m_daughterTrackList.insert(GetTrackID(pTrack));
-      // streamlog_out(DEBUG) << "KinkTrack " << iTrack << ", nHits " << pTrack->getTrackerHits().size()
-      //                      << std::endl;
+      m_algorithm.debug() << "KinkTrack " << iTrack << ", nHits " << pTrack.getTrackerHits().size() << std::endl;
 
       int trackPdgCode = pandora::UNKNOWN_PARTICLE_TYPE;
 
@@ -166,8 +167,8 @@ DDTrackCreatorBase::ExtractProngsAndSplits(const edm4hep::ReconstructedParticleC
     for (auto const& pTrack : trackVec) {
       iTrack++;
       (0 == iTrack) ? m_parentTrackList.insert(GetTrackID(pTrack)) : m_daughterTrackList.insert(GetTrackID(pTrack));
-      // streamlog_out(DEBUG) << "Prong or Split Track " << iTrack << ", nHits " << pTrack->getTrackerHits().size()
-      //                      << std::endl;
+      m_algorithm.debug() << "Prong or Split Track " << iTrack << ", nHits " << pTrack.getTrackerHits().size()
+                          << std::endl;
 
       if (0 == m_settings.m_shouldFormTrackRelationships)
         continue;
@@ -211,7 +212,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const edm4hep::ReconstructedP
     size_t iTrack = -1;
     for (auto const& pTrack : trackVec) {
       m_v0TrackList.insert(GetTrackID(pTrack));
-      // streamlog_out(DEBUG) << "V0Track " << iTrack << ", nHits " << pTrack->getTrackerHits().size() << std::endl;
+      m_algorithm.debug() << "V0Track " << iTrack << ", nHits " << pTrack.getTrackerHits().size() << std::endl;
 
       int trackPdgCode = pandora::UNKNOWN_PARTICLE_TYPE;
 
@@ -300,14 +301,14 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track& pTrack,
 void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
                                               lc_content::LCTrackParameters& trackParameters) {
   if (not trackParameters.m_reachesCalorimeter.Get()) {
-    // streamlog_out(DEBUG5) << "Track does not reach the ECal" << std::endl;
+    m_algorithm.verbose() << "Track does not reach the ECal" << std::endl;
     return;
   }
 
   const auto& trackAtCalo = track.getTrackStates(edm4hep::TrackState::AtCalorimeter);
   // FIXME: how to check trackAtCalo exists?
   // if (not trackAtCalo) {
-  //   // streamlog_out(DEBUG5) << "Track does not have a trackState at calorimeter" << std::endl;
+  //   // m_algorithm.verbose() << "Track does not have a trackState at calorimeter" << std::endl;
   //   // streamlog_out(DEBUG3) << toString(track) << std::endl;
   //   return;
   // }
@@ -317,12 +318,12 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   const auto& tsPosition = trackAtCalo.referencePoint;
 
   if (std::fabs(tsPosition[2]) < getTrackingRegionExtent()[2]) {
-    // streamlog_out(DEBUG5) << "Original trackState is at Barrel" << std::endl;
+    m_algorithm.verbose() << "Original trackState is at Barrel" << std::endl;
     pandora::InputTrackState pandoraTrackState;
     this->CopyTrackState(trackAtCalo, pandoraTrackState);
     trackParameters.m_trackStates.push_back(pandoraTrackState);
   } else { // if track state is in endcap we do not repeat track state calculation, because the barrel cannot be hit
-    // streamlog_out(DEBUG5) << "Original track state is at Endcap" << std::endl;
+    m_algorithm.verbose() << "Original track state is at Endcap" << std::endl;
     pandora::InputTrackState pandoraTrackState;
     this->CopyTrackState(trackAtCalo, pandoraTrackState);
     trackParameters.m_trackStates.push_back(pandoraTrackState);
@@ -330,8 +331,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   }
 
   // FIXME: use marlintrk ported
-  // FIXME: pass correct algorithm or gaudi thing instead of nullptr
-  GaudiDDKalTestTrack trk(nullptr, m_trackingSystem.get());
+  GaudiDDKalTestTrack trk(&m_algorithm, m_trackingSystem.get());
   const auto& trkHits = track.getTrackerHits();
   const int nHitsTrack = trkHits.size();
 
@@ -390,14 +390,14 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   // FIXME: this does not exist with this signature
   // return_error = trk.propagateToLayer(m_encoder.lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
   //                                     true /* is this forward? FIXME */);
-  // streamlog_out(DEBUG5) << "Found trackState at endcap? Error code: " << return_error << std::endl;
+  m_algorithm.verbose() << "Found trackState at endcap? Error code: " << return_error << std::endl;
 
   if (return_error == 1 /* is this success */) {
     // streamlog_out(DEBUG3) << "Endcap" << toString(&trackStateAtCaloEndcap) << std::endl;
     const auto& tsEP = trackStateAtCaloEndcap.referencePoint;
     const double radSquared = (tsEP[0] * tsEP[0] + tsEP[1] * tsEP[1]);
     if (radSquared < m_minimalTrackStateRadiusSquared) {
-      // streamlog_out(DEBUG5) << "new track state is below tolerance radius" << std::endl;
+      m_algorithm.verbose() << "new track state is below tolerance radius" << std::endl;
       return;
     }
     // for curling tracks the propagated track has the wrong z0 whereas it should be 0. really
