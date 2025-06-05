@@ -27,6 +27,10 @@
 #include <edm4hep/Track.h>
 #include <edm4hep/VertexCollection.h>
 
+// FIXME: should be k4Reco...
+#include "GaudiDDKalTest.h"
+#include "GaudiDDKalTestTrack.h"
+
 #include <memory>
 
 typedef uint64_t TrackID;
@@ -178,7 +182,7 @@ protected:
   TrackList m_daughterTrackList;          ///< The list of daughter tracks
   TrackToPidMap m_trackToPidMap;          ///< The map from track addresses to particle ids, where set by kinks/V0s
   float m_minimalTrackStateRadiusSquared; ///< minimal track state radius, derived value
-  // std::shared_ptr<MarlinTrk::IMarlinTrkSystem> m_trackingSystem = {};  ///< Tracking system used for track states
+  std::shared_ptr<GaudiDDKalTest> m_trackingSystem = {};             ///< Tracking system used for track states
   dd4hep::DDSegmentation::BitFieldCoder m_encoder = {};              ///< cell ID encoder
   std::shared_ptr<lc_content::LCTrackFactory> m_lcTrackFactory = {}; ///< LCTrackFactor for creating LCTracks
 
