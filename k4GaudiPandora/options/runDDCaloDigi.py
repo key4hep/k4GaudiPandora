@@ -19,7 +19,7 @@
 from Gaudi.Configuration import INFO
 from k4FWCore import ApplicationMgr, IOSvc
 from Configurables import EventDataSvc
-from Configurables import DDCaloDigi
+from Configurables import DDCaloDigi, CollectionMerger
 
 from Configurables import GeoSvc
 from Configurables import UniqueIDGenSvc
@@ -48,13 +48,7 @@ calodigi = [
     DDCaloDigi("HCALRingDigi"),
 ]
 
-ECALorHCAL = [
-    True,
-    True,
-    False,
-    False,
-    False
-]
+ECALorHCAL = [True, True, False, False, False]
 
 inputcollections = [
     ["ECalBarrelCollection"],
@@ -73,11 +67,11 @@ outputcollections = [
 ]
 
 relcollections = [
-    ["GaudiRelationCaloHitECALBarrel"],
-    ["GaudiRelationCaloHitECALEndcap"],
-    ["GaudiRelationCaloHitHCALBarrel"],
-    ["GaudiRelationCaloHitHCALEndcap"],
-    ["GaudiRelationCaloHitHCALRing"],
+    ["GaudiLinkCaloHitECALBarrel"],
+    ["GaudiLinkCaloHitECALEndcap"],
+    ["GaudiLinkCaloHitHCALBarrel"],
+    ["GaudiLinkCaloHitHCALEndcap"],
+    ["GaudiLinkCaloHitHCALRing"],
 ]
 
 for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
@@ -162,14 +156,26 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
     calodigicol.HCALTimeResolution = 10.0
 
 
+merger = CollectionMerger(
+    "CollectionMerger",
+    InputCollections=[
+        "GaudiLinkCaloHitECALBarrel",
+        "GaudiLinkCaloHitECALEndcap",
+        "GaudiLinkCaloHitHCALBarrel",
+        "GaudiLinkCaloHitHCALEndcap",
+        "GaudiLinkCaloHitHCALRing",
+    ],
+    OutputCollection=["GaudiRelationCaloHit"],
+)
+
 hps = RootHistSvc("HistogramPersistencySvc")
 root_hist_svc = RootHistoSink("RootHistoSink")
 root_hist_svc.FileName = "ddcalodigi_hist.root"
 
 ApplicationMgr(
-    TopAlg=calodigi,
+    TopAlg=calodigi + [merger],
     EvtSel="NONE",
-    EvtMax=-1,
+    EvtMax=1,
     ExtSvc=[EventDataSvc("EventDataSvc"), root_hist_svc],
     OutputLevel=INFO,
 )
