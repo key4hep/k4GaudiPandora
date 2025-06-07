@@ -56,10 +56,7 @@ private:
   // Gaudi::Property<std::vector<bool>> useLayersBarrelVec{this, "useBarrelLayerVector", false, "whether to use the
   // endcap layer vector"}; Gaudi::Property<std::vector<bool>> useLayersEndcapVec{this, "useEndCapLayerVector", false,
   // "whether to use the EndCap layer vector"};
-  Gaudi::Property<std::string> m_encodingStringVariable{
-      this, "EncodingStringParameterName", "GlobalTrackerReadoutID",
-      "The name of the DD4hep constant that contains the Encoding string for tracking detectors"};
-  Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "Layer",
+  Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
   Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025}, "Threshold for muon"};
   Gaudi::Property<float> m_timeThresholdMuon{this, "timethresholdMuon", {0.025}, "time threshold for muons"};
@@ -69,7 +66,8 @@ private:
   Gaudi::Property<std::string> m_detectorNameEndcap{this, "detectornameE", "YokeEndcap",
                                                     "Name of the second subdetector"};
 
-  std::string m_collName;
+  std::string m_collName{};
+  std::string m_encodingString{};
   std::vector<bool> m_useLayersBarrelVec{}, m_useLayersEndcapVec{};
   SmartIF<IGeoSvc> m_geoSvc;
 
