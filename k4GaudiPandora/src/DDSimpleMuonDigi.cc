@@ -24,8 +24,11 @@
 
 #include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
 #include <edm4hep/CalorimeterHitCollection.h>
+#include <edm4hep/Constants.h>
 #include <edm4hep/EventHeaderCollection.h>
 #include <edm4hep/SimCalorimeterHitCollection.h>
+
+#include <k4FWCore/MetadataUtils.h>
 
 #include <cstdlib>
 #include <functional>
@@ -39,8 +42,7 @@ DDSimpleMuonDigi::DDSimpleMuonDigi(const std::string& aName, ISvcLocator* aSvcLo
                            KeyValues("HeaderName", {"EventHeader"}),
                        },
                        {KeyValues("MUONOutputCollections", {"CalorimeterHit"}),
-                        KeyValues("RelationOutputCollection", {"RelationMuonHit"})}) {
-}
+                        KeyValues("RelationOutputCollection", {"RelationMuonHit"})}) {}
 
 StatusCode DDSimpleMuonDigi::initialize() {
 
@@ -50,11 +52,11 @@ StatusCode DDSimpleMuonDigi::initialize() {
     return StatusCode::FAILURE;
   }
 
-  //Get the number of Layers in the Endcap and Barrel
+  // Get the number of Layers in the Endcap and Barrel
   size_t layersEndcap = 0, layersBarrel = 0;
   try {
-    const auto                                 mainDetector = m_geoSvc->getDetector();
-    dd4hep::DetElement                         theDetector  = mainDetector->detector(m_detectorNameBarrel);
+    const auto mainDetector = m_geoSvc->getDetector();
+    dd4hep::DetElement theDetector = mainDetector->detector(m_detectorNameBarrel);
     const dd4hep::rec::LayeredCalorimeterData* yokeBarrelParameters =
         theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
 
@@ -67,8 +69,8 @@ StatusCode DDSimpleMuonDigi::initialize() {
     debug() << "  oops - no Yoke Barrel available: " << e.what() << std::endl;
   }
   try {
-    const auto                                 mainDetector = m_geoSvc->getDetector();
-    dd4hep::DetElement                         theDetector  = mainDetector->detector(m_detectorNameEndcap);
+    const auto mainDetector = m_geoSvc->getDetector();
+    dd4hep::DetElement theDetector = mainDetector->detector(m_detectorNameEndcap);
     const dd4hep::rec::LayeredCalorimeterData* yokeEndcapParameters =
         theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
     layersEndcap = yokeEndcapParameters->layers.size();
@@ -91,35 +93,43 @@ StatusCode DDSimpleMuonDigi::initialize() {
       m_useLayersEndcapVec[k - 1] = true;
     }
   }
+
+  const auto collName = inputLocations("MUONCollection")[0];
+  const auto encodingString =
+      k4FWCore::getParameter<std::string>(collName + "__" + edm4hep::labels::CellIDEncoding, this);
+  if (!encodingString) {
+    throw std::runtime_error("Encoding string not found for collection: " + collName);
+  }
+  m_encodingString = encodingString.value();
+
   return StatusCode::SUCCESS;
 }
-std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection> DDSimpleMuonDigi::operator()(
-    const edm4hep::SimCalorimeterHitCollection& SimCaloHits, const edm4hep::EventHeaderCollection& headers) const {
+std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>
+DDSimpleMuonDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCaloHits,
+                             const edm4hep::EventHeaderCollection& headers) const {
   debug() << " process event : " << headers[0].getEventNumber() << " - run  " << headers[0].getRunNumber()
-          << endmsg;  // headers[0].getRunNumber(),headers[0].getEventNumber()
+          << endmsg; // headers[0].getRunNumber(),headers[0].getEventNumber()
 
-  auto muoncol    = edm4hep::CalorimeterHitCollection();
+  auto muoncol = edm4hep::CalorimeterHitCollection();
   auto muonRelcol = edm4hep::CaloHitSimCaloHitLinkCollection();
 
-  const auto colName    = inputLocations(0)[0];
+  const auto colName = inputLocations(0)[0];
   CHT::Layout caloLayout = layoutFromString(colName);
 
-  //auto col   = headers[0].getCollection(m_muonCollections[i].c_str());
-  std::string initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);  // check!
+  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(m_encodingString);
 
   for (const auto& hit : SimCaloHits) {
     const auto cellID = hit.getCellID();
-    float     energy = hit.getEnergy();
-    //Get the layer number
-    const auto layer = static_cast<size_t>(bitFieldCoder.get(cellID, "layer"));
-    //Check if we want to use this later, else go to the next hit
+    float energy = hit.getEnergy();
+    // Get the layer number
+    const auto layer = static_cast<size_t>(bitFieldCoder.get(cellID, m_cellIDLayerString));
+    // Check if we want to use this later, else go to the next hit
     if (!useLayer(caloLayout, layer))
       continue;
-    //Do the digitalization
+    // Do the digitalization
     float calibr_coeff = 1.;
-    calibr_coeff       = m_calibrCoeffMuon;
-    float hitEnergy    = calibr_coeff * energy;
+    calibr_coeff = m_calibrCoeffMuon;
+    float hitEnergy = calibr_coeff * energy;
     if (hitEnergy > m_maxHitEnergyMuon) {
       hitEnergy = m_maxHitEnergyMuon;
     }
@@ -139,22 +149,22 @@ std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkColl
   return std::make_tuple(std::move(muoncol), std::move(muonRelcol));
 }
 
-//If the vectors are empty, we are keeping everything
+// If the vectors are empty, we are keeping everything
 bool DDSimpleMuonDigi::useLayer(const CHT::Layout caloLayout, const size_t layer) const {
   switch (caloLayout) {
-    case CHT::barrel:
-      if (layer > m_useLayersBarrelVec.size() || m_useLayersBarrelVec.size() == 0)
-        return true;
-      return m_useLayersBarrelVec[layer];
-    case CHT::endcap:
-      if (layer > m_useLayersEndcapVec.size() || m_useLayersEndcapVec.size() == 0)
-        return true;
-      return m_useLayersEndcapVec[layer];
-      //For all other cases, always keep the hit
-    default:
+  case CHT::barrel:
+    if (layer > m_useLayersBarrelVec.size() || m_useLayersBarrelVec.size() == 0)
       return true;
+    return m_useLayersBarrelVec[layer];
+  case CHT::endcap:
+    if (layer > m_useLayersEndcapVec.size() || m_useLayersEndcapVec.size() == 0)
+      return true;
+    return m_useLayersEndcapVec[layer];
+    // For all other cases, always keep the hit
+  default:
+    return true;
   }
-}  //useLayer
+} // useLayer
 
 float DDSimpleMuonDigi::computeHitTime(const edm4hep::SimCalorimeterHit& h) const {
   // Sort sim hit MC contribution by time.
@@ -164,11 +174,10 @@ float DDSimpleMuonDigi::computeHitTime(const edm4hep::SimCalorimeterHit& h) cons
   std::vector<entry_type> timeToEnergyMapping{};
   timeToEnergyMapping.reserve(h.getContributions().size());
 
-  std::ranges::transform(
-      h.getContributions(), std::back_inserter(timeToEnergyMapping),
-      [](const auto& singleHit) { return std::make_pair(singleHit.getTime(), singleHit.getEnergy()); });
-  std::ranges::sort(timeToEnergyMapping, std::less<>{},
-                [](const auto& entry) { return entry.first; });  // sort by time
+  std::ranges::transform(h.getContributions(), std::back_inserter(timeToEnergyMapping), [](const auto& singleHit) {
+    return std::make_pair(singleHit.getTime(), singleHit.getEnergy());
+  });
+  std::ranges::sort(timeToEnergyMapping, std::less<>{}, [](const auto& entry) { return entry.first; }); // sort by time
 
   float energySum = 0.f;
   for (const auto& entry : timeToEnergyMapping) {
@@ -177,7 +186,6 @@ float DDSimpleMuonDigi::computeHitTime(const edm4hep::SimCalorimeterHit& h) cons
       return entry.first;
     }
   }
-
 
   // default case. That should not happen ...
   return 0.f;

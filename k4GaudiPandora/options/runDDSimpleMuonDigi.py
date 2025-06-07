@@ -57,7 +57,6 @@ for alg, inputcol, outputcol, outrel in zip(
     alg.RelationOutputCollection = [outrel]
     alg.MUONOutputCollections = [outputcol]
 
-    alg.EncodingStringParameterName = "GlobalTrackerReadoutID"
     alg.CellIDLayerString = "layer"
 
     alg.timethresholdMuon = 0.025
