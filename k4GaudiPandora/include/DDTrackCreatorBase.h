@@ -20,7 +20,6 @@
 #define DDTRACK_CREATOR_BASE_H 1
 
 #include "Api/PandoraApi.h"
-#include "Objects/Helix.h"
 
 #include <DDSegmentation/BitFieldCoder.h>
 #include <edm4hep/ReconstructedParticleCollection.h>
@@ -44,6 +43,10 @@ namespace lc_content {
 class LCTrackParameters;
 class LCTrackFactory;
 } // namespace lc_content
+
+namespace Gaudi {
+class Algorithm;
+}
 
 /**
  *  @brief  DDTrackCreatorBase class
@@ -137,21 +140,16 @@ public:
    */
   virtual ~DDTrackCreatorBase();
 
-  /**
-   *  @brief  Create associations between tracks, V0s, kinks, etc
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateTrackAssociations(const edm4hep::ReconstructedParticleCollection& kinkCollection,
-                                              const edm4hep::ReconstructedParticleCollection& prongsCollection,
-                                              const edm4hep::ReconstructedParticleCollection& v0Collection);
+  pandora::StatusCode CreateTrackAssociations(const std::vector<const edm4hep::VertexCollection*>& kinkCollection,
+                                              const std::vector<const edm4hep::VertexCollection*>& prongsCollection,
+                                              const std::vector<const edm4hep::VertexCollection*>& v0Collection);
 
   /**
    *  @brief  Create tracks, insert user code here. Implement accordin to detector model
    *
    *  @param  pLCEvent the lcio event
    */
-  virtual pandora::StatusCode CreateTracks(const edm4hep::TrackCollection& trackCollection) = 0;
+  virtual pandora::StatusCode CreateTracks(const std::vector<edm4hep::Track>& tracks) = 0;
 
   /**
    *  @brief  Get the track vector
@@ -226,21 +224,21 @@ protected:
    *
    *  @param  kinkCollection: reconstructed particle collection containing information about kinked tracks
    */
-  pandora::StatusCode ExtractKinks(const edm4hep::ReconstructedParticleCollection& kinkCollection);
+  pandora::StatusCode ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& kinkCollections);
 
   /**
    *  @brief  Extract prong and split information from specified collections
    *
    *  @param  prongsCollection the collection of reconstructed particles
    */
-  pandora::StatusCode ExtractProngsAndSplits(const edm4hep::ReconstructedParticleCollection& prongsCollection);
+  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections);
 
   /**
    *  @brief  Extract v0 information from specified collections
    *
    *  @param  v0Collection the collection of V0 reconstructed particles
    */
-  pandora::StatusCode ExtractV0s(const edm4hep::ReconstructedParticleCollection& v0Collection);
+  pandora::StatusCode ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& v0Collections);
 
   /**
    *  @brief  Whether the track conflicts with previously provided relationship information

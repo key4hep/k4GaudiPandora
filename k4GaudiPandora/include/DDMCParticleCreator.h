@@ -92,7 +92,7 @@ public:
    *
    *  @param  collectionMaps The collection map containing input data
    */
-  pandora::StatusCode CreateMCParticles(MCPCollectionVector const& mcParticleCollections) const;
+  pandora::StatusCode CreateMCParticles(const std::vector<edm4hep::MCParticle>& mcParticleCollections) const;
 
   /**
    *  @brief  Create Track to MCParticle relationships

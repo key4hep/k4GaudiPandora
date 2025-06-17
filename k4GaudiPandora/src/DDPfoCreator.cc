@@ -17,14 +17,6 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/src/DDPfoCreator.cc
- *
- *  @brief  Implementation of the pfo creator class.
- *
- *  $Log: $
- */
-
 #include "DDPfoCreator.h"
 
 #include "CalorimeterHitType.h"
@@ -70,7 +62,7 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
     edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
     edm4hep::VertexCollection&                pStartVertexCollection) {
   const pandora::PfoList* pPandoraPfoList = NULL;
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList))
 
   pandora::StringVector subDetectorNames;
   this->InitialiseSubDetectorNames(subDetectorNames);
@@ -134,8 +126,7 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
 
     auto startVertex = pStartVertexCollection->create();
     startVertex.setAlgorithmType(0);
-    const float ref_value[3] = {referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()};
-    startVertex.setPosition(edm4hep::Vector3f(ref_value));
+    startVertex.setPosition({referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()});
     startVertex.addToParticles(reconstructedParticle);
   }
 
@@ -173,7 +164,12 @@ void DDPfoCreator::SetClusterSubDetectorEnergies(const pandora::StringVector& su
     hitY.push_back(pCalorimeterHit.getPosition()[1]);
     hitZ.push_back(pCalorimeterHit.getPosition()[2]);
 
-    std::vector<float> subDetectorEnergies(subDetectorNames.size(), 0.0);
+    std::vector<float> subDetectorEnergies;
+    subDetectorEnergies.reserve(std::max(subDetectorNames.size(), cluster.getSubdetectorEnergies().size()));
+    for (const auto energy : cluster.getSubdetectorEnergies()) {
+      subDetectorEnergies.push_back(energy);
+    }
+    subDetectorEnergies.resize(subDetectorNames.size());
 
     switch (CHT(pCalorimeterHit.getType()).caloID()) {
       case CHT::ecal:
@@ -241,8 +237,9 @@ void DDPfoCreator::SetClusterPositionAndError(const unsigned int nHitsInCluster,
     cluster.setPhi(std::atan2(clusterShape.getEigenVecInertia()[1], clusterShape.getEigenVecInertia()[0]));
     cluster.setITheta(std::acos(clusterShape.getEigenVecInertia()[2]));
     cluster.setPosition(clusterShape.getCentreOfGravity());
-    cluster.setPositionError(std::array<float, 6>{clusterShape.getCenterOfGravityErrors()});
-    cluster.setDirectionError(clusterShape.getEigenVecInertiaErrors());
+    // TODO: Enable these that are not originally in DDMarlinPandora
+    // cluster.setPositionError(std::array<float, 6>{clusterShape.getCenterOfGravityErrors()});
+    // cluster.setDirectionError(clusterShape.getEigenVecInertiaErrors());
     clusterPositionVec.SetValues(clusterShape.getCentreOfGravity()[0], clusterShape.getCentreOfGravity()[1],
                                  clusterShape.getCentreOfGravity()[2]);
   } catch (...) {
