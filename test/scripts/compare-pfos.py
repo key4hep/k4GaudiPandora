@@ -133,15 +133,13 @@ for i, frame_gaudi in enumerate(events_gaudi):
         ), f"Number of clusters differ: {len(clusters_gaudi)} vs {len(clusters_marlin)}"
         for j, (hit_gaudi, hit_marlin) in enumerate(zip(clusters_gaudi, clusters_marlin)):
             print(f"Checking cluster {j}")
-            print(f"Gaudi ITheta: {hit_gaudi.getITheta()}")
-            print(f"Marlin ITheta: {hit_marlin.getITheta()}")
             for attr in [
                 "Type",
                 "Energy",
                 "EnergyError",
                 "Position",
                 "PositionError",
-                # "ITheta",
+                "ITheta",
                 "Phi",
                 "DirectionError",
             ]:
