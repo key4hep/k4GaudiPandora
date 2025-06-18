@@ -128,6 +128,8 @@ pandora::StatusCode DDPfoCreator::CreateParticleFlowObjects(
     startVertex.setAlgorithmType(0);
     startVertex.setPosition({referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()});
     startVertex.addToParticles(reconstructedParticle);
+
+    reconstructedParticle.setDecayVertex(startVertex);
   }
 
   return pandora::STATUS_CODE_SUCCESS;
