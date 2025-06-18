@@ -165,7 +165,6 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 ), f"{relation} differ for cluster {j}: {getattr(hit_gaudi, f'get{relation}')()} vs {getattr(hit_marlin, f'get{relation}')()}"
 
 
-
     for collection_marlin, collection_gaudi in zip(args.marlin_recoparticle_collections, args.gaudi_recoparticle_collections):
         print(f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)')
         recos_gaudi = frame_gaudi.get(collection_gaudi)
@@ -179,21 +178,23 @@ for i, frame_gaudi in enumerate(events_gaudi):
             for attr in [
                 "PDG",
                 "Energy",
+                "Momentum",
+                "ReferencePoint",
                 "Charge",
                 "Mass",
                 "GoodnessOfPID",
+                "CovMatrix",
             ]:
                 assert (
                     getattr(reco_gaudi, f"get{attr}")() == getattr(reco_marlin, f"get{attr}")()
                 ), f"{attr} differ for reco {j}: {getattr(reco_gaudi, f'get{attr}')()} vs {getattr(reco_marlin, f'get{attr}')()}"
 
-            for vmember in [
-                "Momentum",
-                "ReferencePoint",
+            for relation in [
+                "DecayVertex",
             ]:
                 assert (
-                    list(getattr(reco_gaudi, f"get{vmember}")()) == list(getattr(reco_marlin, f"get{vmember}")())
-                ), f"{vmember} differ for reco {j}: {getattr(reco_gaudi, f'get{vmember}')()} vs {getattr(reco_marlin, f'get{vmember}')()}"
+                    getattr(reco_gaudi, f"get{relation}")().id().index == getattr(reco_marlin, f"get{relation}")().id().index
+                ), f"{relation} differ for cluster {j}: {getattr(reco_gaudi, f'get{relation}')()} vs {getattr(reco_marlin, f'get{relation}')()}"
 
             for relation in [
                 "Clusters",
