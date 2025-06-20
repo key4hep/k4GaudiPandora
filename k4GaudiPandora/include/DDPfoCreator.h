@@ -63,10 +63,11 @@ public:
      */
   DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora);
 
-  /**
-     *  @brief  Destructor
-     */
-  ~DDPfoCreator();
+  DDPfoCreator(const DDPfoCreator&) = delete;
+  DDPfoCreator& operator=(const DDPfoCreator&) = delete;
+  DDPfoCreator(DDPfoCreator&&) = default;
+  DDPfoCreator& operator=(DDPfoCreator&&) = default;
+  ~DDPfoCreator() = default;
 
   /**
      *  @brief  Create particle flow objects
@@ -101,7 +102,7 @@ private:
      *  @param  hitY the vector to receive the y position of hits
      *  @param  hitZ the vector to receive the z position of hits
      */
-  void SetClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames, edm4hep::MutableCluster& cluster,
+  void setClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames, edm4hep::MutableCluster& cluster,
                                      const pandora::CaloHitList& pandoraCaloHitList, pandora::FloatVector& hitE,
                                      pandora::FloatVector& hitX, pandora::FloatVector& hitY,
                                      pandora::FloatVector& hitZ) const;
@@ -114,7 +115,7 @@ private:
      *  @param  cluster the address of the lcio cluster to be set energies and erros
      *  @param  clusterCorrectEnergy a number to receive the cluster correct energy
      */
-  void SetClusterEnergyAndError(const pandora::ParticleFlowObject* const pPandoraPfo,
+  void setClusterEnergyAndError(const pandora::ParticleFlowObject* const pPandoraPfo,
                                 const pandora::Cluster* const pPandoraCluster, edm4hep::MutableCluster& cluster,
                                 float& clusterCorrectEnergy) const;
 
@@ -129,7 +130,7 @@ private:
      *  @param  pLcioCluster the lcio cluster to be set positions and errors
      *  @param  clusterPosition a CartesianVector to receive the cluster position
      */
-  void SetClusterPositionAndError(const unsigned int nHitsInCluster, pandora::FloatVector& hitE,
+  void setClusterPositionAndError(const std::size_t nHitsInCluster, pandora::FloatVector& hitE,
                                   pandora::FloatVector& hitX, pandora::FloatVector& hitY, pandora::FloatVector& hitZ,
                                   edm4hep::MutableCluster& cluster, pandora::CartesianVector& clusterPositionVec) const;
 
@@ -139,17 +140,8 @@ private:
      *  @param  pPandoraPfo the address of the pandora pfo
      *  @param  referencePoint a CartesianVector to receive the reference point
      */
-  pandora::StatusCode CalculateTrackBasedReferencePoint(const pandora::ParticleFlowObject* const pPandoraPfo,
+  pandora::StatusCode calculateTrackBasedReferencePoint(const pandora::ParticleFlowObject* const pPandoraPfo,
                                                         pandora::CartesianVector&                referencePoint) const;
-
-  /**
-     *  @brief  Set reference point of the reconstructed particle
-     *
-     *  @param  referencePoint a CartesianVector of the reference point
-     *  @param  pReconstructedParticle the address of the reconstructed particle to be reference point
-     */
-  void SetRecoParticleReferencePoint(const pandora::CartesianVector&        referencePoint,
-                                     edm4hep::MutableReconstructedParticle& pReconstructedParticle) const;
 
   /**
      *  @brief  Add tracks to reconstructed particle
@@ -177,7 +169,7 @@ private:
      *
      *  @return boolean
      */
-  bool IsValidParentTrack(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
+  bool isValidParentTrack(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
 
   /**
      *  @brief  Whether sibling tracks are associated with the same pfo
@@ -187,7 +179,7 @@ private:
      *
      *  @return boolean
      */
-  bool HasValidSiblingTrack(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
+  bool hasValidSiblingTrack(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
 
   /**
      *  @brief  Whether the track is the closest (of those associated with the same pfo) to the interaction point
@@ -197,7 +189,7 @@ private:
      *
      *  @return boolean
      */
-  bool IsClosestTrackToIP(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
+  bool isClosestTrackToIP(const pandora::Track* const pPandoraTrack, const pandora::TrackList& allTrackList) const;
 
   /**
      *  @brief  Whether at least one track sibling track is associated to the reconstructed particle
