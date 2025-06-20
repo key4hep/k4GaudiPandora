@@ -59,9 +59,9 @@ public:
      *  @brief  Constructor
      *
      *  @param  settings the creator settings
-     *  @param  pPandora address of the relevant pandora instance
+     *  @param  pandora reference to the relevant pandora instance
      */
-  DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDPfoCreator(const Settings& settings, pandora::Pandora& pandora);
 
   DDPfoCreator(const DDPfoCreator&) = delete;
   DDPfoCreator& operator=(const DDPfoCreator&) = delete;
@@ -203,7 +203,7 @@ private:
                                  const pandora::TrackList&   allTrackList) const;
 
   const Settings          m_settings;  ///< The pfo creator settings
-  const pandora::Pandora& m_pandora;   ///< Reference to the pandora object from which to extract the pfos
+  pandora::Pandora&       m_pandora;   ///< Reference to the pandora object from which to extract the pfos
 };
 
 #endif  // #ifndef DDPFO_CREATOR_H
