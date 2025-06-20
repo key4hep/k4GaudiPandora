@@ -52,7 +52,7 @@ DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora)
 pandora::StatusCode
 DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterCollection,
                                         edm4hep::ReconstructedParticleCollection& pReconstructedParticleCollection,
-                                        edm4hep::VertexCollection& pStartVertexCollection) {
+                                        edm4hep::VertexCollection& pStartVertexCollection) const {
   const pandora::PfoList* pPandoraPfoList = NULL;
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::GetCurrentPfoList(m_pandora, pPandoraPfoList))
 

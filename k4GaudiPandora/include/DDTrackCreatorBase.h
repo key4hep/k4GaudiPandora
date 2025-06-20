@@ -129,10 +129,10 @@ public:
    *  @brief  Constructor
    *
    *  @param  settings the creator settings
-   *  @param  pPandora address of the relevant pandora instance
+   *  @param  pandora reference to the relevant pandora instance
    *  @param  pAlgorithm address of the parent gaudi algorithm
    */
-  DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora,
+  DDTrackCreatorBase(const Settings& settings, pandora::Pandora& pandora,
                      const Gaudi::Algorithm* pAlgorithm);
 
   /**
@@ -174,7 +174,7 @@ public:
 
 protected:
   const Settings m_settings;           ///< The track creator settings
-  const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create tracks and track relationships
+  pandora::Pandora& m_pandora;         ///< Reference to the pandora object to create tracks and track relationships
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the parent algorithm
 
   // FIXME: should probably pass these around so we do not have a state of these collections
