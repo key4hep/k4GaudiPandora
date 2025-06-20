@@ -146,17 +146,17 @@ private:
    *  @brief  Register user algorithm factories, energy correction functions and particle id functions,
    *          insert user code here
    */
-  pandora::StatusCode RegisterUserComponents() const;
+  pandora::StatusCode registerUserComponents() const;
 
   /**
    *  @brief  Copy some steering parameters between settings objects
    */
-  void FinaliseSteeringParameters();
+  void finaliseSteeringParameters();
 
   /**
    *  @brief  Reset the pandora pfa new processor
    */
-  void Reset() const;
+  void reset() const;
 
   pandora::Pandora m_pPandora;                                 ///< Pandora instance
   std::unique_ptr<DDCaloHitCreator> m_caloHitCreator;          ///< The calo hit creator
