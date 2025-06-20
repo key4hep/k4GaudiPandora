@@ -36,9 +36,9 @@
 
 #include <cmath>
 #include <limits>
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 // forward declaration
 std::vector<double> getTrackingRegionExtent();
@@ -68,11 +68,12 @@ DDTrackCreatorBase::~DDTrackCreatorBase() {}
 pandora::StatusCode
 DDTrackCreatorBase::CreateTrackAssociations(const std::vector<const edm4hep::VertexCollection*>& kinkCollection,
                                             const std::vector<const edm4hep::VertexCollection*>& prongsCollection,
+                                            const std::vector<const edm4hep::VertexCollection*>& splitCollection,
                                             const std::vector<const edm4hep::VertexCollection*>& v0Collection) {
   // FIXME: this should be optional for all collections
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractKinks(kinkCollection))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractProngsAndSplits(prongsCollection))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->ExtractV0s(v0Collection))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ExtractKinks(kinkCollection))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ExtractProngsAndSplits(prongsCollection, splitCollection))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, ExtractV0s(v0Collection))
 
   return pandora::STATUS_CODE_SUCCESS;
 }
@@ -158,8 +159,11 @@ DDTrackCreatorBase::ExtractKinks(const std::vector<const edm4hep::VertexCollecti
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode
-DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections) {
-  for (const auto& prongCollection : prongsCollections) {
+DDTrackCreatorBase::ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections,
+                                           const std::vector<const edm4hep::VertexCollection*>& splitCollections) {
+  std::vector<const edm4hep::VertexCollection*> allCollections = prongsCollections;
+  allCollections.insert(allCollections.end(), splitCollections.begin(), splitCollections.end());
+  for (const auto& prongCollection : allCollections) {
     for (const auto& vertex : *prongCollection) {
       auto pReconstructedParticles = vertex.getParticles();
       for (const auto& pReconstructedParticle : pReconstructedParticles) {
