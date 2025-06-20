@@ -83,22 +83,22 @@ DDCaloHitCreator::~DDCaloHitCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode
-DDCaloHitCreator::CreateCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
+DDCaloHitCreator::createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
                                  const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateECalCaloHits(eCaloHitsMap))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateHCalCaloHits(hCalCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateMuonCaloHits(muonCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateLCalCaloHits(lCalCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateLHCalCaloHits(lhCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createECalCaloHits(eCaloHitsMap))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createHCalCaloHits(hCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createMuonCaloHits(muonCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createLCalCaloHits(lCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createLHCalCaloHits(lhCalCaloHits))
 
   return pandora::STATUS_CODE_SUCCESS;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
  
-pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(
+pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
     const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const {
 
   std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
@@ -162,15 +162,15 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(
         caloHitParameters.m_isDigital = false;
         caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
         caloHitParameters.m_isInOuterSamplingLayer = false;
-        this->GetCommonCaloHitProperties(hit, caloHitParameters);
+        this->getCommonCaloHitProperties(hit, caloHitParameters);
 
         if ((!m_settings.m_useSystemId && std::fabs(hit.getPosition()[2]) < m_settings.m_eCalBarrelOuterZ) ||
             (m_settings.m_useSystemId && bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_ecalBarrelSystemId)) {
-          this->GetBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_eCalBarrelInnerSymmetry, caloHitParameters,
+          this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_eCalBarrelInnerSymmetry, caloHitParameters,
                                            m_settings.m_eCalBarrelNormalVector, absorberCorrection);
           caloHitParameters.m_hadronicEnergy = eCalToHadGeVBarrel * hit.getEnergy();
         } else {
-          this->GetEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+          this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
           caloHitParameters.m_hadronicEnergy = eCalToHadGeVEndCap * hit.getEnergy();
         }
 
@@ -201,7 +201,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
+pandora::StatusCode DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
 
   if (hCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -230,16 +230,16 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4h
       caloHitParameters.m_hitType = pandora::HCAL;
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
-      caloHitParameters.m_isInOuterSamplingLayer = (this->GetNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
-      this->GetCommonCaloHitProperties(hit, caloHitParameters);
+      caloHitParameters.m_isInOuterSamplingLayer = (this->getNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
+      this->getCommonCaloHitProperties(hit, caloHitParameters);
 
       float absorberCorrection = 1.0;
 
       if (std::fabs(hit.getPosition()[2]) < m_settings.m_hCalBarrelOuterZ) {
-        this->GetBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_hCalBarrelInnerSymmetry, caloHitParameters,
+        this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_hCalBarrelInnerSymmetry, caloHitParameters,
                                          m_settings.m_hCalBarrelNormalVector, absorberCorrection);
       } else {
-        this->GetEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+        this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
       }
 
       caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_hCalToMip * absorberCorrection;
@@ -264,7 +264,7 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4h
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
+pandora::StatusCode DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
 
   if (muonCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -293,7 +293,7 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4h
       caloHitParameters.m_hitType = pandora::MUON;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
       caloHitParameters.m_isInOuterSamplingLayer = true;
-      this->GetCommonCaloHitProperties(hit, caloHitParameters);
+      this->getCommonCaloHitProperties(hit, caloHitParameters);
 
       const float radius =
           std::sqrt(hit.getPosition()[0] * hit.getPosition()[0] + hit.getPosition()[1] * hit.getPosition()[1]);
@@ -306,10 +306,10 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4h
       if (isInBarrelRegion && isWithinCoil) {
         std::cout << "BIG WARNING: CANNOT HANDLE PLUG HITS (no plug in CLIC model), DO NOTHING!" << std::endl;
       } else if (isInBarrelRegion) {
-        this->GetBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_muonBarrelInnerSymmetry, caloHitParameters,
+        this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_muonBarrelInnerSymmetry, caloHitParameters,
                                          m_settings.m_muonBarrelNormalVector, absorberCorrection);
       } else {
-        this->GetEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+        this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
       }
 
       if (m_settings.m_muonDigitalHits > 0) {
@@ -340,7 +340,7 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4h
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode
-DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& inputLCalCaloHits) const {
+DDCaloHitCreator::createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& inputLCalCaloHits) const {
 
   if (inputLCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -366,10 +366,10 @@ DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
       caloHitParameters.m_isInOuterSamplingLayer = false;
-      this->GetCommonCaloHitProperties(hit, caloHitParameters);
+      this->getCommonCaloHitProperties(hit, caloHitParameters);
 
       float absorberCorrection = 1.0;
-      this->GetEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+      this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
 
       caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_eCalToMip * absorberCorrection;
 
@@ -392,7 +392,7 @@ DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const {
+pandora::StatusCode DDCaloHitCreator::createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const {
 
   if (LHCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -417,11 +417,11 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<edm4
       caloHitParameters.m_hitType = pandora::HCAL;
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
-      caloHitParameters.m_isInOuterSamplingLayer = (this->GetNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
-      this->GetCommonCaloHitProperties(hit, caloHitParameters);
+      caloHitParameters.m_isInOuterSamplingLayer = (this->getNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
+      this->getCommonCaloHitProperties(hit, caloHitParameters);
 
       float absorberCorrection = 1.0;
-      this->GetEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+      this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
 
       caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_hCalToMip * absorberCorrection;
 
@@ -445,7 +445,7 @@ pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<edm4
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDCaloHitCreator::GetCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+void DDCaloHitCreator::getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                                   PandoraApi::CaloHit::Parameters& caloHitParameters) const {
   const auto position = hit.getPosition();
   const pandora::CartesianVector positionVector(position.x, position.y, position.z);
@@ -460,7 +460,7 @@ void DDCaloHitCreator::GetCommonCaloHitProperties(const edm4hep::CalorimeterHit&
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDCaloHitCreator::GetEndCapCaloHitProperties(
+void DDCaloHitCreator::getEndCapCaloHitProperties(
     const edm4hep::CalorimeterHit& hit, const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
     PandoraApi::CaloHit::Parameters& caloHitParameters, float& absorberCorrection) const {
   caloHitParameters.m_hitRegion = pandora::ENDCAP;
@@ -528,7 +528,7 @@ void DDCaloHitCreator::GetEndCapCaloHitProperties(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDCaloHitCreator::GetBarrelCaloHitProperties(
+void DDCaloHitCreator::getBarrelCaloHitProperties(
     const edm4hep::CalorimeterHit& hit, const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
     unsigned int barrelSymmetryOrder, PandoraApi::CaloHit::Parameters& caloHitParameters,
     const std::vector<float>& normalVector, float& absorberCorrection) const {
@@ -613,12 +613,12 @@ void DDCaloHitCreator::GetBarrelCaloHitProperties(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-int DDCaloHitCreator::GetNLayersFromEdge(const edm4hep::CalorimeterHit& hit) const {
+int DDCaloHitCreator::getNLayersFromEdge(const edm4hep::CalorimeterHit& hit) const {
   // Calo hit coordinate calculations
   const float barrelMaximumRadius =
-      this->GetMaximumRadius(hit, m_settings.m_hCalBarrelOuterSymmetry, m_settings.m_hCalBarrelOuterPhi0);
+      this->getMaximumRadius(hit, m_settings.m_hCalBarrelOuterSymmetry, m_settings.m_hCalBarrelOuterPhi0);
   const float endCapMaximumRadius =
-      this->GetMaximumRadius(hit, m_settings.m_hCalEndCapInnerSymmetryOrder, m_settings.m_hCalEndCapInnerPhiCoordinate);
+      this->getMaximumRadius(hit, m_settings.m_hCalEndCapInnerSymmetryOrder, m_settings.m_hCalEndCapInnerPhiCoordinate);
   const float caloHitAbsZ = std::fabs(hit.getPosition()[2]);
 
   // Distance from radial outer
@@ -649,7 +649,7 @@ int DDCaloHitCreator::GetNLayersFromEdge(const edm4hep::CalorimeterHit& hit) con
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-float DDCaloHitCreator::GetMaximumRadius(const edm4hep::CalorimeterHit& pCaloHit, const unsigned int symmetryOrder,
+float DDCaloHitCreator::getMaximumRadius(const edm4hep::CalorimeterHit& pCaloHit, const unsigned int symmetryOrder,
                                          const float phi0) const {
   const auto& pCaloHitPosition(pCaloHit.getPosition());
 

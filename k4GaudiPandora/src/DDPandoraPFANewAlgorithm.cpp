@@ -117,7 +117,7 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     return StatusCode::FAILURE;
   }
 
-  FinaliseSteeringParameters();
+  finaliseSteeringParameters();
 
   m_geometryCreator = std::make_unique<DDGeometryCreator>(m_geometryCreatorSettings, m_pPandora);
   m_caloHitCreator = std::make_unique<DDCaloHitCreator>(m_caloHitCreatorSettings, m_pPandora);
@@ -133,7 +133,7 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   m_pDDMCParticleCreator = std::make_unique<DDMCParticleCreator>(m_mcParticleCreatorSettings, m_pPandora);
   m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora);
 
-  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, RegisterUserComponents())
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, registerUserComponents())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                           PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
@@ -220,7 +220,7 @@ DDPandoraPFANewAlgorithm::operator()(
     }
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_caloHitCreator->CreateCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
+                            m_caloHitCreator->createCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
                                                              mCalHitCollectionsVector, lCalHitCollectionsVector,
                                                              lhCalHitCollectionsVector))
 
@@ -262,7 +262,7 @@ const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
   return &m_pPandora;
 }
 
-pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
+pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(m_pPandora))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(m_pPandora))
 
@@ -299,7 +299,7 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
   return pandora::STATUS_CODE_SUCCESS;
 }
 
-void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
+void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the
   // processor, when the steering file is parsed e.g. the call to GEAR to get the inner bfield
 
@@ -456,7 +456,7 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDPandoraPFANewAlgorithm::Reset() const {
+void DDPandoraPFANewAlgorithm::reset() const {
   if (m_caloHitCreator)
     m_caloHitCreator->Reset();
   if (m_pTrackCreator)
