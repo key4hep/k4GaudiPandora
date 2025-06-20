@@ -43,8 +43,8 @@
 // forward declarations. See in DDPandoraPFANewProcessor.cc
 double getFieldFromCompact();
 
-DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pandora(*pPandora), m_bField(getFieldFromCompact()) {}
+DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora)
+    : m_settings(settings), m_pandora(pandora), m_bField(getFieldFromCompact()) {}
 
 DDMCParticleCreator::~DDMCParticleCreator() {}
 

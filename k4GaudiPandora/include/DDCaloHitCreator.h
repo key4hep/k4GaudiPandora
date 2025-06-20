@@ -131,19 +131,19 @@ public:
    *  @brief  Constructor
    *
    *  @param  settings the creator settings
-   *  @param  pPandora address of the relevant pandora instance
+   *  @param  pandora reference to the relevant pandora instance
    */
-  DDCaloHitCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora);
   /**
    *  @brief  Destructor
    */
   virtual ~DDCaloHitCreator();
 
-  pandora::StatusCode CreateECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits);
-  pandora::StatusCode CreateHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits);
-  pandora::StatusCode CreateMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits);
-  pandora::StatusCode CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits);
-  pandora::StatusCode CreateLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits);
+  pandora::StatusCode CreateECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const;
+  pandora::StatusCode CreateHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const;
+  pandora::StatusCode CreateMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const;
+  pandora::StatusCode CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits) const;
+  pandora::StatusCode CreateLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const;
 
   /**
    *  @brief  Create calo hits
@@ -155,7 +155,7 @@ public:
                                  const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits);
+                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
 
   /**
    *  @brief  Get the calorimeter hit vector
@@ -229,7 +229,7 @@ protected:
 
   const Settings m_settings; ///< The calo hit creator settings
 
-  const pandora::Pandora& m_pandora; ///< Reference to the pandora object to create calo hits
+  pandora::Pandora& m_pandora; ///< Reference to the pandora object to create calo hits
 
   float m_hCalBarrelLayerThickness; ///< HCal barrel layer thickness
   float m_hCalEndCapLayerThickness; ///< HCal endcap layer thickness

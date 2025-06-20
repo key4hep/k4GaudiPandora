@@ -37,6 +37,11 @@
 
 #include <LCPlugins/LCSoftwareCompensation.h>
 
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
+
 namespace pandora {
 class Pandora;
 }
@@ -153,13 +158,13 @@ private:
    */
   void Reset() const;
 
-  pandora::Pandora m_pPandora{};                        ///< Pandora instance
-  DDCaloHitCreator* m_pCaloHitCreator = NULL;         ///< The calo hit creator
-  DDGeometryCreator* m_pGeometryCreator = NULL;       ///< The geometry creator
-  DDTrackCreatorBase* m_pTrackCreator = NULL;         ///< The track creator
-  DDMCParticleCreator* m_pDDMCParticleCreator = NULL; ///< The mc particle creator
-  DDPfoCreator* m_pDDPfoCreator = NULL;               ///< The pfo creator
-  SmartIF<IGeoSvc> m_geoSvc;                          ///< The GeoSvc
+  pandora::Pandora m_pPandora;                                 ///< Pandora instance
+  std::unique_ptr<DDCaloHitCreator> m_caloHitCreator;          ///< The calo hit creator
+  std::unique_ptr<DDGeometryCreator> m_geometryCreator;        ///< The geometry creator
+  std::unique_ptr<DDTrackCreatorBase> m_pTrackCreator;         ///< The track creator
+  std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
+  std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
+  SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings

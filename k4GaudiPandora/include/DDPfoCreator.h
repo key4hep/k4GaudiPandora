@@ -76,7 +76,7 @@ public:
   pandora::StatusCode CreateParticleFlowObjects(
       edm4hep::ClusterCollection&               _pClusterCollection,
       edm4hep::ReconstructedParticleCollection& _pReconstructedParticleCollection,
-      edm4hep::VertexCollection&                _pStartVertexCollection);
+      edm4hep::VertexCollection&                _pStartVertexCollection) const;
 
 private:
   /**

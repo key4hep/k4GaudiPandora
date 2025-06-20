@@ -107,7 +107,8 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvc
                        },
                        {KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
                         KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}),
-                        KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"})}) {}
+                        KeyValues("StartVertexCollectionName", {"PandoraPFANewStartVertices"})}),
+      m_pPandora() {}
 
 StatusCode DDPandoraPFANewAlgorithm::initialize() {
   m_geoSvc = serviceLocator()->service("GeoSvc"); // important to initialize m_geoSvc
@@ -116,38 +117,26 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     return StatusCode::FAILURE;
   }
 
-  try {
-    FinaliseSteeringParameters();
+  FinaliseSteeringParameters();
 
-    m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora);
-    m_pCaloHitCreator = new DDCaloHitCreator(m_caloHitCreatorSettings, &m_pPandora);
+  m_geometryCreator = std::make_unique<DDGeometryCreator>(m_geometryCreatorSettings, m_pPandora);
+  m_caloHitCreator = std::make_unique<DDCaloHitCreator>(m_caloHitCreatorSettings, m_pPandora);
 
-    /// TODO: IMPLEMENT ILD
-    if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-      m_pTrackCreator = new DDTrackCreatorCLIC(this, m_trackCreatorSettings, &m_pPandora);
-    // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
-    // m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, &m_pPandora);
-    else
-      error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
+  /// TODO: IMPLEMENT ILD
+  if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
+    m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(this, m_trackCreatorSettings, m_pPandora);
+  // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
+  // m_pTrackCreator = std::make_unique<DDTrackCreatorILD>(m_trackCreatorSettings, m_pPandora);
+  else
+    error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
-    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, &m_pPandora);
-    m_pDDPfoCreator = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
+  m_pDDMCParticleCreator = std::make_unique<DDMCParticleCreator>(m_mcParticleCreatorSettings, m_pPandora);
+  m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora);
 
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents())
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry())
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
-
-  } catch (pandora::StatusCodeException& statusCodeException) {
-    error() << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
-    throw statusCodeException;
-  } catch (std::exception& exception) {
-    error() << "Failed to initialize marlin pandora: std exception " << exception.what() << endmsg;
-    throw exception;
-  } catch (...) {
-    error() << "Failed to initialize marlin pandora: unrecognized exception" << endmsg;
-    throw;
-  }
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, RegisterUserComponents())
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                          PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
 
   return StatusCode::SUCCESS;
 }
@@ -176,8 +165,9 @@ DDPandoraPFANewAlgorithm::operator()(
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             m_pDDMCParticleCreator->CreateMCParticles(mcParticlesVector))
 
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, splitCollections, v0Collections))
+    PANDORA_THROW_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, splitCollections, v0Collections))
 
     std::vector<edm4hep::Track> tracksVector;
     for (const auto& trackCollection : trackCollections) {
@@ -195,7 +185,7 @@ DDPandoraPFANewAlgorithm::operator()(
       const auto& eCalCollection = eCalCollections[i];
       eCalHitCollectionsMap[eCalHitCollectionsNames[i]].reserve(eCalCollection->size());
       eCalHitCollectionsMap[eCalHitCollectionsNames[i]].insert(eCalHitCollectionsMap[eCalHitCollectionsNames[i]].end(),
-                                                  eCalCollection->begin(), eCalCollection->end());
+                                                               eCalCollection->begin(), eCalCollection->end());
     }
     std::vector<edm4hep::CalorimeterHit> hCalHitCollectionsVector;
     std::vector<edm4hep::CalorimeterHit> mCalHitCollectionsVector;
@@ -230,9 +220,9 @@ DDPandoraPFANewAlgorithm::operator()(
     }
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_pCaloHitCreator->CreateCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
-                                                              mCalHitCollectionsVector, lCalHitCollectionsVector,
-                                                              lhCalHitCollectionsVector))
+                            m_caloHitCreator->CreateCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
+                                                             mCalHitCollectionsVector, lCalHitCollectionsVector,
+                                                             lhCalHitCollectionsVector))
 
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
     //                         m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(
@@ -246,10 +236,10 @@ DDPandoraPFANewAlgorithm::operator()(
     edm4hep::VertexCollection pStartVertexCollection;
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_pDDPfoCreator->CreateParticleFlowObjects(
+                            m_pfoCreator->CreateParticleFlowObjects(
                                 pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection))
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(m_pPandora))
-    // this->Reset();
+    // Reset();
 
     return std::make_tuple(std::move(pClusterCollection), std::move(pReconstructedParticleCollection),
                            std::move(pStartVertexCollection));
@@ -265,15 +255,7 @@ DDPandoraPFANewAlgorithm::operator()(
   }
 }
 
-StatusCode DDPandoraPFANewAlgorithm::finalize() {
-  delete m_pGeometryCreator;
-  delete m_pCaloHitCreator;
-  delete m_pTrackCreator;
-  delete m_pDDMCParticleCreator;
-  delete m_pDDPfoCreator;
-
-  return StatusCode::SUCCESS;
-}
+StatusCode DDPandoraPFANewAlgorithm::finalize() { return StatusCode::SUCCESS; }
 
 const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
   // Always valid, since m_pPandora is now a direct member
@@ -475,8 +457,10 @@ void DDPandoraPFANewAlgorithm::FinaliseSteeringParameters() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPandoraPFANewAlgorithm::Reset() const {
-  m_pCaloHitCreator->Reset();
-  m_pTrackCreator->Reset();
+  if (m_caloHitCreator)
+    m_caloHitCreator->Reset();
+  if (m_pTrackCreator)
+    m_pTrackCreator->Reset();
   /*
   PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(&m_pPandora);
 

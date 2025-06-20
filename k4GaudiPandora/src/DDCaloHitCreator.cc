@@ -47,8 +47,8 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 // double getCoilOuterR();
 
 /// FIXME: HANDLE PROBLEM WHEN EXTENSION IS MISSING
-DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pandora(*pPandora), m_hCalBarrelLayerThickness(0.f), m_hCalEndCapLayerThickness(0.f),
+DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora)
+    : m_settings(settings), m_pandora(pandora), m_hCalBarrelLayerThickness(0.f), m_hCalEndCapLayerThickness(0.f),
       m_calorimeterHitVector(0), m_volumeManager() {
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
@@ -87,7 +87,7 @@ DDCaloHitCreator::CreateCaloHits(const std::map<std::string, std::vector<edm4hep
                                  const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) {
+                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateECalCaloHits(eCaloHitsMap))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateHCalCaloHits(hCalCaloHits))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->CreateMuonCaloHits(muonCaloHits))
@@ -97,9 +97,9 @@ DDCaloHitCreator::CreateCaloHits(const std::map<std::string, std::vector<edm4hep
   return pandora::STATUS_CODE_SUCCESS;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
-
+ 
 pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(
-    const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) {
+    const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const {
 
   std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
@@ -201,7 +201,7 @@ pandora::StatusCode DDCaloHitCreator::CreateECalCaloHits(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) {
+pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
 
   if (hCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -264,7 +264,7 @@ pandora::StatusCode DDCaloHitCreator::CreateHCalCaloHits(const std::vector<edm4h
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) {
+pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
 
   if (muonCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -340,7 +340,7 @@ pandora::StatusCode DDCaloHitCreator::CreateMuonCaloHits(const std::vector<edm4h
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode
-DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& inputLCalCaloHits) {
+DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& inputLCalCaloHits) const {
 
   if (inputLCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -392,7 +392,7 @@ DDCaloHitCreator::CreateLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) {
+pandora::StatusCode DDCaloHitCreator::CreateLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const {
 
   if (LHCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
