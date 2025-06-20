@@ -119,25 +119,24 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   try {
     FinaliseSteeringParameters();
 
-    m_pPandora = new pandora::Pandora();
     m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora);
-    m_pCaloHitCreator = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora);
+    m_pCaloHitCreator = new DDCaloHitCreator(m_caloHitCreatorSettings, &m_pPandora);
 
     /// TODO: IMPLEMENT ILD
     if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-      m_pTrackCreator = new DDTrackCreatorCLIC(this, m_trackCreatorSettings, m_pPandora);
+      m_pTrackCreator = new DDTrackCreatorCLIC(this, m_trackCreatorSettings, &m_pPandora);
     // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
-    // m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, m_pPandora);
+    // m_pTrackCreator = new DDTrackCreatorILD(m_trackCreatorSettings, &m_pPandora);
     else
       error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
-    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora);
+    m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, &m_pPandora);
     m_pDDPfoCreator = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents())
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry())
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            PandoraApi::ReadSettings(*m_pPandora, m_settings.m_pandoraSettingsXmlFile))
+                            PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
 
   } catch (pandora::StatusCodeException& statusCodeException) {
     error() << "Failed to initialize marlin pandora: " << statusCodeException.ToString() << endmsg;
@@ -240,7 +239,7 @@ DDPandoraPFANewAlgorithm::operator()(
     //                             caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector(), eCalCollections,
     //                             hCalCollections, mCalCollections, lCalCollections, lhCalCollections))
 
-    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(*m_pPandora))
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(m_pPandora))
 
     edm4hep::ClusterCollection pClusterCollection;
     edm4hep::ReconstructedParticleCollection pReconstructedParticleCollection;
@@ -249,7 +248,7 @@ DDPandoraPFANewAlgorithm::operator()(
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             m_pDDPfoCreator->CreateParticleFlowObjects(
                                 pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection))
-    // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(*m_pPandora))
+    // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(m_pPandora))
     // this->Reset();
 
     return std::make_tuple(std::move(pClusterCollection), std::move(pReconstructedParticleCollection),
@@ -267,7 +266,6 @@ DDPandoraPFANewAlgorithm::operator()(
 }
 
 StatusCode DDPandoraPFANewAlgorithm::finalize() {
-  delete m_pPandora;
   delete m_pGeometryCreator;
   delete m_pCaloHitCreator;
   delete m_pTrackCreator;
@@ -278,31 +276,29 @@ StatusCode DDPandoraPFANewAlgorithm::finalize() {
 }
 
 const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
-  if (NULL == m_pPandora)
-    throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
-
-  return m_pPandora;
+  // Always valid, since m_pPandora is now a direct member
+  return &m_pPandora;
 }
 
 pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(*m_pPandora))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(*m_pPandora))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(m_pPandora))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(m_pPandora))
 
   if (m_settings.m_useDD4hepField) {
     dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
 
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             PandoraApi::SetBFieldPlugin(*m_pPandora, new DDBFieldPlugin(mainDetector)))
+                             PandoraApi::SetBFieldPlugin(m_pPandora, new DDBFieldPlugin(mainDetector)))
   } else {
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             LCContent::RegisterBFieldPlugin(*m_pPandora, m_settings.m_innerBField,
+                             LCContent::RegisterBFieldPlugin(m_pPandora, m_settings.m_innerBField,
                                                              m_settings.m_muonBarrelBField,
                                                              m_settings.m_muonEndCapBField))
   }
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                            LCContent::RegisterNonLinearityEnergyCorrection(
-                               *m_pPandora, "NonLinearity", pandora::HADRONIC, m_settings.m_inputEnergyCorrectionPoints,
+                               m_pPandora, "NonLinearity", pandora::HADRONIC, m_settings.m_inputEnergyCorrectionPoints,
                                m_settings.m_outputEnergyCorrectionPoints))
 
   lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
@@ -315,7 +311,7 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::RegisterUserComponents() const {
   softwareCompensationParameters.m_minCleanCorrectedHitEnergy = m_settings.m_minCleanCorrectedHitEnergy;
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                           LCContent::RegisterSoftwareCompensationEnergyCorrection(*m_pPandora, "SoftwareCompensation",
+                           LCContent::RegisterSoftwareCompensationEnergyCorrection(m_pPandora, "SoftwareCompensation",
                                                                                    softwareCompensationParameters))
 
   return pandora::STATUS_CODE_SUCCESS;
@@ -482,7 +478,7 @@ void DDPandoraPFANewAlgorithm::Reset() const {
   m_pCaloHitCreator->Reset();
   m_pTrackCreator->Reset();
   /*
-  PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(m_pPandora);
+  PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(&m_pPandora);
 
   if (m_pandoraToLCEventMap.end() == iter)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
