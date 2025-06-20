@@ -47,8 +47,8 @@
 std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Gaudi::Algorithm* thisAlg, const Settings& settings,
-                                       const pandora::Pandora* const pPandora)
-    : DDTrackCreatorBase(settings, pPandora, thisAlg), m_trackerInnerR(0.f), m_trackerOuterR(0.f), m_trackerZmax(0.f),
+                                       pandora::Pandora& pandora)
+    : DDTrackCreatorBase(settings, pandora, thisAlg), m_trackerInnerR(0.f), m_trackerOuterR(0.f), m_trackerZmax(0.f),
       m_cosTracker(0.f), m_endcapDiskInnerRadii(DoubleVector()), m_endcapDiskOuterRadii(DoubleVector()),
       m_endcapDiskZPositions(DoubleVector()), m_nEndcapDiskLayers(0), m_barrelTrackerLayers(0),
       m_tanLambdaEndcapDisk(0.f)

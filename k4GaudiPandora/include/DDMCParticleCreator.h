@@ -78,9 +78,9 @@ public:
    *  @brief  Constructor
    *
    *  @param  settings the creator settings
-   *  @param  pPandora address of the relevant pandora instance
+   *  @param  pandora reference to the relevant pandora instance
    */
-  DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora);
 
   /**
    *  @brief  Destructor
@@ -115,7 +115,7 @@ public:
 
 private:
   const Settings          m_settings;  ///< The mc particle creator settings
-  const pandora::Pandora& m_pandora;   ///< Reference to the pandora object to create the mc particles
+  pandora::Pandora&       m_pandora;   ///< Reference to the pandora object to create the mc particles
   const float             m_bField;    ///< The magnetic field strength
   //std::map<unsigned int, const edm4hep::MCParticle*>* m_id_pMC_map; ///< What is this map for? What does it map?
 };
