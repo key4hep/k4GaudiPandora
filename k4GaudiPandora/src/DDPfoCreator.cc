@@ -141,6 +141,14 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
                                                  const pandora::CaloHitList& pandoraCaloHitList,
                                                  pandora::FloatVector& hitE, pandora::FloatVector& hitX,
                                                  pandora::FloatVector& hitY, pandora::FloatVector& hitZ) const {
+  std::vector<float> subDetectorEnergies;
+  subDetectorEnergies.reserve(subDetectorNames.size());
+  for (size_t i = 0; i < subDetectorNames.size() && i < cluster.getSubdetectorEnergies().size(); ++i) {
+    subDetectorEnergies.push_back(cluster.getSubdetectorEnergies()[i]);
+  }
+  for (size_t i = cluster.getSubdetectorEnergies().size(); i < subDetectorNames.size(); ++i) {
+    subDetectorEnergies.push_back(0.f);
+  }
   for (const auto* pPandoraCaloHit : pandoraCaloHitList) {
     const auto& pCalorimeterHit = *static_cast<const edm4hep::CalorimeterHit*>(pPandoraCaloHit->GetParentAddress());
 
@@ -151,13 +159,6 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
     hitX.push_back(pCalorimeterHit.getPosition()[0]);
     hitY.push_back(pCalorimeterHit.getPosition()[1]);
     hitZ.push_back(pCalorimeterHit.getPosition()[2]);
-
-    std::vector<float> subDetectorEnergies;
-    subDetectorEnergies.reserve(std::max(subDetectorNames.size(), cluster.getSubdetectorEnergies().size()));
-    for (const auto energy : cluster.getSubdetectorEnergies()) {
-      subDetectorEnergies.push_back(energy);
-    }
-    subDetectorEnergies.resize(subDetectorNames.size());
 
     switch (CHT(pCalorimeterHit.getType()).caloID()) {
     case CHT::ecal:
@@ -184,9 +185,9 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
       //     << pCalorimeterHit.getType() << std::endl;
       break; // pass
     }
-    for (size_t i = 0; i < subDetectorEnergies.size(); ++i) {
-      cluster.addToSubdetectorEnergies(subDetectorEnergies[i]);
-    }
+  }
+  for (size_t i = 0; i < subDetectorEnergies.size(); ++i) {
+    cluster.addToSubdetectorEnergies(subDetectorEnergies[i]);
   }
 }
 
