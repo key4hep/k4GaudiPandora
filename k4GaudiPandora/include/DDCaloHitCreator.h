@@ -20,14 +20,19 @@
 #ifndef DDCALO_HIT_CREATOR_H
 #define DDCALO_HIT_CREATOR_H 1
 
-#include "Api/PandoraApi.h"
-#include "DD4hep/DetElement.h"
-#include "DD4hep/Detector.h"
-#include "DDRec/DetectorData.h"
-#include "edm4hep/CalorimeterHit.h"
-#include "edm4hep/CalorimeterHitCollection.h"
+#include <Api/PandoraApi.h>
+
+#include <DD4hep/DetElement.h>
+#include <DD4hep/Detector.h>
+#include <DDRec/DetectorData.h>
+
+#include <edm4hep/CalorimeterHit.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+
 #include <string>
 #include <vector>
+
+#include "GaudiKernel/Algorithm.h"
 
 typedef std::vector<edm4hep::CalorimeterHit> CalorimeterHitVector;
 typedef std::vector<const edm4hep::CalorimeterHitCollection*> HitCollectionVector;
@@ -122,10 +127,11 @@ public:
   /**
    *  @brief  Constructor
    *
+   *  @param  pAlgorithm pointer to the Gaudi algorithm instance
    *  @param  settings the creator settings
    *  @param  pandora reference to the relevant pandora instance
    */
-  DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora);
+  DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
   /**
    *  @brief  Destructor
    */
@@ -229,12 +235,10 @@ protected:
   CalorimeterHitVector m_calorimeterHitVector; ///< The calorimeter hit vector
 
   dd4hep::VolumeManager m_volumeManager; ///< DD4hep volume manager
+
+  const Gaudi::Algorithm& m_algorithm; ///< Pointer to the Gaudi algorithm for logging
 };
 
 inline const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-inline void DDCaloHitCreator::Reset() { m_calorimeterHitVector.clear(); }
 
 #endif // DDCALO_HIT_CREATOR_H
