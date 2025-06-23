@@ -48,8 +48,6 @@ public:
    */
   DDGeometryCreator(const Settings& settings, pandora::Pandora& pandora, Gaudi::Algorithm* algorithm);
 
-  ~DDGeometryCreator();
-
   pandora::StatusCode CreateGeometry() const;
 
 private:
