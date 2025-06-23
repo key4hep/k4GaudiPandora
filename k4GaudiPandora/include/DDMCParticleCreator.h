@@ -17,21 +17,10 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/include/DDMCParticleCreator.h
- *
- *  @brief  Header file for the mc particle creator class.
- *
- *  $Log: $
- */
+#ifndef K4GAUDIPANDORA_DDMCPARTICLECREATOR_H
+#define K4GAUDIPANDORA_DDMCPARTICLECREATOR_H
 
-/**
- *  @brief  DDMCParticleCreator class
- */
-#ifndef DDMCPARTICLECREATOR_H
-#define DDMCPARTICLECREATOR_H
-
-#include "DDCaloHitCreator.h"
+#include <Api/PandoraApi.h>
 
 #include <edm4hep/CaloHitMCParticleLinkCollection.h>
 #include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
@@ -39,39 +28,29 @@
 #include <edm4hep/MCParticleCollection.h>
 #include <edm4hep/TrackMCParticleLinkCollection.h>
 
-#include <Api/PandoraApi.h>
+#include "Gaudi/Algorithm.h"
 
-#include <map>
 #include <string>
 #include <vector>
 
-typedef std::vector<const edm4hep::MCParticleCollection*>            MCPCollectionVector;
-typedef std::vector<const edm4hep::TrackMCParticleLinkCollection*>   TrackMCLinkCollectionVector;
+typedef std::vector<const edm4hep::MCParticleCollection*> MCPCollectionVector;
+typedef std::vector<const edm4hep::TrackMCParticleLinkCollection*> TrackMCLinkCollectionVector;
 typedef std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*> CaloHitSimCaloHitLinkCollectionVector;
-typedef std::vector<edm4hep::Track>                                  TrackVector;
-typedef std::vector<edm4hep::CalorimeterHit>                         HitVector;
+typedef std::vector<edm4hep::Track> TrackVector;
+typedef std::vector<edm4hep::CalorimeterHit> HitVector;
 
-/**
- *  @brief  DDMCParticleCreator class
- */
 class DDMCParticleCreator {
 public:
   typedef std::vector<std::string> StringVector;
 
-  /**
-   *  @brief  Settings class
-   */
   class Settings {
   public:
-    /**
-     *  @brief  Default constructor
-     */
     Settings();
 
-    StringVector m_mcParticleCollections;       ///< The mc particle collections
-    StringVector m_caloHitRelationCollections;  ///< The SimCaloHit to CaloHit particle relations
-    StringVector m_trackRelationCollections;    ///< The Track to MCParticle relation collections
-    float        m_bField;                      ///< Magnetic field strength
+    StringVector m_mcParticleCollections;      ///< The mc particle collections
+    StringVector m_caloHitRelationCollections; ///< The SimCaloHit to CaloHit particle relations
+    StringVector m_trackRelationCollections;   ///< The Track to MCParticle relation collections
+    float m_bField;                            ///< Magnetic field strength
   };
 
   /**
@@ -79,19 +58,10 @@ public:
    *
    *  @param  settings the creator settings
    *  @param  pandora reference to the relevant pandora instance
+   *  @param  algorithm pointer to the Gaudi algorithm instance
    */
-  DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora);
+  DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
 
-  /**
-   *  @brief  Destructor
-   */
-  ~DDMCParticleCreator();
-
-  /**
-   *  @brief  Create MCParticles
-   *
-   *  @param  collectionMaps The collection map containing input data
-   */
   pandora::StatusCode CreateMCParticles(const std::vector<edm4hep::MCParticle>& mcParticleCollections) const;
 
   /**
@@ -100,9 +70,8 @@ public:
    *  @param  collectionMaps The collection map containing input data
    *  @param  trackVector Vector of reconstructed tracks
    */
-  pandora::StatusCode CreateTrackToMCParticleRelationships(const MCPCollectionVector&         mcParticleCollections,
-                                                           const TrackMCLinkCollectionVector& trackRelCollections,
-                                                           const TrackVector&                 trackVector) const;
+  pandora::StatusCode CreateTrackToMCParticleRelationships(const TrackMCLinkCollectionVector& trackRelCollections,
+                                                           const TrackVector& trackVector) const;
 
   /**
    *  @brief  Create CaloHit to MCParticle relationships
@@ -110,14 +79,15 @@ public:
    *  @param  collectionMaps The collection map containing input data
    *  @param  calorimeterHitVector Vector of calorimeter hits
    */
-  pandora::StatusCode CreateCaloHitToMCParticleRelationships(
-      const CaloHitSimCaloHitLinkCollectionVector& caloRelCollections, const HitVector& calorimeterHitVector) const;
+  pandora::StatusCode
+  CreateCaloHitToMCParticleRelationships(const CaloHitSimCaloHitLinkCollectionVector& caloRelCollections,
+                                         const HitVector& calorimeterHitVector) const;
 
 private:
-  const Settings          m_settings;  ///< The mc particle creator settings
-  pandora::Pandora&       m_pandora;   ///< Reference to the pandora object to create the mc particles
-  const float             m_bField;    ///< The magnetic field strength
-  //std::map<unsigned int, const edm4hep::MCParticle*>* m_id_pMC_map; ///< What is this map for? What does it map?
+  const Settings m_settings;           ///< The mc particle creator settings
+  pandora::Pandora& m_pandora;         ///< Reference to the pandora object to create the mc particles
+  const float m_bField;                ///< The magnetic field strength
+  const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for logging
 };
 
-#endif  // #ifndef DDMCPARTICLECREATOR_H
+#endif // #ifndef K4GAUDIPANDORA_DDMCPARTICLECREATOR_H
