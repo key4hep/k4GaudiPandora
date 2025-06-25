@@ -16,8 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DDPFO_CREATOR_H
-#define DDPFO_CREATOR_H 1
+#ifndef K4GAUDIPANDORA_DDPFOCREATOR_H
+#define K4GAUDIPANDORA_DDPFOCREATOR_H 1
 
 #include "Api/PandoraApi.h"
 
@@ -30,19 +30,10 @@ class MutableVertex;
 class VertexCollection;
 } // namespace edm4hep
 
-/**
- *  @brief  DDPfoCreator class
- */
 class DDPfoCreator {
 public:
-  /**
-   *  @brief  Settings class
-   */
   class Settings {
   public:
-    /**
-     *  @brief  Default constructor
-     */
     Settings();
 
     std::string m_clusterCollectionName = "";     ///< The name of the cluster output collection
@@ -206,4 +197,4 @@ private:
   pandora::Pandora& m_pandora; ///< Reference to the pandora object from which to extract the pfos
 };
 
-#endif // #ifndef DDPFO_CREATOR_H
+#endif // #ifndef K4GAUDIPANDORA_DDPFOCREATOR_H
