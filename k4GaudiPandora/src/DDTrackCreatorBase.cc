@@ -413,7 +413,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   // (*m_encoder)[lcio::LCTrackerCellID::side()]   = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
   // (*m_encoder)[lcio::LCTrackerCellID::layer()]  = 0;
   m_encoder.set(cellID, 0, ecal_endcap_face_ID);
-  m_encoder.set(cellID, 1, tanL_is_positive ? 1 : 0);
+  m_encoder.set(cellID, 1, tanL_is_positive ? 1 : -1);
   m_encoder.set(cellID, 2, 0);
 
   return_error = trk.propagateToLayer(m_encoder.lowWord(cellID), &trkHitsVec[0], trackStateAtCaloEndcap, chi2, ndf,
