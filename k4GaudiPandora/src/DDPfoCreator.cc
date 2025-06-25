@@ -123,8 +123,6 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
   return pandora::STATUS_CODE_SUCCESS;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 void DDPfoCreator::InitialiseSubDetectorNames(pandora::StringVector& subDetectorNames) const {
   subDetectorNames.push_back("ecal");
   subDetectorNames.push_back("hcal");
@@ -133,8 +131,6 @@ void DDPfoCreator::InitialiseSubDetectorNames(pandora::StringVector& subDetector
   subDetectorNames.push_back("lhcal");
   subDetectorNames.push_back("bcal");
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& subDetectorNames,
                                                  edm4hep::MutableCluster& cluster,
@@ -191,8 +187,6 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
   }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 void DDPfoCreator::setClusterEnergyAndError(const pandora::ParticleFlowObject* const pPandoraPfo,
                                             const pandora::Cluster* const pPandoraCluster,
                                             edm4hep::MutableCluster& cluster, float& clusterCorrectEnergy) const {
@@ -214,8 +208,6 @@ void DDPfoCreator::setClusterEnergyAndError(const pandora::ParticleFlowObject* c
   cluster.setEnergyError(energyError);
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 void DDPfoCreator::setClusterPositionAndError(const std::size_t nHitsInCluster, pandora::FloatVector& hitE,
                                               pandora::FloatVector& hitX, pandora::FloatVector& hitY,
                                               pandora::FloatVector& hitZ, edm4hep::MutableCluster& cluster,
@@ -236,8 +228,6 @@ void DDPfoCreator::setClusterPositionAndError(const std::size_t nHitsInCluster, 
     // std::endl;
   }
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode
 DDPfoCreator::calculateTrackBasedReferencePoint(const pandora::ParticleFlowObject* const pPandoraPfo,
@@ -295,8 +285,6 @@ DDPfoCreator::calculateTrackBasedReferencePoint(const pandora::ParticleFlowObjec
   return pandora::STATUS_CODE_SUCCESS;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 bool DDPfoCreator::isValidParentTrack(const pandora::Track* const pPandoraTrack,
                                       const pandora::TrackList& allTrackList) const {
   const pandora::TrackList& parentTrackList(pPandoraTrack->GetParentList());
@@ -320,8 +308,6 @@ bool DDPfoCreator::isValidParentTrack(const pandora::Track* const pPandoraTrack,
   // Ideal case: All parents are associated to same pfo
   return true;
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 bool DDPfoCreator::hasValidSiblingTrack(const pandora::Track* const pPandoraTrack,
                                         const pandora::TrackList& allTrackList) const {
@@ -348,8 +334,6 @@ bool DDPfoCreator::hasValidSiblingTrack(const pandora::Track* const pPandoraTrac
   return true;
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
 bool DDPfoCreator::isClosestTrackToIP(const pandora::Track* const pPandoraTrack,
                                       const pandora::TrackList& allTrackList) const {
   const pandora::Track* pClosestTrack = nullptr;
@@ -366,8 +350,6 @@ bool DDPfoCreator::isClosestTrackToIP(const pandora::Track* const pPandoraTrack,
 
   return pPandoraTrack == pClosestTrack;
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 bool DDPfoCreator::AreAnyOtherSiblingsInList(const pandora::Track* const pPandoraTrack,
                                              const pandora::TrackList& allTrackList) const {
