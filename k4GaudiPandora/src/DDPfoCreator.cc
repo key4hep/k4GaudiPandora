@@ -46,8 +46,8 @@
 #include <algorithm>
 #include <cmath>
 
-DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora)
-    : m_settings(settings), m_pandora(pandora) {}
+DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm)
+    : m_settings(settings), m_pandora(pandora), m_algorithm(*algorithm) {}
 
 pandora::StatusCode
 DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterCollection,
@@ -97,8 +97,8 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
 
     if (!hasTrack) {
       if (clustersTotalEnergy < std::numeric_limits<float>::epsilon()) {
-        // streamlog_out(WARNING) << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
-        //                        << clustersTotalEnergy << std::endl;
+        m_algorithm.warning() << "DDPfoCreator::CreateParticleFlowObjects: invalid cluster energy "
+                              << clustersTotalEnergy << endmsg;
         throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
       } else {
         referencePoint = clustersWeightedPosition * (1.f / clustersTotalEnergy);
@@ -176,9 +176,9 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
       subDetectorEnergies[BCAL_INDEX] += caloHitEnergy;
       break;
     default:
-      // streamlog_out(WARNING)
-      //     << "DDPfoCreator::setClusterSubDetectorEnergies: no subdetector found for hit with type: "
-      //     << pCalorimeterHit.getType() << std::endl;
+      m_algorithm.warning()
+          << "DDPfoCreator::setClusterSubDetectorEnergies: no subdetector found for hit with type: "
+          << pCalorimeterHit.getType() << endmsg;
       break; // pass
     }
   }
@@ -224,8 +224,7 @@ void DDPfoCreator::setClusterPositionAndError(const std::size_t nHitsInCluster, 
     clusterPositionVec.SetValues(clusterShape.getCentreOfGravity()[0], clusterShape.getCentreOfGravity()[1],
                                  clusterShape.getCentreOfGravity()[2]);
   } catch (...) {
-    // streamlog_out(WARNING) << "DDPfoCreator::setClusterPositionAndError: unidentified exception caught." <<
-    // std::endl;
+    m_algorithm.warning() << "DDPfoCreator::setClusterPositionAndError: unidentified exception caught." << endmsg;
   }
 }
 
@@ -266,16 +265,16 @@ DDPfoCreator::calculateTrackBasedReferencePoint(const pandora::ParticleFlowObjec
 
   if (hasSiblings) {
     if (totalTrackMomentumAtStart < std::numeric_limits<float>::epsilon()) {
-      // streamlog_out(WARNING) << "DDPfoCreator::calculateTrackBasedReferencePoint: invalid track momentum "
-      //                        << totalTrackMomentumAtStart << std::endl;
+      m_algorithm.warning() << "DDPfoCreator::calculateTrackBasedReferencePoint: invalid track momentum "
+                            << totalTrackMomentumAtStart << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
       referencePoint = referencePointAtStartWeighted * (1.f / totalTrackMomentumAtStart);
     }
   } else {
     if (totalTrackMomentumAtDca < std::numeric_limits<float>::epsilon()) {
-      // streamlog_out(WARNING) << "DDPfoCreator::calculateTrackBasedReferencePoint: invalid track momentum "
-      //                        << totalTrackMomentumAtDca << std::endl;
+      m_algorithm.warning() << "DDPfoCreator::calculateTrackBasedReferencePoint: invalid track momentum "
+                            << totalTrackMomentumAtDca << endmsg;
       throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
     } else {
       referencePoint = referencePointAtDCAWeighted * (1.f / totalTrackMomentumAtDca);
@@ -294,10 +293,9 @@ bool DDPfoCreator::isValidParentTrack(const pandora::Track* const pPandoraTrack,
       continue;
 
     // ATTN This track must have a parent not in the all track list; still use it if it is the closest to the ip
-    // streamlog_out(WARNING)
-    //     << "DDPfoCreator::isValidParentTrack: mismatch in track relationship information, use information as
-    //     available "
-    //     << std::endl;
+    m_algorithm.warning()
+        << "DDPfoCreator::isValidParentTrack: mismatch in track relationship information, use information as available "
+        << endmsg;
 
     if (isClosestTrackToIP(pPandoraTrack, allTrackList))
       return true;
@@ -319,10 +317,10 @@ bool DDPfoCreator::hasValidSiblingTrack(const pandora::Track* const pPandoraTrac
       continue;
 
     // ATTN This track must have a sibling not in the all track list; still use it if it has a second sibling that is in
-    // the list streamlog_out(WARNING) << "DDPfoCreator::hasValidSiblingTrack: mismatch in track relationship
-    // information, use "
-    //                           "information as available "
-    //                        << std::endl;
+    // the list
+    m_algorithm.warning()
+        << "DDPfoCreator::hasValidSiblingTrack: mismatch in track relationship information, use information as available "
+        << endmsg;
 
     if (this->AreAnyOtherSiblingsInList(pPandoraTrack, allTrackList))
       return true;
@@ -383,3 +381,4 @@ void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
 
 DDPfoCreator::Settings::Settings()
     : m_emStochasticTerm(0.17f), m_hadStochasticTerm(0.6f), m_emConstantTerm(0.01f), m_hadConstantTerm(0.03f) {}
+

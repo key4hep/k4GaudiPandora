@@ -25,8 +25,8 @@
  *  $Log: $
  */
 
-#ifndef DDBFIELD_PLUGIN_H
-#define DDBFIELD_PLUGIN_H 1
+#ifndef K4GAUDIPANDORA_DDBFIELD_PLUGIN_H
+#define K4GAUDIPANDORA_DDBFIELD_PLUGIN_H 1
 
 #include "Objects/CartesianVector.h"
 #include "Plugins/BFieldPlugin.h"
@@ -42,13 +42,13 @@
 class DDBFieldPlugin : public pandora::BFieldPlugin {
 public:
   DDBFieldPlugin(const dd4hep::Detector& detector);
-  float GetBField(const pandora::CartesianVector& positionVector) const;
+  float GetBField(const pandora::CartesianVector& positionVector) const override;
 
 private:
-  pandora::StatusCode Initialize();
-  pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
+  pandora::StatusCode Initialize() override;
+  pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle) override;
 
-  dd4hep::OverlayedField m_field; ///< The field instance from DD4hep
+  dd4hep::OverlayedField m_field;  ///< The field instance from DD4hep
 };
 
-#endif // #ifndef DDBFIELD_PLUGIN_H
+#endif  // #ifndef K4GAUDIPANDORA_DDBFIELD_PLUGIN_H

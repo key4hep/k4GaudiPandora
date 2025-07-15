@@ -45,7 +45,7 @@ public:
    *  @param  settings the creator settings
    *  @param  pandora reference to the relevant pandora instance
    */
-  DDTrackCreatorCLIC(const Gaudi::Algorithm*, const Settings& settings, pandora::Pandora& pandora);
+  DDTrackCreatorCLIC(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
 
   /**
    *  @brief  Create tracks implementation, insert user code here. Detector specific

@@ -46,8 +46,8 @@
 // forward declarations. See in DDPandoraPFANewProcessor.cc
 std::vector<double> getTrackingRegionExtent();
 
-DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Gaudi::Algorithm* thisAlg, const Settings& settings,
-                                       pandora::Pandora& pandora)
+DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings,
+                                       pandora::Pandora& pandora, const Gaudi::Algorithm* thisAlg)
     : DDTrackCreatorBase(settings, pandora, thisAlg), m_trackerInnerR(0.f), m_trackerOuterR(0.f), m_trackerZmax(0.f),
       m_cosTracker(0.f), m_endcapDiskInnerRadii(DoubleVector()), m_endcapDiskOuterRadii(DoubleVector()),
       m_endcapDiskZPositions(DoubleVector()), m_nEndcapDiskLayers(0), m_barrelTrackerLayers(0),

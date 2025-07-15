@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef DDCALO_HIT_CREATOR_H
-#define DDCALO_HIT_CREATOR_H 1
+#ifndef K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H
+#define K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H 1
 
 #include <Api/PandoraApi.h>
 
@@ -241,4 +241,4 @@ protected:
 
 inline const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }
 
-#endif // DDCALO_HIT_CREATOR_H
+#endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H
