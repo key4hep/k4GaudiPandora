@@ -19,20 +19,26 @@
 
 #include "DDPandoraPFANewAlgorithm.h"
 
+#include "DDCaloHitCreator.h"
+#include "DDGeometryCreator.h"
+#include "DDMCParticleCreator.h"
+#include "DDPfoCreator.h"
+#include "DDTrackCreatorBase.h"
+
+#include "DDTrackCreatorCLIC.h"
+// #include "DDTrackCreatorILD.h"
+#include "DDBFieldPlugin.h"
+
 #include <Api/PandoraApi.h>
 #include <LCContent.h>
 #include <LCPlugins/LCSoftwareCompensation.h>
 
-#include "DD4hep/DD4hepUnits.h"
-#include "DD4hep/DetType.h"
-#include "DD4hep/Detector.h"
-#include "DD4hep/DetectorSelector.h"
-#include "DDRec/DetectorData.h"
+#include <DD4hep/DD4hepUnits.h>
+#include <DD4hep/DetType.h>
+#include <DD4hep/Detector.h>
+#include <DD4hep/DetectorSelector.h>
+#include <DDRec/DetectorData.h>
 
-#include "DDTrackCreatorCLIC.h"
-// #include "DDTrackCreatorILD.h"
-
-#include "DDBFieldPlugin.h"
 
 #include <cstdlib>
 #include <sstream>
@@ -124,14 +130,14 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
 
   /// TODO: IMPLEMENT ILD
   if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-    m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(this, m_trackCreatorSettings, m_pPandora);
+    m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(m_trackCreatorSettings, m_pPandora, this);
   // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
   // m_pTrackCreator = std::make_unique<DDTrackCreatorILD>(m_trackCreatorSettings, m_pPandora);
   else
     error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
   m_pDDMCParticleCreator = std::make_unique<DDMCParticleCreator>(m_mcParticleCreatorSettings, m_pPandora, this);
-  m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora);
+  m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora, this);
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, registerUserComponents())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
@@ -453,7 +459,6 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
 
   m_settings.m_innerBField = magneticFieldVector[2] / dd4hep::tesla; // z component at (0,0,0)
 }
-
 
 void DDPandoraPFANewAlgorithm::reset() const {
   if (m_pTrackCreator)

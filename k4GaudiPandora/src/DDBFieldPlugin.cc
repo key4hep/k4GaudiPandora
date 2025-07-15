@@ -17,14 +17,6 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/src/DDBFieldPlugin.cc
- *
- *  @brief  Implementation of the geometry creator class.
- *
- *  $Log: $
- */
-
 #include "DDBFieldPlugin.h"
 
 #include "Helpers/XmlHelper.h"

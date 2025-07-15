@@ -28,7 +28,7 @@ from Configurables import Gaudi__Histograming__Sink__Root as RootHistoSink
 import os
 
 iosvc = IOSvc()
-iosvc.Input = "output_REC.edm4hep.root"
+iosvc.Input = "REC.root"
 iosvc.Output = "output_calo_digi.root"
 
 id_service = UniqueIDGenSvc("UniqueIDGenSvc")
