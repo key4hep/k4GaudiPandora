@@ -20,7 +20,7 @@
 
 # A simple script to compare the PFOs from the Gaudi and Marlin output
 import argparse
-from podio.root_io import Reader
+from podio.reading import get_reader
 
 parser = argparse.ArgumentParser(description="Compare hits from Gaudi and Marlin")
 parser.add_argument(
@@ -77,8 +77,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-reader_gaudi = Reader(args.gaudi_file)
-reader_marlin = Reader(args.marlin_file)
+reader_gaudi = get_reader(args.gaudi_file)
+reader_marlin = get_reader(args.marlin_file)
 
 events_gaudi = reader_gaudi.get("events")
 events_marlin = reader_marlin.get("events")
