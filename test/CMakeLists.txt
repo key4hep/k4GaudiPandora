@@ -41,6 +41,20 @@ add_test(NAME "run_marlin_wrapper"
 set_test_env("run_marlin_wrapper")
 set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim")
 
+
+add_test(NAME "run_Pandora"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py
+)
+set_test_env("run_Pandora")
+set_tests_properties("run_Pandora" PROPERTIES DEPENDS "run_marlin_wrapper")
+
+add_test(NAME "compare_Pandora"
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-pfos.py"
+)
+set_test_env("compare_Pandora")
+set_tests_properties("compare_Pandora" PROPERTIES DEPENDS "run_Pandora")
+
+
 add_test(NAME "run_DDCaloDigi"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runDDCaloDigi.py
 )
