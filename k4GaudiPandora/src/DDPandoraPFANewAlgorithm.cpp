@@ -39,7 +39,6 @@
 #include <DD4hep/DetectorSelector.h>
 #include <DDRec/DetectorData.h>
 
-
 #include <cstdlib>
 #include <sstream>
 #include <stdexcept>
@@ -155,13 +154,15 @@ DDPandoraPFANewAlgorithm::operator()(
     const std::vector<const edm4hep::VertexCollection*>& splitCollections,
     const std::vector<const edm4hep::VertexCollection*>& v0Collections,
     const std::vector<const edm4hep::TrackCollection*>& trackCollections,
-    const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
+    // const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>& trackerHitLinkCollections,
+    const std::vector<const edm4hep::TrackerHitSimTrackerHitLinkCollection*>&,
     const std::vector<const edm4hep::CalorimeterHitCollection*>& eCalCollections,
     const std::vector<const edm4hep::CalorimeterHitCollection*>& hCalCollections,
     const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
     const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
     const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-    const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections) const {
+    // const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections
+    const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&) const {
   try {
 
     std::vector<edm4hep::MCParticle> mcParticlesVector;
