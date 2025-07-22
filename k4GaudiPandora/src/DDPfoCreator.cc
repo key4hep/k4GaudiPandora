@@ -58,7 +58,7 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
 
   pandora::StringVector subDetectorNames;
   this->InitialiseSubDetectorNames(subDetectorNames);
-#warning ("set metadata for this")
+  // TODO: Add metadata
   // pClusterCollection->parameters().setValues("ClusterSubdetectorNames", subDetectorNames);
 
   // Create lcio "reconstructed particles" from the pandora "particle flow objects"
