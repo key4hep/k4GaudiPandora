@@ -41,7 +41,7 @@ DDSimpleMuonDigi::DDSimpleMuonDigi(const std::string& aName, ISvcLocator* aSvcLo
                            KeyValues("MUONCollection", {"ECalBarrelCollection"}),
                            KeyValues("HeaderName", {"EventHeader"}),
                        },
-                       {KeyValues("MUONOutputCollections", {"CalorimeterHit"}),
+                       {KeyValues("MUONOutputCollection", {"CalorimeterHit"}),
                         KeyValues("RelationOutputCollection", {"RelationMuonHit"})}) {}
 
 StatusCode DDSimpleMuonDigi::initialize() {
