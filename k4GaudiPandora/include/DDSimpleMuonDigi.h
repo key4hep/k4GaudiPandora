@@ -50,16 +50,16 @@ struct DDSimpleMuonDigi final
 private:
   Gaudi::Property<std::string> m_subDetName{this, "SubDetectorName", "VXD", "Name of the subdetector"};
   Gaudi::Property<std::vector<size_t>> m_layersToKeepBarrelVec{
-      this, "KeepBarrelLayersVec", {0}, "Vector of Barrel layers to be kept. Layers start at 1!"};
+      this, "KeepBarrelLayersVec", {}, "Vector of Barrel layers to be kept. Layers start at 1!"};
   Gaudi::Property<std::vector<size_t>> m_layersToKeepEndCapVec{
-      this, "KeepEndcapLayersVec", {0}, "Vector of Endcap layers to be kept. Layers start at 1!"};
+      this, "KeepEndcapLayersVec", {}, "Vector of Endcap layers to be kept. Layers start at 1!"};
   // Gaudi::Property<std::vector<bool>> useLayersBarrelVec{this, "useBarrelLayerVector", false, "whether to use the
   // endcap layer vector"}; Gaudi::Property<std::vector<bool>> useLayersEndcapVec{this, "useEndCapLayerVector", false,
   // "whether to use the EndCap layer vector"};
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
-  Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025}, "Threshold for muon"};
-  Gaudi::Property<float> m_timeThresholdMuon{this, "timethresholdMuon", {0.025}, "time threshold for muons"};
+  Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025f}, "Threshold for muon"};
+  Gaudi::Property<float> m_timeThresholdMuon{this, "timethresholdMuon", {0.025f}, "time threshold for muons"};
   Gaudi::Property<float> m_calibrCoeffMuon{this, "CalibrMUON", {120000.0}, "Callibration coefficient of muons"};
   Gaudi::Property<float> m_maxHitEnergyMuon{this, "MaxHitEnergyMUON", {2.0}, "Threshold for maximum muon hit energy"};
   Gaudi::Property<std::string> m_detectorNameBarrel{this, "detectornameB", "YokeBarrel", "Name of the subdetector"};

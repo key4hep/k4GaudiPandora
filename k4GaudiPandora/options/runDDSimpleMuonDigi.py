@@ -55,7 +55,7 @@ for alg, inputcol, outputcol, outrel in zip(
 
     alg.MUONCollection = [inputcol]
     alg.RelationOutputCollection = [outrel]
-    alg.MUONOutputCollections = [outputcol]
+    alg.MUONOutputCollection = [outputcol]
 
     alg.CellIDLayerString = "layer"
 
