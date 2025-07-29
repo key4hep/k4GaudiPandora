@@ -63,7 +63,7 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
 
   // Create lcio "reconstructed particles" from the pandora "particle flow objects"
   for (const pandora::ParticleFlowObject* const pPandoraPfo : *pPandoraPfoList) {
-    auto reconstructedParticle = pReconstructedParticleCollection->create();
+    auto reconstructedParticle = pReconstructedParticleCollection.create();
 
     const bool hasTrack = !pPandoraPfo->GetTrackList().empty();
 
@@ -78,7 +78,7 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
                                 pPandoraCluster->GetIsolatedCaloHitList().end());
 
       pandora::FloatVector hitE, hitX, hitY, hitZ;
-      auto cluster = pClusterCollection->create();
+      auto cluster = pClusterCollection.create();
       setClusterSubDetectorEnergies(subDetectorNames, cluster, pandoraCaloHitList, hitE, hitX, hitY, hitZ);
 
       float clusterCorrectEnergy = 0.f;
@@ -112,7 +112,7 @@ DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterColl
     this->AddTracksToRecoParticle(pPandoraPfo, reconstructedParticle);
     this->SetRecoParticlePropertiesFromPFO(pPandoraPfo, reconstructedParticle);
 
-    auto startVertex = pStartVertexCollection->create();
+    auto startVertex = pStartVertexCollection.create();
     startVertex.setAlgorithmType(0);
     startVertex.setPosition({referencePoint.GetX(), referencePoint.GetY(), referencePoint.GetZ()});
     startVertex.addToParticles(reconstructedParticle);
