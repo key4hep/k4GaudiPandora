@@ -36,7 +36,6 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
                                         src/DDPandoraPFANewAlgorithm.cpp
 					)
 
-find_package(GSL REQUIRED)
 gaudi_add_module(k4GaudiPandoraPlugins
                  SOURCES ${_plugin_sources}
                  LINK Gaudi::GaudiKernel
