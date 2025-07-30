@@ -47,6 +47,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       CLHEP::CLHEP
                       k4Reco::GaudiTrkUtils
                       GSL::gsl
+                      GSL::gslcblas # This seems to be necessary on Ubuntu 24.04 when linking with mold
                       ${PandoraSDK_LIBRARIES}
                       ${LCContent_LIBRARIES}
                     )
