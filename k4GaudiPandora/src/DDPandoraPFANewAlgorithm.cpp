@@ -285,6 +285,12 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
                                                              m_settings.m_muonEndCapBField))
   }
 
+  PANDORA_RETURN_RESULT_IF(
+      pandora::STATUS_CODE_SUCCESS, !=,
+      LCContent::RegisterNonLinearityEnergyCorrection(m_pPandora, "ECALClusterCorrection", pandora::ELECTROMAGNETIC,
+                                                      m_settings.m_ecalInputEnergyCorrectionPoints,
+                                                      m_settings.m_ecalOutputEnergyCorrectionPoints))
+
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                            LCContent::RegisterNonLinearityEnergyCorrection(
                                m_pPandora, "NonLinearity", pandora::HADRONIC, m_settings.m_inputEnergyCorrectionPoints,
