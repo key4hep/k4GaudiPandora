@@ -129,7 +129,7 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
 
   /// TODO: IMPLEMENT ILD
   if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
-    m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(m_trackCreatorSettings, m_pPandora, this);
+    m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(m_trackCreatorSettings, m_pPandora, this, m_geoSvc);
   // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
   // m_pTrackCreator = std::make_unique<DDTrackCreatorILD>(m_trackCreatorSettings, m_pPandora);
   else
