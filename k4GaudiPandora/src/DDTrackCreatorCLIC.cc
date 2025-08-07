@@ -38,6 +38,8 @@
 
 #include <edm4hep/TrackCollection.h>
 
+#include <k4Interface/IGeoSvc.h>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -46,12 +48,12 @@
 // forward declarations. See in DDPandoraPFANewProcessor.cc
 std::vector<double> getTrackingRegionExtent();
 
-DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings,
-                                       pandora::Pandora& pandora, const Gaudi::Algorithm* thisAlg)
+DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, pandora::Pandora& pandora,
+                                       const Gaudi::Algorithm* thisAlg, SmartIF<IGeoSvc> geoSvc)
     : DDTrackCreatorBase(settings, pandora, thisAlg), m_trackerInnerR(0.f), m_trackerOuterR(0.f), m_trackerZmax(0.f),
       m_cosTracker(0.f), m_endcapDiskInnerRadii(DoubleVector()), m_endcapDiskOuterRadii(DoubleVector()),
       m_endcapDiskZPositions(DoubleVector()), m_nEndcapDiskLayers(0), m_barrelTrackerLayers(0),
-      m_tanLambdaEndcapDisk(0.f)
+      m_tanLambdaEndcapDisk(0.f), m_geoSvc(geoSvc)
 
 {
   m_trackerInnerR = getTrackingRegionExtent()[0];
@@ -61,11 +63,11 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings,
   /// FIXME: Probably need to be something relating to last disk inner radius
   m_cosTracker = m_trackerZmax / std::sqrt(m_trackerZmax * m_trackerZmax + m_trackerInnerR * m_trackerInnerR);
 
-  dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
+  dd4hep::Detector* mainDetector = m_geoSvc->getDetector();
 
   // Maybe we need to veto the vertex? That was done in the ILD case
   const std::vector<dd4hep::DetElement>& barrelDets =
-      dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
+      dd4hep::DetectorSelector(*mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
 
   m_barrelTrackerLayers = 0;
   for (std::vector<dd4hep::DetElement>::const_iterator iter = barrelDets.begin(), iterEnd = barrelDets.end();
@@ -94,7 +96,7 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings,
   // Instead of gear, loop over a provided list of forward (read: endcap) tracking detectors. For ILD this would be FTD
 
   const std::vector<dd4hep::DetElement>& endcapDets =
-      dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
+      dd4hep::DetectorSelector(*mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
 
   for (auto iter = endcapDets.begin(), iterEnd = endcapDets.end(); iter != iterEnd; ++iter) {
     try {
@@ -193,7 +195,6 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(const std::vector<edm4hep::
       m_trackVector.push_back(pTrack);
     } catch (pandora::StatusCodeException& statusCodeException) {
       m_algorithm.error() << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
-
       m_algorithm.debug() << " failed track : " << pTrack << endmsg;
     }
   }
@@ -217,16 +218,22 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
 
   const auto& firstTrackState = pTrack.getTrackStates(0);
 
-  if (firstTrackState.omega == 0.f) {
+  if (std::fabs(firstTrackState.omega) < std::numeric_limits<float>::epsilon()) {
     m_algorithm.error() << "Track has Omega = 0 " << endmsg;
     return false;
   }
 
+  // TODO: Add this? It's in the DDTrackCreatorILD version
+  // if (pTrack.getNdf() < 0) {
+  //   m_algorithm.error() << "Track is unconstrained - ndf = " << pTrack.getNdf() << endmsg;
+  //   return false;
+  // }
+
   // Check momentum uncertainty is reasonable to use track
-  const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float sigmaPOverP(
+  const pandora::CartesianVector& momentumAtDca = trackParameters.m_momentumAtDca.Get();
+  const float sigmaPOverP =
       std::sqrt(firstTrackState.getCovMatrix(edm4hep::TrackParams::omega, edm4hep::TrackParams::omega)) /
-      std::fabs(firstTrackState.omega));
+      std::fabs(firstTrackState.omega);
 
   if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
     m_algorithm.warning() << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
@@ -319,44 +326,42 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
 
 void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
                                              PandoraApi::Track::Parameters& trackParameters) const {
-  bool canFormPfo(false);
-  bool canFormClusterlessPfo(false);
+  bool canFormPfo = false;
+  bool canFormClusterlessPfo = false;
 
-  if (trackParameters.m_reachesCalorimeter.Get() && !this->IsParent(pTrack)) {
+  if (trackParameters.m_reachesCalorimeter.Get() && !IsParent(pTrack)) {
     const auto& firstTrackState = pTrack.getTrackStates(0);
-    const float d0(std::fabs(firstTrackState.D0)), z0(std::fabs(firstTrackState.Z0));
 
-    float rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
+    double rInner = std::numeric_limits<double>::max();
+    double zMin = std::numeric_limits<double>::max();
 
     for (const auto& hit : pTrack.getTrackerHits()) {
       const auto pPosition = hit.getPosition();
-      const float x(pPosition[0]), y(pPosition[1]), absoluteZ(std::fabs(pPosition[2]));
-      const float r(std::sqrt(x * x + y * y));
-
-      if (r < rInner)
-        rInner = r;
-
-      if (absoluteZ < zMin)
-        zMin = absoluteZ;
+      rInner = std::min(rInner, std::hypot(pPosition[0], pPosition[1]));
+      zMin = std::min(zMin, std::fabs(pPosition[2]));
     }
 
-    if (this->PassesQualityCuts(pTrack, trackParameters)) {
-      const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-      const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
-      const float pT(std::sqrt(pX * pX + pY * pY));
+    if (PassesQualityCuts(pTrack, trackParameters)) {
+      const pandora::CartesianVector& momentumAtDca = trackParameters.m_momentumAtDca.Get();
+      const float pZ = momentumAtDca.GetZ();
+      const float pT = std::hypot(momentumAtDca.GetX(), momentumAtDca.GetY());
 
-      const float zCutForNonVertexTracks(m_trackerInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks);
+      const float zCutForNonVertexTracks = m_trackerInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks;
       const bool passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
                                    (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
 
-      const bool isV0(this->IsV0(pTrack));
-      const bool isDaughter(this->IsDaughter(pTrack));
+      const bool isV0 = IsV0(pTrack);
+      const bool isDaughter = IsDaughter(pTrack);
+
+      m_algorithm.debug() << " -- track passed quality cuts and has : "
+                          << " passRzQualityCuts " << passRzQualityCuts << " isV0 " << isV0 << " isDaughter "
+                          << isDaughter << endmsg;
 
       // Decide whether track can be associated with a pandora cluster and used to form a charged PFO
-      if ((d0 < m_settings.m_d0TrackCut) && (z0 < m_settings.m_z0TrackCut) &&
+      if ((firstTrackState.D0 < m_settings.m_d0TrackCut) && (firstTrackState.Z0 < m_settings.m_z0TrackCut) &&
           (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance)) {
         canFormPfo = true;
-      } else if (passRzQualityCuts && (0 != m_settings.m_usingNonVertexTracks)) {
+      } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0) {
         canFormPfo = true;
       } else if (isV0 || isDaughter) {
         canFormPfo = true;
@@ -364,26 +369,29 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
 
       // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora
       // cluster
-      const float particleMass(trackParameters.m_mass.Get());
-      const float trackEnergy(std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass));
+      const float particleMass = trackParameters.m_mass.Get();
+      const float trackEnergy = std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass);
 
-      if ((0 != m_settings.m_usingUnmatchedVertexTracks) &&
-          (trackEnergy < m_settings.m_unmatchedVertexTrackMaxEnergy)) {
-        if ((d0 < m_settings.m_d0UnmatchedVertexTrackCut) && (z0 < m_settings.m_z0UnmatchedVertexTrackCut) &&
-            (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance)) {
+      if (m_settings.m_usingUnmatchedVertexTracks != 0 && trackEnergy < m_settings.m_unmatchedVertexTrackMaxEnergy) {
+        if (firstTrackState.D0 < m_settings.m_d0UnmatchedVertexTrackCut &&
+            firstTrackState.Z0 < m_settings.m_z0UnmatchedVertexTrackCut &&
+            rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance) {
           canFormClusterlessPfo = true;
-        } else if (passRzQualityCuts && (0 != m_settings.m_usingNonVertexTracks) &&
-                   (0 != m_settings.m_usingUnmatchedNonVertexTracks)) {
+        } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0 &&
+                   m_settings.m_usingUnmatchedNonVertexTracks != 0) {
           canFormClusterlessPfo = true;
         } else if (isV0 || isDaughter) {
           canFormClusterlessPfo = true;
         }
       }
-    } else if (this->IsDaughter(pTrack) || this->IsV0(pTrack)) {
+    } else if (IsDaughter(pTrack) || IsV0(pTrack)) {
       m_algorithm.warning() << "Recovering daughter or v0 track "
                             << trackParameters.m_momentumAtDca.Get().GetMagnitude() << endmsg;
       canFormPfo = true;
     }
+
+    m_algorithm.debug() << " -- track canFormPfo = " << canFormPfo
+                        << " -  canFormClusterlessPfo = " << canFormClusterlessPfo << endmsg;
   }
 
   trackParameters.m_canFormPfo = canFormPfo;

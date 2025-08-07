@@ -32,6 +32,8 @@
 
 #include <Gaudi/Algorithm.h>
 
+class IGeoSvc;
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -45,12 +47,12 @@ public:
    *  @param  settings the creator settings
    *  @param  pandora reference to the relevant pandora instance
    */
-  DDTrackCreatorCLIC(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
+  DDTrackCreatorCLIC(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm, SmartIF<IGeoSvc> geoSvc);
 
   /**
    *  @brief  Create tracks implementation, insert user code here. Detector specific
    *
-   *  @param  pLCEvent the lcio event
+   *  @param  tracks tracks the lcio event
    */
   pandora::StatusCode CreateTracks(const std::vector<edm4hep::Track>& tracks) override;
 
@@ -68,6 +70,8 @@ protected:
   unsigned int m_barrelTrackerLayers;  ///< Number of barrel tracker layers
 
   float m_tanLambdaEndcapDisk; ///< Tan lambda for first endcapDisk layer
+
+  SmartIF<IGeoSvc> m_geoSvc;
 
   /**
    *  @brief  Whether track passes the quality cuts required in order to be used to form a pfo. Detector specific
