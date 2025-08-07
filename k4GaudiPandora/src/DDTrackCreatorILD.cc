@@ -65,7 +65,7 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, pandora::Pandora&
   for (std::vector<dd4hep::DetElement>::const_iterator iter = endcapDets.begin(), iterEnd = endcapDets.end();
        iter != iterEnd; ++iter) {
     try {
-      dd4hep::rec::ZDiskPetalsData* theExtension = 0;
+      dd4hep::rec::ZDiskPetalsData* theExtension = nullptr;
 
       const dd4hep::DetElement& theDetector = *iter;
       theExtension = theDetector.extension<dd4hep::rec::ZDiskPetalsData>();
@@ -100,7 +100,7 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, pandora::Pandora&
   }
 
   try {
-    dd4hep::rec::FixedPadSizeTPCData* theExtension = 0;
+    dd4hep::rec::FixedPadSizeTPCData* theExtension = nullptr;
     // Get the TPC, make sure not to get the vertex
     const std::vector<dd4hep::DetElement>& tpcDets =
         dd4hep::DetectorSelector(*mainDetector)
@@ -119,27 +119,27 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, pandora::Pandora&
     m_tpcMembraneMaxZ = 10;
     std::cout << "WARNING! DO NOT MASK! HANDLE m_tpcMembraneMaxZ (currently hardcoded to 10)!" << std::endl;
 
-  } catch (std::runtime_error& exception) {
+  } catch (std::runtime_error&) {
     m_algorithm.warning() << "DDTrackCreatorILD exception during TPC parameter construction." << endmsg;
   }
 
   // Check tpc parameters
-  if ((std::fabs(m_tpcZmax) < std::numeric_limits<float>::epsilon()) ||
-      (std::fabs(m_tpcInnerR) < std::numeric_limits<float>::epsilon()) ||
-      (std::fabs(m_tpcOuterR - m_tpcInnerR) < std::numeric_limits<float>::epsilon())) {
+  if (std::fabs(m_tpcZmax) < std::numeric_limits<float>::epsilon() ||
+      std::fabs(m_tpcInnerR) < std::numeric_limits<float>::epsilon() ||
+      std::fabs(m_tpcOuterR - m_tpcInnerR) < std::numeric_limits<float>::epsilon()) {
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
 
   m_cosTpc = m_tpcZmax / std::sqrt(m_tpcZmax * m_tpcZmax + m_tpcInnerR * m_tpcInnerR);
 
   // Check ftd parameters
-  if ((0 == m_nFtdLayers) || (m_nFtdLayers != m_ftdInnerRadii.size()) || (m_nFtdLayers != m_ftdOuterRadii.size())) {
+  if (0 == m_nFtdLayers || m_nFtdLayers != m_ftdInnerRadii.size() || m_nFtdLayers != m_ftdOuterRadii.size()) {
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
 
   for (unsigned int iFtdLayer = 0; iFtdLayer < m_nFtdLayers; ++iFtdLayer) {
-    if ((std::fabs(m_ftdOuterRadii[iFtdLayer]) < std::numeric_limits<float>::epsilon()) ||
-        (std::fabs(m_ftdInnerRadii[iFtdLayer]) < std::numeric_limits<float>::epsilon())) {
+    if (std::fabs(m_ftdOuterRadii[iFtdLayer]) < std::numeric_limits<float>::epsilon() ||
+        std::fabs(m_ftdInnerRadii[iFtdLayer]) < std::numeric_limits<float>::epsilon()) {
       throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
     }
   }

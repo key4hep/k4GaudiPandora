@@ -70,12 +70,10 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, pandora::Pandor
       dd4hep::DetectorSelector(*mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
 
   m_barrelTrackerLayers = 0;
-  for (std::vector<dd4hep::DetElement>::const_iterator iter = barrelDets.begin(), iterEnd = barrelDets.end();
-       iter != iterEnd; ++iter) {
+  for (const auto& theDetector : barrelDets) {
     try {
       dd4hep::rec::ZPlanarData* theExtension = nullptr;
 
-      const dd4hep::DetElement& theDetector = *iter;
       theExtension = theDetector.extension<dd4hep::rec::ZPlanarData>();
 
       size_t N = theExtension->layers.size();
@@ -84,8 +82,8 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, pandora::Pandor
       m_algorithm.debug() << " Adding layers for barrel tracker from DD4hep for " << theDetector.name()
                           << "- n layers: " << N << " sum up to now: " << m_barrelTrackerLayers << endmsg;
     } catch (std::runtime_error& exception) {
-      m_algorithm.warning() << "DDTrackCreatorCLIC exception during Barrel Tracker layer sum for "
-                            << const_cast<dd4hep::DetElement&>(*iter).name() << " : " << exception.what() << endmsg;
+      m_algorithm.warning() << "DDTrackCreatorCLIC exception during Barrel Tracker layer sum for " << theDetector.name()
+                            << " : " << exception.what() << endmsg;
     }
   }
 
@@ -136,8 +134,8 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, pandora::Pandor
   }
 
   for (unsigned int iEndcapDiskLayer = 0; iEndcapDiskLayer < m_nEndcapDiskLayers; ++iEndcapDiskLayer) {
-    if ((std::fabs(m_endcapDiskOuterRadii[iEndcapDiskLayer]) < std::numeric_limits<float>::epsilon()) ||
-        (std::fabs(m_endcapDiskInnerRadii[iEndcapDiskLayer]) < std::numeric_limits<float>::epsilon())) {
+    if (std::fabs(m_endcapDiskOuterRadii[iEndcapDiskLayer]) < std::numeric_limits<float>::epsilon() ||
+        std::fabs(m_endcapDiskInnerRadii[iEndcapDiskLayer]) < std::numeric_limits<float>::epsilon()) {
       throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
     }
   }
@@ -152,6 +150,10 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(const std::vector<edm4hep::
         << " Warning! Ignoring expected number of hits and other hit number cuts. Should eventually change!" << endmsg;
 
     // Take the first track state for the parameters
+    if (pTrack.getTrackStates().empty()) {
+      continue;
+      // throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
+    }
     const auto& trackState = pTrack.getTrackStates()[0];
 
     // Proceed to create the pandora track
@@ -249,31 +251,30 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
 
   // Require reasonable number of Tracker hits
   if (momentumAtDca.GetMagnitude() > m_settings.m_minMomentumForTrackHitChecks) {
-    const float pX(fabs(momentumAtDca.GetX()));
-    const float pY(fabs(momentumAtDca.GetY()));
-    const float pZ(fabs(momentumAtDca.GetZ()));
-    const float pT(std::sqrt(pX * pX + pY * pY));
+    const float pZ = std::abs(momentumAtDca.GetZ());
+    const float pT = std::hypot(std::abs(momentumAtDca.GetX()), std::abs(momentumAtDca.GetY()));
     // TODO: Compute
     const float rInnermostHit = 0;
     throw std::runtime_error("DDTrackCreatorCLIC::PassesQualityCuts: rInnermostHit not implemented");
 
-    if ((0.f == pT) || (0.f == pZ) || (rInnermostHit == m_trackerOuterR)) {
+    if (0.f == pT || 0.f == pZ || rInnermostHit == m_trackerOuterR) {
       m_algorithm.error() << "Invalid track parameter, pT " << pT << ", pZ " << pZ << ", rInnermostHit "
                           << rInnermostHit << endmsg;
       return false;
     }
 
-    float nExpectedTrackerHits(0.);
+    float nExpectedTrackerHits = 0.;
 
     if (pZ < m_trackerZmax / m_trackerOuterR * pT) {
-      const float innerExpectedHitRadius(std::max(m_trackerInnerR, rInnermostHit));
-      const float frac((m_trackerOuterR - innerExpectedHitRadius) / (m_trackerOuterR - m_trackerInnerR));
+      const float innerExpectedHitRadius = std::max(m_trackerInnerR, rInnermostHit);
+      const float frac = (m_trackerOuterR - innerExpectedHitRadius) / (m_trackerOuterR - m_trackerInnerR);
       nExpectedTrackerHits = m_barrelTrackerLayers * frac;
     }
 
-    if ((pZ <= m_trackerZmax / m_trackerInnerR * pT) && (pZ >= m_trackerZmax / m_trackerOuterR * pT)) {
-      const float innerExpectedHitRadius(std::max(m_trackerInnerR, rInnermostHit));
-      const float frac((m_trackerZmax * pT / pZ - innerExpectedHitRadius) / (m_trackerOuterR - innerExpectedHitRadius));
+    if (pZ <= m_trackerZmax / m_trackerInnerR * pT && pZ >= m_trackerZmax / m_trackerOuterR * pT) {
+      const float innerExpectedHitRadius = std::max(m_trackerInnerR, rInnermostHit);
+      const float frac =
+          (m_trackerZmax * pT / pZ - innerExpectedHitRadius) / (m_trackerOuterR - innerExpectedHitRadius);
       nExpectedTrackerHits = frac * m_barrelTrackerLayers;
     }
 
@@ -285,9 +286,9 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
 
     // Initialize hits to 0
     int nBarrelTrackerHits = 0;
-    dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
+    dd4hep::Detector* mainDetector = m_geoSvc->getDetector();
     const std::vector<dd4hep::DetElement>& barrelDets =
-        dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
+        dd4hep::DetectorSelector(*mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
     for (std::vector<dd4hep::DetElement>::const_iterator iter = barrelDets.begin(), iterEnd = barrelDets.end();
          iter != iterEnd; ++iter) {
       const dd4hep::DetElement& theDetector = *iter;
@@ -297,7 +298,7 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
 
     int nEndcapTrackerHits = 0;
     const std::vector<dd4hep::DetElement>& endcapDets =
-        dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
+        dd4hep::DetectorSelector(*mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
     for (std::vector<dd4hep::DetElement>::const_iterator iter = endcapDets.begin(), iterEnd = endcapDets.end();
          iter != iterEnd; ++iter) {
       const dd4hep::DetElement& theDetector = *iter;
@@ -308,8 +309,8 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const edm4hep::Track& pTrack,
     const int minTrackerHits =
         static_cast<int>(nExpectedTrackerHits * m_settings.m_minBarrelTrackerHitFractionOfExpected);
 
-    if ((nBarrelTrackerHits < minTrackerHits) &&
-        (nEndcapTrackerHits < m_settings.m_minFtdHitsForBarrelTrackerHitFraction)) {
+    if (nBarrelTrackerHits < minTrackerHits &&
+        nEndcapTrackerHits < m_settings.m_minFtdHitsForBarrelTrackerHitFraction) {
       m_algorithm.warning() << " Dropping track : " << momentumAtDca.GetMagnitude()
                             << " Number of Tracker hits = " << nBarrelTrackerHits << " < " << minTrackerHits
                             << " nendcapDisk = " << nEndcapTrackerHits << endmsg;
@@ -403,38 +404,31 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
 void DDTrackCreatorCLIC::TrackReachesECAL(const edm4hep::Track& pTrack,
                                           PandoraApi::Track::Parameters& trackParameters) const {
   // Calculate hit position information
-  float hitZMin(std::numeric_limits<float>::max());
-  float hitZMax(-std::numeric_limits<float>::max());
-  float hitOuterR(-std::numeric_limits<float>::max());
+  float hitZMin = std::numeric_limits<float>::max();
+  float hitZMax = -std::numeric_limits<float>::max();
+  float hitOuterR = -std::numeric_limits<float>::max();
 
-  int nTrackerHits(0);
-  int nEndcapDiskHits(0);
-  int maxOccupiedEndcapDiskLayer(0);
+  int nTrackerHits = 0;
+  int nEndcapDiskHits = 0;
+  int maxOccupiedEndcapDiskLayer = 0;
 
   for (const auto& hit : pTrack.getTrackerHits()) {
-    const float x(static_cast<float>(hit.getPosition()[0]));
-    const float y(static_cast<float>(hit.getPosition()[1]));
-    const float z(static_cast<float>(hit.getPosition()[2]));
-    const float r(std::sqrt(x * x + y * y));
+    const float z = static_cast<float>(hit.getPosition()[2]);
+    const float r = std::hypot(hit.getPosition()[0], hit.getPosition()[1]);
 
-    if (z > hitZMax)
-      hitZMax = z;
+    hitZMin = std::min(hitZMin, z);
+    hitZMax = std::max(hitZMax, z);
+    hitOuterR = std::max(hitOuterR, r);
 
-    if (z < hitZMin)
-      hitZMin = z;
-
-    if (r > hitOuterR)
-      hitOuterR = r;
-
-    if ((r > m_trackerInnerR) && (r < m_trackerOuterR) && (std::fabs(z) <= m_trackerZmax)) {
+    if (r > m_trackerInnerR && r < m_trackerOuterR && std::fabs(z) <= m_trackerZmax) {
       nTrackerHits++;
       continue;
     }
 
     for (unsigned int j = 0; j < m_nEndcapDiskLayers; ++j) {
-      if ((r > m_endcapDiskInnerRadii[j]) && (r < m_endcapDiskOuterRadii[j]) &&
-          (std::fabs(z) - m_settings.m_reachesECalFtdZMaxDistance < m_endcapDiskZPositions[j]) &&
-          (std::fabs(z) + m_settings.m_reachesECalFtdZMaxDistance > m_endcapDiskZPositions[j])) {
+      if (r > m_endcapDiskInnerRadii[j] && r < m_endcapDiskOuterRadii[j] &&
+          std::fabs(z) - m_settings.m_reachesECalFtdZMaxDistance < m_endcapDiskZPositions[j] &&
+          std::fabs(z) + m_settings.m_reachesECalFtdZMaxDistance > m_endcapDiskZPositions[j]) {
         if (static_cast<int>(j) > maxOccupiedEndcapDiskLayer)
           maxOccupiedEndcapDiskLayer = static_cast<int>(j);
 
@@ -445,25 +439,24 @@ void DDTrackCreatorCLIC::TrackReachesECAL(const edm4hep::Track& pTrack,
   }
 
   // Require sufficient hits in barrel or endcap trackers, then compare extremal hit positions with tracker dimensions
-  if ((nTrackerHits >= m_settings.m_reachesECalNBarrelTrackerHits) ||
-      (nEndcapDiskHits >= m_settings.m_reachesECalNFtdHits)) {
-    if ((hitOuterR - m_trackerOuterR > m_settings.m_reachesECalBarrelTrackerOuterDistance) ||
-        (std::fabs(hitZMax) - m_trackerZmax > m_settings.m_reachesECalBarrelTrackerZMaxDistance) ||
-        (std::fabs(hitZMin) - m_trackerZmax > m_settings.m_reachesECalBarrelTrackerZMaxDistance) ||
-        (maxOccupiedEndcapDiskLayer >= m_settings.m_reachesECalMinFtdLayer)) {
+  if (nTrackerHits >= m_settings.m_reachesECalNBarrelTrackerHits ||
+      nEndcapDiskHits >= m_settings.m_reachesECalNFtdHits) {
+    if (hitOuterR - m_trackerOuterR > m_settings.m_reachesECalBarrelTrackerOuterDistance ||
+        std::fabs(hitZMax) - m_trackerZmax > m_settings.m_reachesECalBarrelTrackerZMaxDistance ||
+        std::fabs(hitZMin) - m_trackerZmax > m_settings.m_reachesECalBarrelTrackerZMaxDistance ||
+        maxOccupiedEndcapDiskLayer >= m_settings.m_reachesECalMinFtdLayer) {
       trackParameters.m_reachesCalorimeter = true;
       return;
     }
   }
 
   // If track is lowpt, it may curl up and end inside tpc inner radius
-  const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float cosAngleAtDca(std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude());
-  const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY());
-  const float pT(std::sqrt(pX * pX + pY * pY));
+  const pandora::CartesianVector& momentumAtDca = trackParameters.m_momentumAtDca.Get();
+  const float cosAngleAtDca = std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude();
+  const float pT = std::hypot(momentumAtDca.GetX(), momentumAtDca.GetY());
 
-  if ((cosAngleAtDca > m_cosTracker) ||
-      (pT < m_settings.m_curvatureToMomentumFactor * m_settings.m_bField * m_trackerOuterR)) {
+  if (cosAngleAtDca > m_cosTracker ||
+      pT < m_settings.m_curvatureToMomentumFactor * m_settings.m_bField * m_trackerOuterR) {
     trackParameters.m_reachesCalorimeter = true;
     return;
   }
