@@ -132,12 +132,10 @@ public:
    *  @param  pandora reference to the relevant pandora instance
    */
   DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
-  /**
-   *  @brief  Destructor
-   */
   virtual ~DDCaloHitCreator();
 
-  pandora::StatusCode createECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const;
+  pandora::StatusCode
+  createECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const;
   pandora::StatusCode createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const;
   pandora::StatusCode createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const;
   pandora::StatusCode createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits) const;
@@ -149,11 +147,12 @@ public:
    *  @param  inputHits
    *  @param  outputHits
    */
-  virtual pandora::StatusCode createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
-                                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
+  virtual pandora::StatusCode
+  createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
+                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
 
   /**
    *  @brief  Get the calorimeter hit vector
@@ -238,7 +237,5 @@ protected:
 
   const Gaudi::Algorithm& m_algorithm; ///< Pointer to the Gaudi algorithm for logging
 };
-
-inline const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }
 
 #endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H
