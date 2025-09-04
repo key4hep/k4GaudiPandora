@@ -73,7 +73,7 @@ set_test_env("compare_Pandora")
 set_tests_properties("compare_Pandora" PROPERTIES DEPENDS "run_Pandora")
 
 add_test(NAME "compare_Pandora_ttbar"
-  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-pfos.py" --gaudi-file output_pandora_ttbar.root
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-pfos.py" --gaudi-file output_pandora_ttbar.root --marlin-file output_ttbar_REC.edm4hep.root
 )
 set_test_env("compare_Pandora_ttbar")
 set_tests_properties("compare_Pandora_ttbar" PROPERTIES DEPENDS "run_Pandora_ttbar")
