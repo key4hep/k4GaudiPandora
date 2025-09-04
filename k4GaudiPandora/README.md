@@ -22,3 +22,6 @@ DDCaloDigi has been ported. The following changes have been done:
   `m_layerTypes` is being used instead.
 - The functions `digitalEcalCalibCoeff` and `analogueEcalCalibCoeff` have been
   merged into `ecalCalibCoeff` since they were the same function.
+
+DDMarlinPandora has been ported
+- DDPfoCreator: `SetRecoParticleReferencePoint` has been removed
