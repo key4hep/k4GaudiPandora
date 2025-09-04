@@ -21,11 +21,11 @@
 
 #include <DD4hep/DD4hepUnits.h>
 #include <DD4hep/DetElement.h>
+#include <DD4hep/DetType.h>
 #include <DD4hep/Detector.h>
+#include <DD4hep/DetectorSelector.h>
 #include <DDCaloHitCreator.h>
 #include <DDRec/DetectorData.h>
-#include <DD4hep/DetType.h>
-#include <DD4hep/DetectorSelector.h>
 
 #include "GaudiKernel/MsgStream.h"
 
@@ -44,7 +44,8 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 // double getCoilOuterR();
 
 /// FIXME: HANDLE PROBLEM WHEN EXTENSION IS MISSING
-DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm)
+DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora,
+                                   const Gaudi::Algorithm* algorithm)
     : m_settings(settings), m_pandora(pandora), m_hCalBarrelLayerThickness(0.f), m_hCalEndCapLayerThickness(0.f),
       m_calorimeterHitVector(0), m_volumeManager(), m_algorithm(*algorithm) {
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
@@ -73,11 +74,7 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& p
   }
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-DDCaloHitCreator::~DDCaloHitCreator() {}
-
-//------------------------------------------------------------------------------------------------------------------------------------------
+DDCaloHitCreator::~DDCaloHitCreator() = default;
 
 pandora::StatusCode
 DDCaloHitCreator::createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
@@ -85,16 +82,16 @@ DDCaloHitCreator::createCaloHits(const std::map<std::string, std::vector<edm4hep
                                  const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
                                  const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createECalCaloHits(eCaloHitsMap))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createHCalCaloHits(hCalCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createMuonCaloHits(muonCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createLCalCaloHits(lCalCaloHits))
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->createLHCalCaloHits(lhCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createECalCaloHits(eCaloHitsMap))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createHCalCaloHits(hCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createMuonCaloHits(muonCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createLCalCaloHits(lCalCaloHits))
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createLHCalCaloHits(lhCalCaloHits))
 
   return pandora::STATUS_CODE_SUCCESS;
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
- 
+
 pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
     const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const {
 
@@ -135,7 +132,8 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
                                  [](unsigned char c) { return std::tolower(c); });
 
           if (originalCollectionName.find("ecal") == std::string::npos) {
-            m_algorithm.warning() << "WARNING: Mismatching hybrid ECal collection name: " << originalCollectionName << endmsg;
+            m_algorithm.warning() << "WARNING: Mismatching hybrid ECal collection name: " << originalCollectionName
+                                  << endmsg;
           }
 
           if (originalCollectionName.find("si") != std::string::npos) {
@@ -161,7 +159,8 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
         this->getCommonCaloHitProperties(hit, caloHitParameters);
 
         if ((!m_settings.m_useSystemId && std::fabs(hit.getPosition()[2]) < m_settings.m_eCalBarrelOuterZ) ||
-            (m_settings.m_useSystemId && bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_ecalBarrelSystemId)) {
+            (m_settings.m_useSystemId &&
+             bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_ecalBarrelSystemId)) {
           this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_eCalBarrelInnerSymmetry, caloHitParameters,
                                            m_settings.m_eCalBarrelNormalVector, absorberCorrection);
           caloHitParameters.m_hadronicEnergy = eCalToHadGeVBarrel * hit.getEnergy();
@@ -197,7 +196,8 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
+pandora::StatusCode
+DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
 
   if (hCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -260,7 +260,8 @@ pandora::StatusCode DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4h
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
+pandora::StatusCode
+DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
 
   if (muonCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -388,7 +389,8 @@ DDCaloHitCreator::createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const {
+pandora::StatusCode
+DDCaloHitCreator::createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const {
 
   if (LHCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
@@ -490,7 +492,9 @@ void DDCaloHitCreator::getEndCapCaloHitProperties(
 
   if (caloHitParameters.m_nCellRadiationLengths.Get() < std::numeric_limits<float>::epsilon() ||
       caloHitParameters.m_nCellInteractionLengths.Get() < std::numeric_limits<float>::epsilon()) {
-    m_algorithm.warning() << "CaloHitCreator::GetEndCapCaloHitProperties: Calo hit has 0 radiation length or interaction length. Not creating a Pandora calo hit." << endmsg;
+    m_algorithm.warning() << "CaloHitCreator::GetEndCapCaloHitProperties: Calo hit has 0 radiation length or "
+                             "interaction length. Not creating a Pandora calo hit."
+                          << endmsg;
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
 
@@ -554,7 +558,8 @@ void DDCaloHitCreator::getBarrelCaloHitProperties(
 
   if (caloHitParameters.m_nCellRadiationLengths.Get() < std::numeric_limits<float>::epsilon() ||
       caloHitParameters.m_nCellInteractionLengths.Get() < std::numeric_limits<float>::epsilon()) {
-    m_algorithm.warning() << "CaloHitCreator::getBarrelCaloHitProperties: Calo hit has 0 radiation or interaction length." << endmsg;
+    m_algorithm.warning()
+        << "CaloHitCreator::getBarrelCaloHitProperties: Calo hit has 0 radiation or interaction length." << endmsg;
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
 
@@ -581,14 +586,12 @@ void DDCaloHitCreator::getBarrelCaloHitProperties(
       staveDetElement.nominal().localToWorld(local2, global2);
       dd4hep::Position normal(global2 - global1);
 
-      m_algorithm.debug() << "DetElement: " << staveDetElement.name()
-                          << " Parent: " << staveDetElement.parent().name()
+      m_algorithm.debug() << "DetElement: " << staveDetElement.name() << " Parent: " << staveDetElement.parent().name()
                           << " Grandparent: " << staveDetElement.parent().parent().name()
                           << " CellID: " << hit.getCellID()
                           << " PhiLoc: " << atan2(global1.y(), global1.x()) * 180 / M_PI
                           << " PhiNor: " << atan2(normal.y(), normal.x()) * 180 / M_PI
-                          << " Normal Vector: " << normal.x() << " " << normal.y() << " " << normal.z()
-                          << endmsg;
+                          << " Normal Vector: " << normal.x() << " " << normal.y() << " " << normal.z() << endmsg;
 
       caloHitParameters.m_cellNormalVector = pandora::CartesianVector(normal.x(), normal.y(), normal.z());
     } else {
@@ -682,3 +685,5 @@ DDCaloHitCreator::Settings::Settings()
       m_hCalBarrelOuterR(0.f), m_hCalBarrelOuterPhi0(0.f), m_hCalBarrelOuterSymmetry(0.f), m_useSystemId(false),
       m_ecalBarrelSystemId(-1), m_hcalBarrelSystemId(-1), m_eCalBarrelNormalVector({0.0, 0.0, 1.0}),
       m_hCalBarrelNormalVector({0.0, 0.0, 1.0}), m_muonBarrelNormalVector({0.0, 0.0, 1.0}) {}
+
+const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }

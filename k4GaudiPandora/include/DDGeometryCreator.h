@@ -48,10 +48,9 @@ public:
 
   pandora::StatusCode CreateGeometry() const;
 
-private:
+protected:
   typedef std::map<pandora::SubDetectorType, PandoraApi::Geometry::SubDetector::Parameters> SubDetectorTypeMap;
   typedef std::map<std::string, PandoraApi::Geometry::SubDetector::Parameters> SubDetectorNameMap;
-
   /**
    *  @brief  Set mandatory sub detector parameters
    *

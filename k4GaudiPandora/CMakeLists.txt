@@ -33,6 +33,9 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
                     src/DDTrackCreatorCLIC.cc
                     src/DDTrackCreatorILD.cc
                     src/DDPandoraPFANewAlgorithm.cpp
+                    src/DDGeometryCreatorALLEGRO.cc
+                    src/DDTrackCreatorALLEGRO.cc
+                    src/DDCaloHitCreatorALLEGRO.cc
 )
 
 gaudi_add_module(k4GaudiPandoraPlugins

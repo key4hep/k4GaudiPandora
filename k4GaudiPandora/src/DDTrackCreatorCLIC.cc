@@ -201,8 +201,8 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(const std::vector<edm4hep::
     }
   }
 
-  // m_algorithm.debug() << "After treating collection : " << trackColl << " with " << trackColl->size()
-  //                     << " tracks, the track vector size is " << m_trackVector.size() << endmsg;
+  m_algorithm.debug() << "After treating the input with " << tracks.size()
+                      << " tracks, the track vector size is " << m_trackVector.size() << endmsg;
 
   return pandora::STATUS_CODE_SUCCESS;
 }
