@@ -262,7 +262,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
   const double event_correl_miscalib_ecal = CLHEP::RandGauss::shoot(&randomEngine, 1.0, m_misCalibEcal_correl.value());
   const double event_correl_miscalib_hcal = CLHEP::RandGauss::shoot(&randomEngine, 1.0, m_misCalibHcal_correl.value());
 
-  const std::string colName = m_inputLocations[0][0].key();  // take input collection name
+  const std::string colName = inputLocations(0)[0];  // take input collection name
   debug() << "looking for collection: " << colName << std::endl;
 
   if (colName.find("dummy") != std::string::npos) {
