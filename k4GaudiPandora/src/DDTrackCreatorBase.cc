@@ -56,6 +56,7 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandor
   m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("subdet:5,side:-2,layer:9,module:8,sensor:8");
+  m_trackingSystem->setEncoder(m_encoder);
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -416,7 +417,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   m_encoder.set(cellID, 1, tanL_is_positive ? 1 : -1);
   m_encoder.set(cellID, 2, 0);
 
-  return_error = trk.propagateToLayer(m_encoder.lowWord(cellID), &trkHitsVec[0], trackStateAtCaloEndcap, chi2, ndf,
+  return_error = trk.propagateToLayer(m_encoder.lowWord(cellID), trackStateAtCaloEndcap, chi2, ndf,
                                       detElementID, true);
   m_algorithm.debug() << "Found trackState at endcap? Error code: " << return_error << endmsg;
 
