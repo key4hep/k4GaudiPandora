@@ -25,9 +25,14 @@
 #include "DDPfoCreator.h"
 #include "DDTrackCreatorBase.h"
 
+#include "DDCaloHitCreatorALLEGRO.h"
+#include "DDGeometryCreatorALLEGRO.h"
+#include "DDTrackCreatorALLEGRO.h"
+
+#include "DDBFieldPlugin.h"
+
 #include "DDTrackCreatorCLIC.h"
 #include "DDTrackCreatorILD.h"
-#include "DDBFieldPlugin.h"
 
 #include <Api/PandoraApi.h>
 #include <LCContent.h>
