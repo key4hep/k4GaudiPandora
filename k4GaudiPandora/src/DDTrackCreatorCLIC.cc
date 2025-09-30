@@ -359,7 +359,8 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
                           << isDaughter << endmsg;
 
       // Decide whether track can be associated with a pandora cluster and used to form a charged PFO
-      if ((firstTrackState.D0 < m_settings.m_d0TrackCut) && (firstTrackState.Z0 < m_settings.m_z0TrackCut) &&
+      if ((std::abs(firstTrackState.D0) < m_settings.m_d0TrackCut) &&
+          (std::abs(firstTrackState.Z0) < m_settings.m_z0TrackCut) &&
           (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance)) {
         canFormPfo = true;
       } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0) {
@@ -374,8 +375,8 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
       const float trackEnergy = std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass);
 
       if (m_settings.m_usingUnmatchedVertexTracks != 0 && trackEnergy < m_settings.m_unmatchedVertexTrackMaxEnergy) {
-        if (firstTrackState.D0 < m_settings.m_d0UnmatchedVertexTrackCut &&
-            firstTrackState.Z0 < m_settings.m_z0UnmatchedVertexTrackCut &&
+        if (std::abs(firstTrackState.D0) < m_settings.m_d0UnmatchedVertexTrackCut &&
+            std::abs(firstTrackState.Z0) < m_settings.m_z0UnmatchedVertexTrackCut &&
             rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance) {
           canFormClusterlessPfo = true;
         } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0 &&
