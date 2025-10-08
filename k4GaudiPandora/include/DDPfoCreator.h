@@ -89,7 +89,7 @@ private:
    *  @brief  Set sub detector energies for a cluster
    *
    *  @param  subDetectorNames the list of sub detector names
-   *  @param  pLcioCluster the address of the lcio cluster to be set sub detector energies
+   *  @param  cluster the address of the lcio cluster to be set sub detector energies
    *  @param  pandoraCaloHitList the pandora calorimeter hit list
    *  @param  hitE the vector to receive the energy of hits
    *  @param  hitX the vector to receive the x position of hits
@@ -121,8 +121,8 @@ private:
    *  @param  hitX the vector of the x position of hits
    *  @param  hitY the vector of the y position of hits
    *  @param  hitZ the vector of the z position of hits
-   *  @param  pLcioCluster the lcio cluster to be set positions and errors
-   *  @param  clusterPosition a CartesianVector to receive the cluster position
+   *  @param  cluster the lcio cluster to be set positions and errors
+   *  @param  clusterPositionVec a CartesianVector to receive the cluster position
    */
   void setClusterPositionAndError(const std::size_t nHitsInCluster, pandora::FloatVector& hitE,
                                   pandora::FloatVector& hitX, pandora::FloatVector& hitY, pandora::FloatVector& hitZ,
