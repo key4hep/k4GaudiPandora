@@ -30,11 +30,6 @@ public:
   ClusterShapes(int nhits, float* a, float* x, float* y, float* z);
 
   /**
-   *    Destructor
-   */
-  ~ClusterShapes();
-
-  /**
    *    Defining errors for Helix Fit
    */
   void setErrors(float* ex, float* ey, float* ez);
@@ -232,61 +227,61 @@ public:
    * distance to the centre of gravity measured from IP
    * (absolut value of the vector to the centre of gravity)
    */
-  inline float radius() { return _radius; }
+  inline float radius() { return m_radius; }
 
   /**
    * largest spatial axis length of the ellipsoid derived
    * by the inertia tensor (by their eigenvalues and eigen-
    * vectors)
    */
-  inline float getElipsoid_r1() { return _r1; }
+  inline float getElipsoid_r1() { return m_r1; }
 
   /**
    * medium spatial axis length of the ellipsoid derived
    * by the inertia tensor (by their eigenvalues and eigen-
    * vectors)
    */
-  inline float getElipsoid_r2() { return _r2; }
+  inline float getElipsoid_r2() { return m_r2; }
 
   /**
    * smallest spatial axis length of the ellipsoid derived
    * by the inertia tensor (by their eigenvalues and eigen-
    * vectors)
    */
-  inline float getElipsoid_r3() { return _r3; }
+  inline float getElipsoid_r3() { return m_r3; }
 
   /**
    * volume of the ellipsoid
    */
-  inline float getElipsoid_vol() { return _vol; }
+  inline float getElipsoid_vol() { return m_vol; }
 
   /**
    * average radius of the ellipsoid (qubic root of volume)
    */
-  inline float getElipsoid_r_ave() { return _r_ave; }
+  inline float getElipsoid_r_ave() { return m_r_ave; }
 
   /**
    * density of the ellipsoid defined by: totAmpl/vol
    */
-  inline float getElipsoid_density() { return _density; }
+  inline float getElipsoid_density() { return m_density; }
 
   /**
    * eccentricity of the ellipsoid defined by:
    * Width/r1
    */
-  inline float getElipsoid_eccentricity() { return _eccentricity; }
+  inline float getElipsoid_eccentricity() { return m_eccentricity; }
 
   /**
    * distance from centre of gravity to the point most far
    * away from IP projected on the main principal axis
    */
-  inline float getElipsoid_r_forw() { return _r1_forw; }
+  inline float getElipsoid_r_forw() { return m_r1_forw; }
 
   /**
    * distance from centre of gravity to the point nearest
    * to IP projected on the main principal axis
    */
-  inline float getElipsoid_r_back() { return _r1_back; }
+  inline float getElipsoid_r_back() { return m_r1_back; }
 
   // Mean of the radius of the hits
   float getRhitMean(float* xStart, int& index_xStart, float* X0, float* Rm);
@@ -295,49 +290,49 @@ public:
   float getRhitRMS(float* xStart, int& index_xStart, float* X0, float* Rm);
 
 private:
-  int _nHits;
+  int m_nHits;
 
-  std::vector<float> _aHit;
-  std::vector<float> _xHit;
-  std::vector<float> _yHit;
-  std::vector<float> _zHit;
-  std::vector<float> _exHit;
-  std::vector<float> _eyHit;
-  std::vector<float> _ezHit;
-  std::vector<float> _xl;
-  std::vector<float> _xt;
-  std::vector<float> _t;
-  std::vector<float> _s;
-  std::vector<int> _types;
+  std::vector<float> m_aHit;
+  std::vector<float> m_xHit;
+  std::vector<float> m_yHit;
+  std::vector<float> m_zHit;
+  std::vector<float> m_exHit;
+  std::vector<float> m_eyHit;
+  std::vector<float> m_ezHit;
+  std::vector<float> m_xl;
+  std::vector<float> m_xt;
+  std::vector<float> m_t;
+  std::vector<float> m_s;
+  std::vector<int> m_types;
 
-  int _ifNotGravity = 1;
-  float _totAmpl = 0.0;
-  float _radius = 0.0;
-  float _xgr = 0.0;
-  float _ygr = 0.0;
-  float _zgr = 0.0;
-  std::array<float, 3> _analogGravity{0.0, 0.0, 0.0};
-  std::array<float, 6> _analogGravityErr{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  int m_ifNotGravity = 1;
+  float m_totAmpl = 0.0;
+  float m_radius = 0.0;
+  float m_xgr = 0.0;
+  float m_ygr = 0.0;
+  float m_zgr = 0.0;
+  std::array<float, 3> m_analogGravity{0.0, 0.0, 0.0};
+  std::array<float, 6> m_analogGravityErr{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  int _ifNotWidth = 1;
-  float _analogWidth = 0.0;
+  int m_ifNotWidth = 1;
+  float m_analogWidth = 0.0;
 
-  int _ifNotInertia = 1;
-  float _ValAnalogInertia[3];
-  float _VecAnalogInertia[9];
+  int m_ifNotInertia = 1;
+  float m_ValAnalogInertia[3];
+  float m_VecAnalogInertia[9];
 
-  int _ifNotEigensystem = 1;
+  int m_ifNotEigensystem = 1;
 
-  // int   _ifNotElipsoid=1;
-  float _r1 = 0.0;           // Cluster spatial axis length -- the largest
-  float _r2 = 0.0;           // Cluster spatial axis length -- less
-  float _r3 = 0.0;           // Cluster spatial axis length -- less
-  float _vol = 0.0;          // Cluster ellipsoid volume
-  float _r_ave = 0.0;        // Cluster average radius  (qubic root)
-  float _density = 0.0;      // Cluster density
-  float _eccentricity = 0.0; // Cluster Eccentricity
-  float _r1_forw = 0.0;
-  float _r1_back = 0.0;
+  // int   m_ifNotElipsoid=1;
+  float m_r1 = 0.0;           // Cluster spatial axis length -- the largest
+  float m_r2 = 0.0;           // Cluster spatial axis length -- less
+  float m_r3 = 0.0;           // Cluster spatial axis length -- less
+  float m_vol = 0.0;          // Cluster ellipsoid volume
+  float m_r_ave = 0.0;        // Cluster average radius  (qubic root)
+  float m_density = 0.0;      // Cluster density
+  float m_eccentricity = 0.0; // Cluster Eccentricity
+  float m_r1_forw = 0.0;
+  float m_r1_back = 0.0;
 
   void findElipsoid();
   void findGravity();

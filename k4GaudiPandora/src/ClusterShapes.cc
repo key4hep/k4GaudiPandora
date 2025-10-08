@@ -49,18 +49,18 @@ double Integral_G(double x, void* params) {
 //=============================================================================
 
 double DinvG(double x) {
-  int workspace_size = 1000;
+  int workspacem_size = 1000;
   double abs_error = 0;
   double rel_error = 1e-6;
   double result = 0.0;
   double error = 0.0;
 
-  gsl_integration_workspace* w = gsl_integration_workspace_alloc(workspace_size);
+  gsl_integration_workspace* w = gsl_integration_workspace_alloc(workspacem_size);
   gsl_function F;
   F.function = &Integral_G;
   F.params = &x;
 
-  /*int status=*/gsl_integration_qagiu(&F, 0, abs_error, rel_error, workspace_size, w, &result, &error);
+  /*int status=*/gsl_integration_qagiu(&F, 0, abs_error, rel_error, workspacem_size, w, &result, &error);
 
   // debug
   /*
@@ -521,36 +521,30 @@ int fdfParametrisation3(const gsl_vector* par, void* d, gsl_vector* f, gsl_matri
 ClusterShapes::ClusterShapes(int nhits, float* a, float* x, float* y, float* z)
     :
 
-      _nHits(nhits), _aHit(nhits, 0.0), _xHit(nhits, 0.0), _yHit(nhits, 0.0), _zHit(nhits, 0.0), _exHit(nhits, 1.0),
-      _eyHit(nhits, 1.0), _ezHit(nhits, 1.0), _xl(nhits, 0.0), _xt(nhits, 0.0), _t(nhits, 0.0), _s(nhits, 0.0),
-      _types(nhits, 1), // all hits are assumed to be "cylindrical"
+      m_nHits(nhits), m_aHit(nhits, 0.0), m_xHit(nhits, 0.0), m_yHit(nhits, 0.0), m_zHit(nhits, 0.0), m_exHit(nhits, 1.0),
+      m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0), m_xl(nhits, 0.0), m_xt(nhits, 0.0), m_t(nhits, 0.0), m_s(nhits, 0.0),
+      m_types(nhits, 1), // all hits are assumed to be "cylindrical"
 
-      _ifNotGravity(1), _ifNotWidth(1), _ifNotInertia(1), _ifNotEigensystem(1) {
+      m_ifNotGravity(1), m_ifNotWidth(1), m_ifNotInertia(1), m_ifNotEigensystem(1) {
   for (int i(0); i < nhits; ++i) {
-    _aHit[i] = a[i];
-    _xHit[i] = x[i];
-    _yHit[i] = y[i];
-    _zHit[i] = z[i];
+    m_aHit[i] = a[i];
+    m_xHit[i] = x[i];
+    m_yHit[i] = y[i];
+    m_zHit[i] = z[i];
   }
 }
 
-//=============================================================================
-
-ClusterShapes::~ClusterShapes() {}
-
-//=============================================================================
-
 void ClusterShapes::setErrors(float* ex, float* ey, float* ez) {
-  for (int i = 0; i < _nHits; ++i) {
-    _exHit[i] = ex[i];
-    _eyHit[i] = ey[i];
-    _ezHit[i] = ez[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    m_exHit[i] = ex[i];
+    m_eyHit[i] = ey[i];
+    m_ezHit[i] = ez[i];
   }
 }
 
 void ClusterShapes::setHitTypes(int* typ) {
-  for (int i = 0; i < _nHits; ++i) {
-    _types[i] = typ[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    m_types[i] = typ[i];
   }
 }
 
@@ -562,64 +556,64 @@ void ClusterShapes::setHitTypes(int* typ) {
 
 //=============================================================================
 
-int ClusterShapes::getNumberOfHits() { return _nHits; }
+int ClusterShapes::getNumberOfHits() { return m_nHits; }
 
 //=============================================================================
 
 float ClusterShapes::getTotalAmplitude() {
-  if (_ifNotGravity == 1)
+  if (m_ifNotGravity == 1)
     findGravity();
-  return _totAmpl;
+  return m_totAmpl;
 }
 
 //=============================================================================
 
 float* ClusterShapes::getCentreOfGravity() {
-  if (_ifNotGravity == 1)
+  if (m_ifNotGravity == 1)
     findGravity();
-  return &_analogGravity[0];
+  return &m_analogGravity[0];
 }
 std::array<float, 6> const& ClusterShapes::getCentreOfGravityErrors() {
   // this is a pure dummy to allow MarlinPandora development!
-  if (_ifNotGravity == 1)
+  if (m_ifNotGravity == 1)
     findGravity();
-  return _analogGravityErr;
+  return m_analogGravityErr;
 }
 
 //=============================================================================
 
 float* ClusterShapes::getEigenValInertia() {
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
-  return &_ValAnalogInertia[0];
+  return &m_ValAnalogInertia[0];
 }
 float* ClusterShapes::getEigenValInertiaErrors() {
   // this is a pure dummy to allow MarlinPandora development!
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
-  return &_ValAnalogInertia[0];
+  return &m_ValAnalogInertia[0];
 }
 
 //=============================================================================
 
 float* ClusterShapes::getEigenVecInertia() {
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
-  return &_VecAnalogInertia[0];
+  return &m_VecAnalogInertia[0];
 }
 float* ClusterShapes::getEigenVecInertiaErrors() {
   // this is a pure dummy to allow MarlinPandora development!
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
-  return &_VecAnalogInertia[0];
+  return &m_VecAnalogInertia[0];
 }
 
 //=============================================================================
 
 float ClusterShapes::getWidth() {
-  if (_ifNotWidth == 1)
+  if (m_ifNotWidth == 1)
     findWidth();
-  return _analogWidth;
+  return m_analogWidth;
 }
 
 //=============================================================================
@@ -632,12 +626,12 @@ int ClusterShapes::getEigenSytemCoordinates(float* xlong, float* xtrans) {
   float X0[2] = {3.50, 17.57}; // in mm. //this is the exact value of tungsten and iron
   float Rm[2] = {9.00, 17.19}; // in mm. need to change to estimate correctly
 
-  if (_ifNotEigensystem == 1)
+  if (m_ifNotEigensystem == 1)
     transformToEigensystem(xStart, index_xStart, X0, Rm);
 
-  for (int i = 0; i < _nHits; ++i) {
-    xlong[i] = _xl[i];
-    xtrans[i] = _xt[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    xlong[i] = m_xl[i];
+    xtrans[i] = m_xt[i];
   }
 
   return 0; // no error messages at the moment
@@ -653,13 +647,13 @@ int ClusterShapes::getEigenSytemCoordinates(float* xlong, float* xtrans, float* 
   float X0[2] = {3.50, 17.57}; // in mm. //this is the exact value of tungsten and iron
   float Rm[2] = {9.00, 17.19}; // in mm. need to change to estimate correctly
 
-  if (_ifNotEigensystem == 1)
+  if (m_ifNotEigensystem == 1)
     transformToEigensystem(xStart, index_xStart, X0, Rm);
 
-  for (int i = 0; i < _nHits; ++i) {
-    xlong[i] = _xl[i];
-    xtrans[i] = _xt[i];
-    a[i] = _aHit[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    xlong[i] = m_xl[i];
+    xtrans[i] = m_xt[i];
+    a[i] = m_aHit[i];
   }
 
   return 0; // no error messages at the moment
@@ -671,15 +665,15 @@ int ClusterShapes::fit3DProfile(float& chi2, float& E0, float& A, float& B, floa
                                 int& index_xStart, float* X0, float* Rm) {
   const int npar = 4;
 
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
-  float* E = new float[_nHits];
+  float* E = new float[m_nHits];
 
-  // doesn't fit when _nHits==0
-  // std::cout << "_nhits " << _nHits << std::endl;
-  if (_nHits - 1 < npar) { // can't fit because number of degrees of freedom is small
+  // doesn't fit when m_nHits==0
+  // std::cout << "_nhits " << m_nHits << std::endl;
+  if (m_nHits - 1 < npar) { // can't fit because number of degrees of freedom is small
     E0 = 0.0;
 
     delete[] E;
@@ -697,23 +691,23 @@ int ClusterShapes::fit3DProfile(float& chi2, float& E0, float& A, float& B, floa
   float D_init = 0.06; // 0.5; //if Rm includes 90% of shower energy, absorption length has 63% of shower energy
   float t0_init = -10.0 / X0[0]; // shift xl0_ini is assumed to be -10.0 without a reason ????
 
-  float E0_tmp = 0.0;
+  float E0m_tmp = 0.0;
   //  int i_max = 0;
   // float t_max = 0.0;
-  for (int i = 0; i < _nHits; ++i) {
-    if (E0_tmp < _aHit[i]) {
-      E0_tmp = _aHit[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    if (E0m_tmp < m_aHit[i]) {
+      E0m_tmp = m_aHit[i];
       // i_max = i;
     }
-    E0_init += _aHit[i];
+    E0_init += m_aHit[i];
   }
 
   // first definition
-  // t_max = _xl[i_max]/X0;
+  // t_max = m_xl[i_max]/X0;
   // A_init = t_max*B_init + 1.0;
 
   // second definition
-  // t_max = (1.0/3.0) * (t[_nHits-1] - t[0]);
+  // t_max = (1.0/3.0) * (t[m_nHits-1] - t[0]);
   // A_init = t_max*B_init + 1.0;
 
   // third definition
@@ -722,8 +716,8 @@ int ClusterShapes::fit3DProfile(float& chi2, float& E0, float& A, float& B, floa
 
   // par_init[0] = E0_init;
   E0 = E0_init;
-  for (int i = 0; i < _nHits; ++i)
-    E[i] = _aHit[i] / E0_init;
+  for (int i = 0; i < m_nHits; ++i)
+    E[i] = m_aHit[i] / E0_init;
   par_init[0] = A_init; // 2.0
   par_init[1] = B_init;
   par_init[2] = D_init;
@@ -743,7 +737,7 @@ int ClusterShapes::fit3DProfile(float& chi2, float& E0, float& A, float& B, floa
   par[2] = D;
   par[3] = t0;
 
-  fit3DProfileAdvanced(chi2, par_init, par, npar, &_t[0], &_s[0], E, E0);
+  fit3DProfileAdvanced(chi2, par_init, par, npar, &m_t[0], &m_s[0], E, E0);
 
   A = par[0];
   B = par[1];
@@ -764,7 +758,7 @@ float ClusterShapes::getChi2Fit3DProfileSimple(float a, float b, float c, float 
   float xStart[3];
   int index_xStart;
 
-  if (_ifNotEigensystem == 1)
+  if (m_ifNotEigensystem == 1)
     transformToEigensystem(xStart, index_xStart, X0, Rm);
 
   chi2 = calculateChi2Fit3DProfileSimple(a, b, c, d);
@@ -780,7 +774,7 @@ float ClusterShapes::getChi2Fit3DProfileAdvanced(float E0, float a, float b, flo
   float xStart[3];
   int index_xStart;
 
-  if (_ifNotEigensystem == 1)
+  if (m_ifNotEigensystem == 1)
     transformToEigensystem(xStart, index_xStart, X0, Rm);
 
   chi2 = calculateChi2Fit3DProfileAdvanced(E0, a, b, d, t0);
@@ -824,7 +818,7 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
                             double& chi2, double& distmax, int direction) {
   // FIXME: version with double typed parameters needed 2006/06/10 OW
 
-  if (_nHits < 3) {
+  if (m_nHits < 3) {
     std::cout << "ClusterShapes : helix fit impossible, two few points";
     std::cout << std::endl;
     for (int i = 0; i < 5; ++i) {
@@ -841,8 +835,8 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   int i1 = -1;
 
   // 1st loop
-  for (int i(0); i < _nHits; ++i) {
-    double Rz = sqrt(_xHit[i] * _xHit[i] + _yHit[i] * _yHit[i]);
+  for (int i(0); i < m_nHits; ++i) {
+    double Rz = sqrt(m_xHit[i] * m_xHit[i] + m_yHit[i] * m_yHit[i]);
     if (Rz < Rmin) {
       Rmin = Rz;
       i1 = i;
@@ -854,7 +848,7 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   // debug
   /*
-    for (int i(0); i < _nHits; ++i) std::cout << i << "  " << _xHit[i] << "  " << _yHit[i] << "  " << _zHit[i] <<
+    for (int i(0); i < m_nHits; ++i) std::cout << i << "  " << m_xHit[i] << "  " << m_yHit[i] << "  " << m_zHit[i] <<
     std::endl; std::cout << std::endl << Rmin << "  " <<  Rmax << "  " << i1 << std::endl;
   */
 
@@ -865,10 +859,10 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   int i3 = -1;
 
-  for (int i(0); i < _nHits; ++i) {
-    double Rz = sqrt(_xHit[i] * _xHit[i] + _yHit[i] * _yHit[i]);
+  for (int i(0); i < m_nHits; ++i) {
+    double Rz = sqrt(m_xHit[i] * m_xHit[i] + m_yHit[i] * m_yHit[i]);
     if ((Rz > Lower) && (Rz < Upper)) {
-      double dZ = fabs(_zHit[i] - _zHit[i1]);
+      double dZ = fabs(m_zHit[i] - m_zHit[i1]);
       if (dZ < dZmin) {
         dZmin = dZ;
         i3 = i;
@@ -879,8 +873,8 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   // debug
   // std::cout << std::endl << Upper << "  " << Lower << "  " << dZmin << "  " << i3 << std::endl;
 
-  double z1 = std::min(_zHit[i1], _zHit[i3]);
-  double z3 = std::max(_zHit[i1], _zHit[i3]);
+  double z1 = std::min(m_zHit[i1], m_zHit[i3]);
+  double z3 = std::max(m_zHit[i1], m_zHit[i3]);
 
   int i2 = -1;
   double dRmin = 1.0e+20;
@@ -888,9 +882,9 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   // 3d loop
 
-  for (int i(0); i < _nHits; ++i) {
-    if (_zHit[i] >= z1 && _zHit[i] <= z3) {
-      double Rz = sqrt(_xHit[i] * _xHit[i] + _yHit[i] * _yHit[i]);
+  for (int i(0); i < m_nHits; ++i) {
+    if (m_zHit[i] >= z1 && m_zHit[i] <= z3) {
+      double Rz = sqrt(m_xHit[i] * m_xHit[i] + m_yHit[i] * m_yHit[i]);
       double dRz = fabs(Rz - Rref);
       if (dRz < dRmin) {
         i2 = i;
@@ -904,14 +898,14 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   if (i2 < 0 || i2 == i1 || i2 == i3) {
     // problematic = 1;
     //  std::cout << "here we are " << std::endl;
-    for (int i(0); i < _nHits; ++i) {
+    for (int i(0); i < m_nHits; ++i) {
       if (i != i1 && i != i3) {
         i2 = i;
-        if (_zHit[i2] < z1) {
+        if (m_zHit[i2] < z1) {
           int itemp = i1;
           i1 = i2;
           i2 = itemp;
-        } else if (_zHit[i2] > z3) {
+        } else if (m_zHit[i2] > z3) {
           int itemp = i3;
           i3 = i2;
           i2 = itemp;
@@ -922,14 +916,14 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
     // std::cout << i1 << " " << i2 << " " << i3 << std::endl;
   }
 
-  double x0 = 0.5 * (_xHit[i2] + _xHit[i1]);
-  double y0 = 0.5 * (_yHit[i2] + _yHit[i1]);
-  double x0p = 0.5 * (_xHit[i3] + _xHit[i2]);
-  double y0p = 0.5 * (_yHit[i3] + _yHit[i2]);
-  double ax = _yHit[i2] - _yHit[i1];
-  double ay = _xHit[i1] - _xHit[i2];
-  double axp = _yHit[i3] - _yHit[i2];
-  double ayp = _xHit[i2] - _xHit[i3];
+  double x0 = 0.5 * (m_xHit[i2] + m_xHit[i1]);
+  double y0 = 0.5 * (m_yHit[i2] + m_yHit[i1]);
+  double x0p = 0.5 * (m_xHit[i3] + m_xHit[i2]);
+  double y0p = 0.5 * (m_yHit[i3] + m_yHit[i2]);
+  double ax = m_yHit[i2] - m_yHit[i1];
+  double ay = m_xHit[i1] - m_xHit[i2];
+  double axp = m_yHit[i3] - m_yHit[i2];
+  double ayp = m_xHit[i2] - m_xHit[i3];
   double det = ax * ayp - axp * ay;
   double time;
 
@@ -955,24 +949,24 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   double X0 = x0 + ax * time;
   double Y0 = y0 + ay * time;
 
-  double dX = _xHit[i1] - X0;
-  double dY = _yHit[i1] - Y0;
+  double dX = m_xHit[i1] - X0;
+  double dY = m_yHit[i1] - Y0;
 
   double R0 = sqrt(dX * dX + dY * dY);
 
   /*
     if (problematic == 1) {
     std::cout << i1 << " " << i2 << " " << i3 << std::endl;
-    std::cout << _xHit[i1] << " " << _yHit[i1] << " " << _zHit[i1] << std::endl;
-    std::cout << _xHit[i2] << " " << _yHit[i2] << " " << _zHit[i2] << std::endl;
-    std::cout << _xHit[i3] << " " << _yHit[i3] << " " << _zHit[i3] << std::endl;
+    std::cout << m_xHit[i1] << " " << m_yHit[i1] << " " << m_zHit[i1] << std::endl;
+    std::cout << m_xHit[i2] << " " << m_yHit[i2] << " " << m_zHit[i2] << std::endl;
+    std::cout << m_xHit[i3] << " " << m_yHit[i3] << " " << m_zHit[i3] << std::endl;
     std::cout << "R0 = " << R0 << std::endl;
     }
   */
 
-  double phi1 = (double)atan2(_yHit[i1] - Y0, _xHit[i1] - X0);
-  double phi2 = (double)atan2(_yHit[i2] - Y0, _xHit[i2] - X0);
-  double phi3 = (double)atan2(_yHit[i3] - Y0, _xHit[i3] - X0);
+  double phi1 = (double)atan2(m_yHit[i1] - Y0, m_xHit[i1] - X0);
+  double phi2 = (double)atan2(m_yHit[i2] - Y0, m_xHit[i2] - X0);
+  double phi3 = (double)atan2(m_yHit[i3] - Y0, m_xHit[i3] - X0);
 
   // testing bz > 0 hypothesis
 
@@ -983,15 +977,15 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   if (phi2 > phi3)
     phi3 = phi3 + 2.0 * M_PI;
 
-  double bz_plus = (phi3 - phi1) / (_zHit[i3] - _zHit[i1]);
-  double phi0_plus = phi1 - bz_plus * _zHit[i1];
-  double dphi_plus = fabs(bz_plus * _zHit[i2] + phi0_plus - phi2);
+  double bz_plus = (phi3 - phi1) / (m_zHit[i3] - m_zHit[i1]);
+  double phi0_plus = phi1 - bz_plus * m_zHit[i1];
+  double dphi_plus = fabs(bz_plus * m_zHit[i2] + phi0_plus - phi2);
 
   // testing bz < 0 hypothesis
 
-  phi1 = (double)atan2(_yHit[i1] - Y0, _xHit[i1] - X0);
-  phi2 = (double)atan2(_yHit[i2] - Y0, _xHit[i2] - X0);
-  phi3 = (double)atan2(_yHit[i3] - Y0, _xHit[i3] - X0);
+  phi1 = (double)atan2(m_yHit[i1] - Y0, m_xHit[i1] - X0);
+  phi2 = (double)atan2(m_yHit[i2] - Y0, m_xHit[i2] - X0);
+  phi3 = (double)atan2(m_yHit[i3] - Y0, m_xHit[i3] - X0);
 
   if (phi1 < phi2)
     phi2 = phi2 - 2.0 * M_PI;
@@ -1000,9 +994,9 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
   if (phi2 < phi3)
     phi3 = phi3 - 2.0 * M_PI;
 
-  double bz_minus = (phi3 - phi1) / (_zHit[i3] - _zHit[i1]);
-  double phi0_minus = phi1 - bz_minus * _zHit[i1];
-  double dphi_minus = fabs(bz_minus * _zHit[i2] + phi0_minus - phi2);
+  double bz_minus = (phi3 - phi1) / (m_zHit[i3] - m_zHit[i1]);
+  double phi0_minus = phi1 - bz_minus * m_zHit[i1];
+  double dphi_minus = fabs(bz_minus * m_zHit[i2] + phi0_minus - phi2);
 
   double bz;
   double phi0;
@@ -1123,12 +1117,12 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   double chi2_nofit = 0.0;
   int iFirst = 1;
-  for (int ipoint(0); ipoint < _nHits; ipoint++) {
+  for (int ipoint(0); ipoint < m_nHits; ipoint++) {
     double distRPZ[2];
-    double Dist = DistanceHelix(_xHit[ipoint], _yHit[ipoint], _zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
-    double chi2rphi = distRPZ[0] / _exHit[ipoint];
+    double Dist = DistanceHelix(m_xHit[ipoint], m_yHit[ipoint], m_zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
+    double chi2rphi = distRPZ[0] / m_exHit[ipoint];
     chi2rphi = chi2rphi * chi2rphi;
-    double chi2z = distRPZ[1] / _ezHit[ipoint];
+    double chi2z = distRPZ[1] / m_ezHit[ipoint];
     chi2z = chi2z * chi2z;
     chi2_nofit = chi2_nofit + chi2rphi + chi2z;
     if (Dist > distmax || iFirst == 1) {
@@ -1136,7 +1130,7 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
       iFirst = 0;
     }
   }
-  chi2_nofit = chi2_nofit / double(_nHits);
+  chi2_nofit = chi2_nofit / double(m_nHits);
 
   if (status_out == 1) {
     for (int i(0); i < 5; ++i) {
@@ -1155,38 +1149,38 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   const gsl_multifit_fdfsolver_type* T = gsl_multifit_fdfsolver_lmsder;
 
-  gsl_multifit_fdfsolver* s = gsl_multifit_fdfsolver_alloc(T, ndim * _nHits, npar);
+  gsl_multifit_fdfsolver* s = gsl_multifit_fdfsolver_alloc(T, ndim * m_nHits, npar);
 
   gsl_matrix* covar = gsl_matrix_alloc(npar, npar); // covariance matrix
 
   data d;
-  d.n = _nHits;
-  d.x = &_xHit[0];
-  d.y = &_yHit[0];
-  d.z = &_zHit[0];
-  d.ex = &_exHit[0];
-  d.ey = &_eyHit[0];
-  d.ez = &_ezHit[0];
+  d.n = m_nHits;
+  d.x = &m_xHit[0];
+  d.y = &m_yHit[0];
+  d.z = &m_zHit[0];
+  d.ex = &m_exHit[0];
+  d.ey = &m_eyHit[0];
+  d.ez = &m_ezHit[0];
 
   if (parametrisation == 1) {
     fitfunct.f = &functParametrisation1;
     fitfunct.df = &dfunctParametrisation1;
     fitfunct.fdf = &fdfParametrisation1;
-    fitfunct.n = ndim * _nHits;
+    fitfunct.n = ndim * m_nHits;
     fitfunct.p = npar;
     fitfunct.params = &d;
   } else if (parametrisation == 2) {
     fitfunct.f = &functParametrisation2;
     fitfunct.df = &dfunctParametrisation2;
     fitfunct.fdf = &fdfParametrisation2;
-    fitfunct.n = ndim * _nHits;
+    fitfunct.n = ndim * m_nHits;
     fitfunct.p = npar;
     fitfunct.params = &d;
   } else if (parametrisation == 3) {
     fitfunct.f = &functParametrisation3;
     fitfunct.df = &dfunctParametrisation3;
     fitfunct.fdf = &fdfParametrisation3;
-    fitfunct.n = ndim * _nHits;
+    fitfunct.n = ndim * m_nHits;
     fitfunct.p = npar;
     fitfunct.params = &d;
   } else
@@ -1244,12 +1238,12 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   iFirst = 1;
   double ddmax = 0.0;
-  for (int ipoint(0); ipoint < _nHits; ipoint++) {
+  for (int ipoint(0); ipoint < m_nHits; ipoint++) {
     double distRPZ[2];
-    double Dist = DistanceHelix(_xHit[ipoint], _yHit[ipoint], _zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
-    double chi2rphi = distRPZ[0] / _exHit[ipoint];
+    double Dist = DistanceHelix(m_xHit[ipoint], m_yHit[ipoint], m_zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
+    double chi2rphi = distRPZ[0] / m_exHit[ipoint];
     chi2rphi = chi2rphi * chi2rphi;
-    double chi2z = distRPZ[1] / _ezHit[ipoint];
+    double chi2z = distRPZ[1] / m_ezHit[ipoint];
     chi2z = chi2z * chi2z;
     chi2 = chi2 + chi2rphi + chi2z;
     if (Dist > ddmax || iFirst == 1) {
@@ -1258,7 +1252,7 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
     }
   }
 
-  chi2 = chi2 / double(_nHits);
+  chi2 = chi2 / double(m_nHits);
   if (chi2 < chi2_nofit) {
     for (int i = 0; i < npar; i++) {
       parameter[i] = gsl_vector_get(s->x, i);
@@ -1294,32 +1288,32 @@ void ClusterShapes::findElipsoid() {
   float cx, cy, cz;
   float dx, dy, dz;
   float r_hit_max, d_begn, d_last, r_max, proj;
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
   //   Normalize the eigen values of inertia tensor
-  float wr1 = sqrt(_ValAnalogInertia[0] / _totAmpl);
-  float wr2 = sqrt(_ValAnalogInertia[1] / _totAmpl);
-  float wr3 = sqrt(_ValAnalogInertia[2] / _totAmpl);
-  _r1 = sqrt(wr2 * wr3);                   // spatial axis length -- the largest
-  _r2 = sqrt(wr1 * wr3);                   // spatial axis length -- less
-  _r3 = sqrt(wr1 * wr2);                   // spatial axis length -- even more less
-  _vol = 4. * M_PI * _r1 * _r2 * _r3 / 3.; // ellipsoid volume
-  _r_ave = pow(_vol, 1 / 3);               // average radius  (quibc root)
-  _density = _totAmpl / _vol;              // density
-  //    _eccentricity = _r_ave/_r1;   // Cluster Eccentricity
-  _eccentricity = _analogWidth / _r1; // Cluster Eccentricity
+  float wr1 = sqrt(m_ValAnalogInertia[0] / m_totAmpl);
+  float wr2 = sqrt(m_ValAnalogInertia[1] / m_totAmpl);
+  float wr3 = sqrt(m_ValAnalogInertia[2] / m_totAmpl);
+  m_r1 = sqrt(wr2 * wr3);                   // spatial axis length -- the largest
+  m_r2 = sqrt(wr1 * wr3);                   // spatial axis length -- less
+  m_r3 = sqrt(wr1 * wr2);                   // spatial axis length -- even more less
+  m_vol = 4. * M_PI * m_r1 * m_r2 * m_r3 / 3.; // ellipsoid volume
+  m_r_ave = pow(m_vol, 1 / 3);               // average radius  (quibc root)
+  m_density = m_totAmpl / m_vol;              // density
+  //    m_eccentricity = m_r_ave/m_r1;   // Cluster Eccentricity
+  m_eccentricity = m_analogWidth / m_r1; // Cluster Eccentricity
 
   // Find Minumal and Maximal Lenght for Principal axis
   r_hit_max = -100000.;
   d_begn = 100000.;
   d_last = -100000.;
-  cx = _VecAnalogInertia[0];
-  cy = _VecAnalogInertia[1];
-  cz = _VecAnalogInertia[2];
-  for (int i(0); i < _nHits; ++i) {
-    dx = _xHit[i] - _xgr;
-    dy = _yHit[i] - _ygr;
-    dz = _zHit[i] - _zgr;
+  cx = m_VecAnalogInertia[0];
+  cy = m_VecAnalogInertia[1];
+  cz = m_VecAnalogInertia[2];
+  for (int i(0); i < m_nHits; ++i) {
+    dx = m_xHit[i] - m_xgr;
+    dy = m_yHit[i] - m_ygr;
+    dz = m_zHit[i] - m_zgr;
     r_max = sqrt(dx * dx + dy * dy + dz * dz);
     ;
     if (r_max > r_hit_max)
@@ -1333,31 +1327,31 @@ void ClusterShapes::findElipsoid() {
     //            lad_last = ladc(L)
   }
   //        if (r_hit_max > 0.0)
-  //	  _r1 = 1.05*r_hit_max; // + 5% of length
-  _r1_forw = fabs(d_last);
-  _r1_back = fabs(d_begn);
+  //	  m_r1 = 1.05*r_hit_max; // + 5% of length
+  m_r1_forw = fabs(d_last);
+  m_r1_back = fabs(d_begn);
 }
 
 //=============================================================================
 
 void ClusterShapes::findGravity() {
-  _totAmpl = 0.;
+  m_totAmpl = 0.;
   for (int i(0); i < 3; ++i) {
-    _analogGravity[i] = 0.0;
+    m_analogGravity[i] = 0.0;
   }
-  for (int i(0); i < _nHits; ++i) {
-    _totAmpl += _aHit[i];
-    _analogGravity[0] += _aHit[i] * _xHit[i];
-    _analogGravity[1] += _aHit[i] * _yHit[i];
-    _analogGravity[2] += _aHit[i] * _zHit[i];
+  for (int i(0); i < m_nHits; ++i) {
+    m_totAmpl += m_aHit[i];
+    m_analogGravity[0] += m_aHit[i] * m_xHit[i];
+    m_analogGravity[1] += m_aHit[i] * m_yHit[i];
+    m_analogGravity[2] += m_aHit[i] * m_zHit[i];
   }
   for (int i(0); i < 3; ++i) {
-    _analogGravity[i] /= _totAmpl;
+    m_analogGravity[i] /= m_totAmpl;
   }
-  _xgr = _analogGravity[0];
-  _ygr = _analogGravity[1];
-  _zgr = _analogGravity[2];
-  _ifNotGravity = 0;
+  m_xgr = m_analogGravity[0];
+  m_ygr = m_analogGravity[1];
+  m_zgr = m_analogGravity[2];
+  m_ifNotGravity = 0;
 }
 
 //=============================================================================
@@ -1375,16 +1369,16 @@ void ClusterShapes::findInertia() {
     }
   }
 
-  for (int i(0); i < _nHits; ++i) {
-    float dX = _xHit[i] - _analogGravity[0];
-    float dY = _yHit[i] - _analogGravity[1];
-    float dZ = _zHit[i] - _analogGravity[2];
-    aIne[0][0] += _aHit[i] * (dY * dY + dZ * dZ);
-    aIne[1][1] += _aHit[i] * (dX * dX + dZ * dZ);
-    aIne[2][2] += _aHit[i] * (dX * dX + dY * dY);
-    aIne[0][1] -= _aHit[i] * dX * dY;
-    aIne[0][2] -= _aHit[i] * dX * dZ;
-    aIne[1][2] -= _aHit[i] * dY * dZ;
+  for (int i(0); i < m_nHits; ++i) {
+    float dX = m_xHit[i] - m_analogGravity[0];
+    float dY = m_yHit[i] - m_analogGravity[1];
+    float dZ = m_zHit[i] - m_analogGravity[2];
+    aIne[0][0] += m_aHit[i] * (dY * dY + dZ * dZ);
+    aIne[1][1] += m_aHit[i] * (dX * dX + dZ * dZ);
+    aIne[2][2] += m_aHit[i] * (dX * dX + dY * dY);
+    aIne[0][1] -= m_aHit[i] * dX * dY;
+    aIne[0][2] -= m_aHit[i] * dX * dZ;
+    aIne[1][2] -= m_aHit[i] * dY * dZ;
   }
 
   for (int i(0); i < 2; ++i) {
@@ -1405,29 +1399,29 @@ void ClusterShapes::findInertia() {
   gsl_eigen_symmv_sort(aVector, aEigenVec, GSL_EIGEN_SORT_ABS_ASC);
 
   for (int i(0); i < 3; i++) {
-    _ValAnalogInertia[i] = gsl_vector_get(aVector, i);
+    m_ValAnalogInertia[i] = gsl_vector_get(aVector, i);
     for (int j(0); j < 3; j++) {
-      _VecAnalogInertia[i + 3 * j] = gsl_matrix_get(aEigenVec, i, j);
+      m_VecAnalogInertia[i + 3 * j] = gsl_matrix_get(aEigenVec, i, j);
     }
   }
 
   // Main principal points away from IP
 
-  _radius = 0.;
+  m_radius = 0.;
   radius2 = 0.;
 
   for (int i(0); i < 3; ++i) {
-    _radius += _analogGravity[i] * _analogGravity[i];
-    radius2 += (_analogGravity[i] + _VecAnalogInertia[i]) * (_analogGravity[i] + _VecAnalogInertia[i]);
+    m_radius += m_analogGravity[i] * m_analogGravity[i];
+    radius2 += (m_analogGravity[i] + m_VecAnalogInertia[i]) * (m_analogGravity[i] + m_VecAnalogInertia[i]);
   }
 
-  if (radius2 < _radius) {
+  if (radius2 < m_radius) {
     for (int i(0); i < 3; ++i)
-      _VecAnalogInertia[i] = -_VecAnalogInertia[i];
+      m_VecAnalogInertia[i] = -m_VecAnalogInertia[i];
   }
 
-  _radius = sqrt(_radius);
-  _ifNotInertia = 0;
+  m_radius = sqrt(m_radius);
+  m_ifNotInertia = 0;
 
   // The final job
   findWidth();
@@ -1441,15 +1435,15 @@ void ClusterShapes::findInertia() {
 
 void ClusterShapes::findWidth() {
   float dist = 0.0;
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
-  _analogWidth = 0.0;
-  for (int i(0); i < _nHits; ++i) {
+  m_analogWidth = 0.0;
+  for (int i(0); i < m_nHits; ++i) {
     dist = findDistance(i);
-    _analogWidth += _aHit[i] * dist * dist;
+    m_analogWidth += m_aHit[i] * dist * dist;
   }
-  _analogWidth = sqrt(_analogWidth / _totAmpl);
-  _ifNotWidth = 0;
+  m_analogWidth = sqrt(m_analogWidth / m_totAmpl);
+  m_ifNotWidth = 0;
 }
 
 //=============================================================================
@@ -1461,12 +1455,12 @@ float ClusterShapes::findDistance(int i) {
   float dx = 0.0;
   float dy = 0.0;
   float dz = 0.0;
-  cx = _VecAnalogInertia[0];
-  cy = _VecAnalogInertia[1];
-  cz = _VecAnalogInertia[2];
-  dx = _analogGravity[0] - _xHit[i];
-  dy = _analogGravity[1] - _yHit[i];
-  dz = _analogGravity[2] - _zHit[i];
+  cx = m_VecAnalogInertia[0];
+  cy = m_VecAnalogInertia[1];
+  cz = m_VecAnalogInertia[2];
+  dx = m_analogGravity[0] - m_xHit[i];
+  dy = m_analogGravity[1] - m_yHit[i];
+  dz = m_analogGravity[2] - m_zHit[i];
   float tx = cy * dz - cz * dy;
   float ty = cz * dx - cx * dz;
   float tz = cx * dy - cy * dx;
@@ -1579,18 +1573,18 @@ double ClusterShapes::DistanceHelix(double x, double y, double z, double X0, dou
 //=============================================================================
 
 int ClusterShapes::transformToEigensystem(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotInertia == 1)
+  if (m_ifNotInertia == 1)
     findInertia();
 
   float MainAxis[3];
   float MainCentre[3];
 
-  MainAxis[0] = _VecAnalogInertia[0];
-  MainAxis[1] = _VecAnalogInertia[1];
-  MainAxis[2] = _VecAnalogInertia[2];
-  MainCentre[0] = _analogGravity[0];
-  MainCentre[1] = _analogGravity[1];
-  MainCentre[2] = _analogGravity[2];
+  MainAxis[0] = m_VecAnalogInertia[0];
+  MainAxis[1] = m_VecAnalogInertia[1];
+  MainAxis[2] = m_VecAnalogInertia[2];
+  MainCentre[0] = m_analogGravity[0];
+  MainCentre[1] = m_analogGravity[1];
+  MainCentre[2] = m_analogGravity[2];
 
   // analoginertia looks something wrong!
   // change it to the direction of CoG
@@ -1604,10 +1598,10 @@ int ClusterShapes::transformToEigensystem(float* xStart, int& index_xStart, floa
   float prodmin = 1.0e+100;
   int index = 0;
 
-  for (int i(0); i < _nHits; ++i) {
-    xx[0] = _xHit[i] - MainCentre[0];
-    xx[1] = _yHit[i] - MainCentre[1];
-    xx[2] = _zHit[i] - MainCentre[2];
+  for (int i(0); i < m_nHits; ++i) {
+    xx[0] = m_xHit[i] - MainCentre[0];
+    xx[1] = m_yHit[i] - MainCentre[1];
+    xx[2] = m_zHit[i] - MainCentre[2];
     float prod = vecProject(xx, MainAxis);
     if (ifirst == 0 || prod < prodmin) {
       ifirst = 1;
@@ -1643,50 +1637,50 @@ int ClusterShapes::transformToEigensystem(float* xStart, int& index_xStart, floa
   //           << xStart[0]/ll << " " << xStart[1]/ll << " " << xStart[2]/ll << " "
   //           << MainAxis[0]/l << " " << MainAxis[1]/l << " " << MainAxis[1]/l << std::endl;
 
-  for (int i(0); i < _nHits; ++i) {
-    xx[0] = _xHit[i] - xStart[0];
-    xx[1] = _yHit[i] - xStart[1];
-    xx[2] = _zHit[i] - xStart[2];
+  for (int i(0); i < m_nHits; ++i) {
+    xx[0] = m_xHit[i] - xStart[0];
+    xx[1] = m_yHit[i] - xStart[1];
+    xx[2] = m_zHit[i] - xStart[2];
     float xx2(0.);
     for (int j(0); j < 3; ++j)
       xx2 += xx[j] * xx[j];
 
-    _xl[i] = 0.001 + vecProject(xx, MainAxis);
-    _xt[i] = sqrt(std::max(0.0, xx2 + 0.01 - _xl[i] * _xl[i]));
-    //    std::cout << i << " " << _xl[i] << " " << _xt[i] << " " << _aHit[i] << " "
+    m_xl[i] = 0.001 + vecProject(xx, MainAxis);
+    m_xt[i] = sqrt(std::max(0.0, xx2 + 0.01 - m_xl[i] * m_xl[i]));
+    //    std::cout << i << " " << m_xl[i] << " " << m_xt[i] << " " << m_aHit[i] << " "
     //              << std::endl;
   }
 
   // first, check ecal and solve wrong behaviour
   // std::cout << "param: " << X0[0] << " " << X0[1] << " " << Rm[0] << " " << Rm[1] << std::endl;
-  for (int i = 0; i < _nHits; ++i) {
-    // if(_types[i]==0 || _types[i]==3){   //if the hit is in Ecal
-    _t[i] = _xl[i] / X0[0];
-    _s[i] = _xt[i] / Rm[0];
-    if (detend < _xl[i]) {
-      // std::cout << "something wrong!! " << detend << " " << _xl[i] << " " << _t[i] << std::endl;
-      // detend = _xl[i]; //to avoid wrong behaviour
+  for (int i = 0; i < m_nHits; ++i) {
+    // if(m_types[i]==0 || m_types[i]==3){   //if the hit is in Ecal
+    m_t[i] = m_xl[i] / X0[0];
+    m_s[i] = m_xt[i] / Rm[0];
+    if (detend < m_xl[i]) {
+      // std::cout << "something wrong!! " << detend << " " << m_xl[i] << " " << m_t[i] << std::endl;
+      // detend = m_xl[i]; //to avoid wrong behaviour
     }
     //}
   }
 
   // second, check hcal
-  /*for (int i = 0; i < _nHits; ++i) {
-    if(_types[i]==1 || _types[i]==4){   //if the hit is in Hcal
-    if(_xl[i]>detend){
-    _t[i] = detend/X0[0]+(_xl[i]-detend)/X0[1];
-    _s[i] = _xt[i]/Rm[1];
+  /*for (int i = 0; i < m_nHits; ++i) {
+    if(m_types[i]==1 || m_types[i]==4){   //if the hit is in Hcal
+    if(m_xl[i]>detend){
+    m_t[i] = detend/X0[0]+(m_xl[i]-detend)/X0[1];
+    m_s[i] = m_xt[i]/Rm[1];
     }else{
-    _t[i] = _xl[i]/X0[0];
-    _s[i] = _xt[i]/Rm[0];
+    m_t[i] = m_xl[i]/X0[0];
+    m_s[i] = m_xt[i]/Rm[0];
     }
     }
-    // std::cout << _types[i] << " " << _xl[i] << " "
-    //           << _xl[i]+sqrt(xStart[0]*xStart[0]+xStart[1]*xStart[1]+xStart[2]*xStart[2])  << " "
-    //           << _t[i] << " " << _s[i] << std::endl;
+    // std::cout << m_types[i] << " " << m_xl[i] << " "
+    //           << m_xl[i]+sqrt(xStart[0]*xStart[0]+xStart[1]*xStart[1]+xStart[2]*xStart[2])  << " "
+    //           << m_t[i] << " " << m_s[i] << std::endl;
     }*/
 
-  _ifNotEigensystem = 0;
+  m_ifNotEigensystem = 0;
 
   return 0; // no error messages at the moment
 }
@@ -1699,16 +1693,16 @@ float ClusterShapes::calculateChi2Fit3DProfileSimple(float a, float b, float c, 
   float chi2 = 0.0;
   float Ampl = 0.0;
 
-  for (int i(0); i < _nHits; ++i) {
+  for (int i(0); i < m_nHits; ++i) {
     // old definition of Ampl and chi2
-    // Ampl = a*(float)pow(_xl[i],b)*exp(-c*_xl[i]-d*_xt[i]);
-    // chi2 += ((Ampl - _aHit[i])*(Ampl - _aHit[i]))/(_aHit[i]*_aHit[i]);
+    // Ampl = a*(float)pow(m_xl[i],b)*exp(-c*m_xl[i]-d*m_xt[i]);
+    // chi2 += ((Ampl - m_aHit[i])*(Ampl - m_aHit[i]))/(m_aHit[i]*m_aHit[i]);
 
-    Ampl = a * (float)pow(_xl[i], b) * exp(-c * _xl[i] - d * _xt[i]);
-    chi2 += (log(_aHit[i]) - log(Ampl)) * (log(_aHit[i]) - log(Ampl));
+    Ampl = a * (float)pow(m_xl[i], b) * exp(-c * m_xl[i] - d * m_xt[i]);
+    chi2 += (log(m_aHit[i]) - log(Ampl)) * (log(m_aHit[i]) - log(Ampl));
   }
 
-  chi2 = chi2 / std::max((float)1.0, (float)(_nHits - 4));
+  chi2 = chi2 / std::max((float)1.0, (float)(m_nHits - 4));
 
   return chi2;
 }
@@ -1722,29 +1716,29 @@ float ClusterShapes::calculateChi2Fit3DProfileAdvanced(float E0, float a, float 
   float Ampl = 0.0;
   float shift = 0.0;
 
-  for (int i(0); i < _nHits; ++i) {
-    shift = _t[i] - t0;
+  for (int i(0); i < m_nHits; ++i) {
+    shift = m_t[i] - t0;
 
     if (shift <= 0)
       Ampl = 0.0;
     else {
-      Ampl = E0 * b * invG(a) * pow(b * (shift), a - 1) * exp(-b * (shift)) * exp(-d * _s[i]);
+      Ampl = E0 * b * invG(a) * pow(b * (shift), a - 1) * exp(-b * (shift)) * exp(-d * m_s[i]);
     }
 
     // debug
     /*
       std::cout << "OUT : " << Ampl << "  " << E0  << "  " << a  << "  " << b  << "  "
-      << d  << "  " << t0  << "  " << _t[i] << "  " << invG(a)  << "  "
-      << pow(b*(_t[i]-t0),a-1)  << "  " << exp(-b*(_t[i]-t0))  << "  "
-      << exp(-d*_s[i])
+      << d  << "  " << t0  << "  " << m_t[i] << "  " << invG(a)  << "  "
+      << pow(b*(m_t[i]-t0),a-1)  << "  " << exp(-b*(m_t[i]-t0))  << "  "
+      << exp(-d*m_s[i])
       << std::endl;
     */
 
-    chi2 += ((Ampl - _aHit[i]) * (Ampl - _aHit[i])) / (_aHit[i] * _aHit[i]);
-    // chi2 += (log(_aHit[i]) - log(Ampl))*(log(_aHit[i]) - log(Ampl));
-    // chi2 += log((Ampl - _aHit[i])*(Ampl - _aHit[i]))/log(_aHit[i]*_aHit[i]);
+    chi2 += ((Ampl - m_aHit[i]) * (Ampl - m_aHit[i])) / (m_aHit[i] * m_aHit[i]);
+    // chi2 += (log(m_aHit[i]) - log(Ampl))*(log(m_aHit[i]) - log(Ampl));
+    // chi2 += log((Ampl - m_aHit[i])*(Ampl - m_aHit[i]))/log(m_aHit[i]*m_aHit[i]);
   }
-  chi2 = chi2 / std::max((float)1.0, (float)(_nHits - 4));
+  chi2 = chi2 / std::max((float)1.0, (float)(m_nHits - 4));
 
   return chi2;
 }
@@ -1752,7 +1746,7 @@ float ClusterShapes::calculateChi2Fit3DProfileAdvanced(float E0, float a, float 
 //=============================================================================
 
 int ClusterShapes::fit3DProfileSimple(float& chi2, float& a, float& b, float& c, float& d) {
-  // Fit function: _aHit[i] = a * pow(_xl[i],b) * exp(-c*_xl[i]) * exp(-d*_xt[i])
+  // Fit function: m_aHit[i] = a * pow(m_xl[i],b) * exp(-c*m_xl[i]) * exp(-d*m_xt[i])
 
   float Slnxl(0.);
   float Sxl(0.);
@@ -1769,20 +1763,20 @@ int ClusterShapes::fit3DProfileSimple(float& chi2, float& a, float& b, float& c,
   float SlnAxt(0.);
 
   // for a quadratic matrix
-  for (int i = 0; i < _nHits; i++) {
-    Slnxl += log(_xl[i]);
-    Sxl += _xl[i];
-    Sxt += _xt[i];
-    Sln2xl += log(_xl[i]) * log(_xl[i]);
-    Sxllnxl += _xl[i] * log(_xl[i]);
-    Sxtlnxl += _xt[i] * log(_xl[i]);
-    Sxlxl += _xl[i] * _xl[i];
-    Sxlxt += _xl[i] * _xt[i];
-    Sxtxt += _xt[i] * _xt[i];
-    SlnA += log(_aHit[i]);
-    SlnAlnxl += log(_aHit[i]) * log(_xl[i]);
-    SlnAxl += log(_aHit[i]) * _xl[i];
-    SlnAxt += log(_aHit[i]) * _xt[i];
+  for (int i = 0; i < m_nHits; i++) {
+    Slnxl += log(m_xl[i]);
+    Sxl += m_xl[i];
+    Sxt += m_xt[i];
+    Sln2xl += log(m_xl[i]) * log(m_xl[i]);
+    Sxllnxl += m_xl[i] * log(m_xl[i]);
+    Sxtlnxl += m_xt[i] * log(m_xl[i]);
+    Sxlxl += m_xl[i] * m_xl[i];
+    Sxlxt += m_xl[i] * m_xt[i];
+    Sxtxt += m_xt[i] * m_xt[i];
+    SlnA += log(m_aHit[i]);
+    SlnAlnxl += log(m_aHit[i]) * log(m_xl[i]);
+    SlnAxl += log(m_aHit[i]) * m_xl[i];
+    SlnAxt += log(m_aHit[i]) * m_xt[i];
   }
   // create system of linear equations, written as Ae = z
 
@@ -1792,7 +1786,7 @@ int ClusterShapes::fit3DProfileSimple(float& chi2, float& a, float& b, float& c,
 
   // initialise matrix and vectors
 
-  gsl_matrix_set(A, 0, 0, _nHits);
+  gsl_matrix_set(A, 0, 0, m_nHits);
   gsl_matrix_set(A, 0, 1, Slnxl);
   gsl_matrix_set(A, 0, 2, -Sxl);
   gsl_matrix_set(A, 0, 3, -Sxt);
@@ -1851,22 +1845,22 @@ int ClusterShapes::fit3DProfileAdvanced(float& chi2, double* par_init, double* p
 
   const gsl_multifit_fdfsolver_type* T = gsl_multifit_fdfsolver_lmsder;
 
-  // std::cout << T << " " << _nHits << " " << npar << std::endl;
+  // std::cout << T << " " << m_nHits << " " << npar << std::endl;
 
-  gsl_multifit_fdfsolver* Solver = gsl_multifit_fdfsolver_alloc(T, _nHits, npar);
+  gsl_multifit_fdfsolver* Solver = gsl_multifit_fdfsolver_alloc(T, m_nHits, npar);
 
   gsl_matrix* covar = gsl_matrix_alloc(npar, npar); // covariance matrix
 
   data DataSet;
-  DataSet.n = _nHits;
+  DataSet.n = m_nHits;
   DataSet.x = &t[0];
   DataSet.y = &s[0];
-  DataSet.z = &E[0]; // _aHit[0]; // ???? normalise per volume ????
+  DataSet.z = &E[0]; // m_aHit[0]; // ???? normalise per volume ????
 
   fitfunct.f = &ShapeFitFunct;
   fitfunct.df = &dShapeFitFunct;
   fitfunct.fdf = &fdfShapeFitFunct;
-  fitfunct.n = _nHits;
+  fitfunct.n = m_nHits;
   fitfunct.p = npar;
   fitfunct.params = &DataSet;
 
@@ -1931,15 +1925,15 @@ int ClusterShapes::fit3DProfileAdvanced(float& chi2, double* par_init, double* p
 //=============================================================================
 
 float ClusterShapes::getEmax(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
   float E_max = 0.0;
   // int i_max=0;
-  for (int i = 0; i < _nHits; ++i) {
-    if (E_max < _aHit[i]) {
-      E_max = _aHit[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    if (E_max < m_aHit[i]) {
+      E_max = m_aHit[i];
       // i_max = i;
     }
   }
@@ -1948,48 +1942,48 @@ float ClusterShapes::getEmax(float* xStart, int& index_xStart, float* X0, float*
 }
 
 float ClusterShapes::getsmax(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
   float E_max = 0.0, xl_max = 0.0;
-  float xl_start = 1.0e+50;
+  float xlm_start = 1.0e+50;
   // int i_max=0;
-  for (int i = 0; i < _nHits; ++i) {
+  for (int i = 0; i < m_nHits; ++i) {
     // check the position of maximum energy deposit
-    if (E_max < _aHit[i]) {
-      E_max = _aHit[i];
-      xl_max = _xl[i];
+    if (E_max < m_aHit[i]) {
+      E_max = m_aHit[i];
+      xl_max = m_xl[i];
       // i_max = i;
     }
     // check the position of shower start
-    if (xl_start > _xl[i]) {
-      xl_start = _xl[i];
+    if (xlm_start > m_xl[i]) {
+      xlm_start = m_xl[i];
     }
   }
 
-  return fabs(xl_max - xl_start);
+  return fabs(xl_max - xlm_start);
 }
 
 float ClusterShapes::getxl20(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
-  float* xl_res = new float[_nHits];
-  float* E_res = new float[_nHits];
-  float E_tot = 0.0;
-  for (int i = 0; i < _nHits; ++i) {
-    E_res[i] = _aHit[i];
-    xl_res[i] = _xl[i];
+  float* xl_res = new float[m_nHits];
+  float* E_res = new float[m_nHits];
+  float Em_tot = 0.0;
+  for (int i = 0; i < m_nHits; ++i) {
+    E_res[i] = m_aHit[i];
+    xl_res[i] = m_xl[i];
 
-    E_tot += _aHit[i];
+    Em_tot += m_aHit[i];
   }
 
   // sort deposite energy to xs ascending order
   float tmpe = 0.0, tmpxl = 0.0;
-  for (int i = 0; i < _nHits; ++i) {
-    for (int j = i + 1; j < _nHits; ++j) {
+  for (int i = 0; i < m_nHits; ++i) {
+    for (int j = i + 1; j < m_nHits; ++j) {
       if (xl_res[i] > xl_res[j]) {
         tmpe = E_res[i];
         E_res[i] = E_res[j];
@@ -2006,7 +2000,7 @@ float ClusterShapes::getxl20(float* xStart, int& index_xStart, float* X0, float*
   //           <<std::endl;
   float E20 = 0.0, okxl = 0.0;
   int k = 0;
-  while (E20 / E_tot < 0.2) {
+  while (E20 / Em_tot < 0.2) {
     E20 += E_res[k];
     k++;
   }
@@ -2021,24 +2015,24 @@ float ClusterShapes::getxl20(float* xStart, int& index_xStart, float* X0, float*
 }
 
 float ClusterShapes::getxt90(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
-  float* xt_res = new float[_nHits];
-  float* E_res = new float[_nHits];
-  float E_tot = 0.0;
-  for (int i = 0; i < _nHits; ++i) {
-    E_res[i] = _aHit[i];
-    xt_res[i] = _xt[i];
+  float* xt_res = new float[m_nHits];
+  float* E_res = new float[m_nHits];
+  float Em_tot = 0.0;
+  for (int i = 0; i < m_nHits; ++i) {
+    E_res[i] = m_aHit[i];
+    xt_res[i] = m_xt[i];
 
-    E_tot += _aHit[i];
+    Em_tot += m_aHit[i];
   }
 
   // sort deposite energy to xt ascending order
   float tmpe = 0.0, tmpxt = 0.0;
-  for (int i = 0; i < _nHits; ++i) {
-    for (int j = i + 1; j < _nHits; ++j) {
+  for (int i = 0; i < m_nHits; ++i) {
+    for (int j = i + 1; j < m_nHits; ++j) {
       if (xt_res[i] > xt_res[j]) {
         tmpe = E_res[i];
         E_res[i] = E_res[j];
@@ -2055,7 +2049,7 @@ float ClusterShapes::getxt90(float* xStart, int& index_xStart, float* X0, float*
   //           <<std::endl;
   float E90 = 0.0, okxt = 0.0;
   int k = 0;
-  while (E90 / E_tot < 0.9) {
+  while (E90 / Em_tot < 0.9) {
     E90 += E_res[k];
     k++;
   }
@@ -2072,71 +2066,71 @@ float ClusterShapes::getxt90(float* xStart, int& index_xStart, float* X0, float*
 // for test
 void ClusterShapes::gethits(float* xStart, int& index_xStart, float* X0, float* Rm, float* okxl, float* okxt,
                             float* oke) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
-  for (int i = 0; i < _nHits; ++i) {
-    okxl[i] = _xl[i];
-    okxt[i] = _xt[i];
-    oke[i] = _aHit[i];
+  for (int i = 0; i < m_nHits; ++i) {
+    okxl[i] = m_xl[i];
+    okxt[i] = m_xt[i];
+    oke[i] = m_aHit[i];
   }
 
   return;
 }
 
 float ClusterShapes::getRhitMean(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
   float MainCentre[3];
 
-  MainCentre[0] = _analogGravity[0];
-  MainCentre[1] = _analogGravity[1];
-  MainCentre[2] = _analogGravity[2];
+  MainCentre[0] = m_analogGravity[0];
+  MainCentre[1] = m_analogGravity[1];
+  MainCentre[2] = m_analogGravity[2];
 
-  // float Rhit[_nHits]={0};
+  // float Rhit[m_nHits]={0};
   float Rhit = 0;
 
   float Rhitsum = 0;
   float Rhitmean = 0;
 
-  for (int i = 0; i < _nHits; ++i) {
-    Rhit = sqrt(pow((_xHit[i] - MainCentre[0]), 2) + pow((_yHit[i] - MainCentre[1]), 2));
+  for (int i = 0; i < m_nHits; ++i) {
+    Rhit = sqrt(pow((m_xHit[i] - MainCentre[0]), 2) + pow((m_yHit[i] - MainCentre[1]), 2));
     Rhitsum += Rhit;
   }
   // cogx-- xx[0]
 
-  Rhitmean = Rhitsum / _nHits;
+  Rhitmean = Rhitsum / m_nHits;
 
   return Rhitmean;
 }
 
 float ClusterShapes::getRhitRMS(float* xStart, int& index_xStart, float* X0, float* Rm) {
-  if (_ifNotEigensystem == 1) {
+  if (m_ifNotEigensystem == 1) {
     transformToEigensystem(xStart, index_xStart, X0, Rm);
   }
 
   float MainCentre[3];
 
-  MainCentre[0] = _analogGravity[0];
-  MainCentre[1] = _analogGravity[1];
-  MainCentre[2] = _analogGravity[2];
+  MainCentre[0] = m_analogGravity[0];
+  MainCentre[1] = m_analogGravity[1];
+  MainCentre[2] = m_analogGravity[2];
 
-  // float Rhit[_nHits]={0};
+  // float Rhit[m_nHits]={0};
   float Rhit = 0;
 
   float Rhit2sum = 0;
   float Rhitrms = 0;
 
-  for (int i = 0; i < _nHits; ++i) {
-    Rhit = sqrt(pow((_xHit[i] - MainCentre[0]), 2) + pow((_yHit[i] - MainCentre[1]), 2));
+  for (int i = 0; i < m_nHits; ++i) {
+    Rhit = sqrt(pow((m_xHit[i] - MainCentre[0]), 2) + pow((m_yHit[i] - MainCentre[1]), 2));
     Rhit2sum += pow(Rhit, 2);
   }
   // cogx-- xx[0]
 
-  Rhitrms = sqrt(Rhit2sum / _nHits);
+  Rhitrms = sqrt(Rhit2sum / m_nHits);
 
   return Rhitrms;
 }
