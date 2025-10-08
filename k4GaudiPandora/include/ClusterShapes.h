@@ -35,8 +35,6 @@ public:
    * of gravity is calculated with the energy of the entries of the cluster.
    */
   float* getCentreOfGravity();
-  // this is (for now) a pure dummy to allow MarlinPandora development!
-  std::array<float, 6> const& getCentreOfGravityErrors();
 
   /**
    * array of the three main axes of inertia (9 entries) starting
@@ -120,10 +118,6 @@ private:
   float m_ygr = 0.0;
   float m_zgr = 0.0;
   std::array<float, 3> m_analogGravity{0.0, 0.0, 0.0};
-  std::array<float, 6> m_analogGravityErr{0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-  int m_ifNotWidth = 1;
-  float m_analogWidth = 0.0;
 
   int m_ifNotInertia = 1;
   float m_VecAnalogInertia[9];
@@ -132,7 +126,6 @@ private:
   void findGravity();
   void findInertia();
   void findWidth();
-  float findDistance(int i);
   double DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz, double phi0,
                        double* distRPhiZ);
 

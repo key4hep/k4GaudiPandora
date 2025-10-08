@@ -515,7 +515,7 @@ ClusterShapes::ClusterShapes(int nhits, float* a, float* x, float* y, float* z)
       m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0), m_xl(nhits, 0.0), m_xt(nhits, 0.0), m_t(nhits, 0.0), m_s(nhits, 0.0),
       m_types(nhits, 1), // all hits are assumed to be "cylindrical"
 
-      m_ifNotGravity(1), m_ifNotWidth(1), m_ifNotInertia(1) {
+      m_ifNotGravity(1), m_ifNotInertia(1) {
   for (int i = 0; i < nhits; ++i) {
     m_aHit[i] = a[i];
     m_xHit[i] = x[i];
@@ -528,12 +528,6 @@ float* ClusterShapes::getCentreOfGravity() {
   if (m_ifNotGravity == 1)
     findGravity();
   return &m_analogGravity[0];
-}
-std::array<float, 6> const& ClusterShapes::getCentreOfGravityErrors() {
-  // this is a pure dummy to allow MarlinPandora development!
-  if (m_ifNotGravity == 1)
-    findGravity();
-  return m_analogGravityErr;
 }
 
 float* ClusterShapes::getEigenVecInertia() {
@@ -1182,41 +1176,10 @@ void ClusterShapes::findInertia() {
 
 
 void ClusterShapes::findWidth() {
-  float dist = 0.0;
   if (m_ifNotInertia == 1)
     findInertia();
-  m_analogWidth = 0.0;
-  for (int i = 0; i < m_nHits; ++i) {
-    dist = findDistance(i);
-    m_analogWidth += m_aHit[i] * dist * dist;
-  }
-  m_analogWidth = sqrt(m_analogWidth / m_totAmpl);
-  m_ifNotWidth = 0;
 }
 
-
-
-float ClusterShapes::findDistance(int i) {
-  float cx = 0.0;
-  float cy = 0.0;
-  float cz = 0.0;
-  float dx = 0.0;
-  float dy = 0.0;
-  float dz = 0.0;
-  cx = m_VecAnalogInertia[0];
-  cy = m_VecAnalogInertia[1];
-  cz = m_VecAnalogInertia[2];
-  dx = m_analogGravity[0] - m_xHit[i];
-  dy = m_analogGravity[1] - m_yHit[i];
-  dz = m_analogGravity[2] - m_zHit[i];
-  float tx = cy * dz - cz * dy;
-  float ty = cz * dx - cx * dz;
-  float tz = cx * dy - cy * dx;
-  float tt = sqrt(tx * tx + ty * ty + tz * tz);
-  float ti = sqrt(cx * cx + cy * cy + cz * cz);
-  float f = tt / ti;
-  return f;
-}
 /**
    Function sdist(xp,yp,zp,cx,cy,cz,xv,yv,zv)
    c----------------------------------------------------------------------
