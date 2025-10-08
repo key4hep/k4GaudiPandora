@@ -54,7 +54,6 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       ${LCContent_LIBRARIES}
                     )
 target_include_directories(k4GaudiPandoraPlugins PRIVATE include)
-
 target_include_directories(k4GaudiPandoraPlugins SYSTEM PUBLIC ${PandoraSDK_INCLUDE_DIRS} PRIVATE ${LCContent_INCLUDE_DIRS})
 
 install(TARGETS k4GaudiPandoraPlugins
