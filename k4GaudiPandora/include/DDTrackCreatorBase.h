@@ -26,9 +26,8 @@
 #include <edm4hep/Track.h>
 #include <edm4hep/VertexCollection.h>
 
-// FIXME: should be k4Reco...
-#include "GaudiDDKalTest.h"
-#include "GaudiDDKalTestTrack.h"
+#include <k4Reco/GaudiDDKalTest.h>
+#include <k4Reco/GaudiDDKalTestTrack.h>
 
 #include <memory>
 
