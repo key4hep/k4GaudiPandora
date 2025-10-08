@@ -68,7 +68,8 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void TrackReachesECAL(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
+  virtual void TrackReachesECAL(const edm4hep::Track& pTrack,
+                                PandoraApi::Track::Parameters& trackParameters) const override;
 
   /**
    *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -79,7 +80,8 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void DefineTrackPfoUsage(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
+  virtual void DefineTrackPfoUsage(const edm4hep::Track& pTrack,
+                                   PandoraApi::Track::Parameters& trackParameters) const override;
 
   /**
    *  @brief  Copy track states stored in lcio tracks to pandora track parameters
