@@ -49,48 +49,6 @@ public:
   float* getEigenVecInertiaErrors();
 
   /**
-   * 'mean' width of the cluster perpendicular to the main
-   * principal axis, defined as:
-   * width := sqrt( 1/TotalAmplitude * Sum(a[i]*d[i]*d[i]) ),
-   * where d[i] is the distance of the i-th point to the main
-   * principal axis.
-   */
-  float getWidth();
-
-  /**
-   * performs a least square fit on the shape of an electro-
-   * magnetic-shower, which is defined as:
-   * A[i] = a * (xl[i]-xl0)^b * exp(-c*(xl[i]-xl0)) * exp(-d*xt[i]),
-   * where A[i] is the array of amplitudes, xl[i] is the
-   * coordinate of the actual point along the main principal
-   * axis and xt[i] the coordinate perpendicular to it. The return value
-   * of the method itself is not used at the moment (always returns 0).
-   * @param a,b,c,d,xl0  : references to the parameters, which are fitted.
-   * @param chi2         : reference to the chi2 of the fit
-   * @param xStart       : pointer to the 'initial hit' of the cluster. It is defined
-   *                       as the point with the largest distance to the CoG measured
-   *                       in the direction towards the IP.
-   * @param index_xStart : index of the point in the cluster corresponding to xStart
-   * @param X0           : radiation length of the detector material. For a composite
-   *                       detector this is meant to be the 'mean' radiation length.
-   * @param Rm           : Moliere radius of the the detector material. For a composite
-   *                       detector this is meant to be the 'mean' Moliere radius.
-   */
-  int fit3DProfile(float& chi2, float& a, float& b, float& c, float& d, float& xl0, float* xStart, int& index_xStart,
-                   float* X0, float* Rm);
-
-  /**
-   * returns the chi2 of the fit in the method Fit3DProfile (if simple
-   * parametrisation is used)for a given set of parameters a,b,c,d
-   * @param a,b,c,d,xl0  : fitted parameters, which have been calculated before
-   * @param X0           : radiation length of the detector material. For a composite
-   *                       detector this is meant to be the 'mean' radiation length.
-   * @param Rm           : Moliere radius of the the detector material. For a composite
-   *                       detector this is meant to be the 'mean' Moliere radius.
-   */
-  float getChi2Fit3DProfileSimple(float a, float b, float c, float d, float* X0, float* Rm);
-
-  /**
    * performs a least square fit on a helix path in space, which
    * which is defined as (Cartesian coordiantes):
    *
@@ -168,26 +126,15 @@ private:
   float m_analogWidth = 0.0;
 
   int m_ifNotInertia = 1;
-  float m_ValAnalogInertia[3];
   float m_VecAnalogInertia[9];
-
-  int m_ifNotEigensystem = 1;
-
-  // int   m_ifNotElipsoid=1;
 
   void findElipsoid();
   void findGravity();
   void findInertia();
   void findWidth();
   float findDistance(int i);
-  float vecProject(float* x, float* axis);
   double DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz, double phi0,
                        double* distRPhiZ);
-  int transformToEigensystem(float* xStart, int& index_xStart, float* X0, float* Xm);
-  float calculateChi2Fit3DProfileSimple(float a, float b, float c, float d);
-  float calculateChi2Fit3DProfileAdvanced(float E0, float a, float b, float d, float t0);
-  int fit3DProfileAdvanced(float& chi2, double* par_init, double* par, int npar, float* t, float* s, float* E,
-                           float E0);
 
   // private methods for non-linear, multidim. fitting (helix)
   // static int functParametrisation1(const gsl_vector* par, void* data, gsl_vector* f);
