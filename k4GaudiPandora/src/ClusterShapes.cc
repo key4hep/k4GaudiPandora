@@ -8,6 +8,7 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_vector.h>
 
+#include <algorithm>
 #include <iostream>
 
 // #################################################
@@ -25,135 +26,6 @@ struct data {
   float* ey;
   float* ez;
 };
-
-// Gammafunction
-double G(double x) { return gsl_sf_gamma(x); }
-
-// inverse Gammafunction
-double invG(double x) { return gsl_sf_gammainv(x); }
-
-// Integral needed for deriving the derivative of the Gammafunction
-double Integral_G(double x, void* params) {
-  double a = *(double*)params;
-  double f = exp(-x) * pow(x, a - 1) * log(x);
-  return f;
-}
-
-double DinvG(double x) {
-  int workspacem_size = 1000;
-  double abs_error = 0;
-  double rel_error = 1e-6;
-  double result = 0.0;
-  double error = 0.0;
-
-  gsl_integration_workspace* w = gsl_integration_workspace_alloc(workspacem_size);
-  gsl_function F;
-  F.function = &Integral_G;
-  F.params = &x;
-
-  /*int status=*/gsl_integration_qagiu(&F, 0, abs_error, rel_error, workspacem_size, w, &result, &error);
-
-  // debug
-  /*
-      printf ("Numeric Integration : \n");
-      printf ("parameter of integration = % .18f\n", x);
-      printf ("status of integration    = %d \n"   , status);
-      printf ("result                   = % .18f\n", result);
-      printf ("estimated error          = % .18f\n", error);
-      printf ("intervals                =  %d\n\n", w->size);
-  */
-
-  double G2 = pow(gsl_sf_gamma(x), 2);
-  double DG = result;
-
-  gsl_integration_workspace_free(w);
-
-  return -DG / G2;
-}
-
-int ShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f) {
-  // Used for shape fitting. Function to fit:
-  //
-  // a[i](t[i],s[i]) =
-  //
-  // E0 * b * 1/Gamma(a) * ( b * (t[i] - t0) )^(a-1) * exp(-b*(t[i] - t0)) * exp(-d*s[i])
-  //
-  // Function to minimise:
-  //
-  // f0[i] =  E0 * b * 1/Gamma(a) *
-  //        ( b * (t[i] - t0) )^(a-1) * exp(-b*(t[i] - t0)) * exp(-d*s[i]) - a[i]
-  //
-
-  //  float E0   = gsl_vector_get(par,0);
-  float A = gsl_vector_get(par, 0);
-  float B = gsl_vector_get(par, 1);
-  float D = gsl_vector_get(par, 2);
-  float t0 = gsl_vector_get(par, 3);
-  int n = ((struct data*)d)->n;
-  float* t = ((struct data*)d)->x;
-  float* s = ((struct data*)d)->y;
-  float* a = ((struct data*)d)->z; // amplitude stored in z[i]
-  float fi = 0.0;
-
-  for (int i = 0; i < n; i++) {
-    fi = /*E0 * */ B * invG(A) * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0)) * exp(-D * s[i]) - a[i];
-    gsl_vector_set(f, i, fi);
-  }
-
-  return GSL_SUCCESS;
-}
-
-int dShapeFitFunct(const gsl_vector* par, void* d, gsl_matrix* J) {
-  // Used for shape fitting
-  // float E0  = gsl_vector_get(par,0);
-  float A = gsl_vector_get(par, 0);
-  float B = gsl_vector_get(par, 1);
-  float D = gsl_vector_get(par, 2);
-  float t0 = gsl_vector_get(par, 3);
-  int n = ((struct data*)d)->n;
-  float* t = ((struct data*)d)->x;
-  float* s = ((struct data*)d)->y;
-
-  // calculate Jacobi's matrix J[i][j] = dfi/dparj, but here only one dimension
-
-  for (int i = 0; i < n; i++) {
-    /*
-          gsl_matrix_set(J,i,0,B * invG(A) * pow(B*(t[i]-t0),A-1) * exp(-B*(t[i]-t0))
-          * exp(-D*s[i]) );
-          */
-
-    gsl_matrix_set(
-        J, i, 0,
-        (/* E0 * */ B * invG(A) * log(B * (t[i] - t0)) * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0)) +
-         DinvG(A) * /* E0 * */ B * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0))) *
-            exp(-D * s[i]));
-
-    gsl_matrix_set(
-        J, i, 1,
-        (/* E0 * */ invG(A) * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0)) +
-         /* E0 * */ invG(A) * (A - 1) * B * (t[i] - t0) * pow(B * (t[i] - t0), A - 2) * exp(-B * (t[i] - t0)) -
-         /* E0 * */ B * invG(A) * (t[i] - t0) * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0))) *
-            exp(-D * s[i]));
-
-    gsl_matrix_set(
-        J, i, 2, -/* E0 * */ B * invG(A) * s[i] * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0)) * exp(-D * s[i]));
-
-    gsl_matrix_set(J, i, 3,
-                   (-/* E0 * */ pow(B, 2) * invG(A) * (A - 1) * pow(B * (t[i] - t0), A - 2) * exp(-B * (t[i] - t0)) +
-                    /* E0 * */ pow(B, 2) * invG(A) * pow(B * (t[i] - t0), A - 1) * exp(-B * (t[i] - t0))) *
-                       exp(-D * s[i]));
-  }
-
-  return GSL_SUCCESS;
-}
-
-int fdfShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J) {
-  //     For helix fitting
-  ShapeFitFunct(par, d, f);
-  dShapeFitFunct(par, d, J);
-
-  return GSL_SUCCESS;
-}
 
 int signum(float x) {
   // computes the signum of x. Needed for the 3. parametrisation
