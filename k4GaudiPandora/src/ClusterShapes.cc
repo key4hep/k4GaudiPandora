@@ -16,7 +16,6 @@
 // #####                                       #####
 // #################################################
 
-
 struct data {
   int n;
   float* x;
@@ -27,17 +26,11 @@ struct data {
   float* ez;
 };
 
-
-
 // Gammafunction
 double G(double x) { return gsl_sf_gamma(x); }
 
-
-
 // inverse Gammafunction
 double invG(double x) { return gsl_sf_gammainv(x); }
-
-
 
 // Integral needed for deriving the derivative of the Gammafunction
 double Integral_G(double x, void* params) {
@@ -45,8 +38,6 @@ double Integral_G(double x, void* params) {
   double f = exp(-x) * pow(x, a - 1) * log(x);
   return f;
 }
-
-
 
 double DinvG(double x) {
   int workspacem_size = 1000;
@@ -80,8 +71,6 @@ double DinvG(double x) {
   return -DG / G2;
 }
 
-
-
 int ShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f) {
   // Used for shape fitting. Function to fit:
   //
@@ -113,8 +102,6 @@ int ShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f) {
 
   return GSL_SUCCESS;
 }
-
-
 
 int dShapeFitFunct(const gsl_vector* par, void* d, gsl_matrix* J) {
   // Used for shape fitting
@@ -160,8 +147,6 @@ int dShapeFitFunct(const gsl_vector* par, void* d, gsl_matrix* J) {
   return GSL_SUCCESS;
 }
 
-
-
 int fdfShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J) {
   //     For helix fitting
   ShapeFitFunct(par, d, f);
@@ -169,8 +154,6 @@ int fdfShapeFitFunct(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* 
 
   return GSL_SUCCESS;
 }
-
-
 
 int signum(float x) {
   // computes the signum of x. Needed for the 3. parametrisation
@@ -180,8 +163,6 @@ int signum(float x) {
   else
     return -1;
 }
-
-
 
 int functParametrisation1(const gsl_vector* par, void* d, gsl_vector* f) {
   //     For helix fitting
@@ -223,8 +204,6 @@ int functParametrisation1(const gsl_vector* par, void* d, gsl_vector* f) {
   return GSL_SUCCESS;
 }
 
-
-
 int dfunctParametrisation1(const gsl_vector* par, void* d, gsl_matrix* J) {
   //     For helix fitting
   float R = gsl_vector_get(par, 2);
@@ -262,8 +241,6 @@ int dfunctParametrisation1(const gsl_vector* par, void* d, gsl_matrix* J) {
   return GSL_SUCCESS;
 }
 
-
-
 int fdfParametrisation1(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J) {
   //     For helix fitting
   functParametrisation1(par, d, f);
@@ -271,8 +248,6 @@ int fdfParametrisation1(const gsl_vector* par, void* d, gsl_vector* f, gsl_matri
 
   return GSL_SUCCESS;
 }
-
-
 
 int functParametrisation2(const gsl_vector* par, void* d, gsl_vector* f) {
   //     For helix fitting
@@ -317,8 +292,6 @@ int functParametrisation2(const gsl_vector* par, void* d, gsl_vector* f) {
 
   return GSL_SUCCESS;
 }
-
-
 
 int dfunctParametrisation2(const gsl_vector* par, void* d, gsl_matrix* J) {
   //     For helix fitting
@@ -372,8 +345,6 @@ int dfunctParametrisation2(const gsl_vector* par, void* d, gsl_matrix* J) {
   return GSL_SUCCESS;
 }
 
-
-
 int fdfParametrisation2(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J) {
   //     For helix fitting
   functParametrisation2(par, d, f);
@@ -381,8 +352,6 @@ int fdfParametrisation2(const gsl_vector* par, void* d, gsl_vector* f, gsl_matri
 
   return GSL_SUCCESS;
 }
-
-
 
 int functParametrisation3(const gsl_vector* par, void* d, gsl_vector* f) {
   //     For helix fitting
@@ -431,8 +400,6 @@ int functParametrisation3(const gsl_vector* par, void* d, gsl_vector* f) {
 
   return GSL_SUCCESS;
 }
-
-
 
 int dfunctParametrisation3(const gsl_vector* par, void* d, gsl_matrix* J) {
   //     For helix fitting
@@ -498,8 +465,6 @@ int dfunctParametrisation3(const gsl_vector* par, void* d, gsl_matrix* J) {
   return GSL_SUCCESS;
 }
 
-
-
 int fdfParametrisation3(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J) {
   //     For helix fitting
   functParametrisation3(par, d, f);
@@ -511,9 +476,9 @@ int fdfParametrisation3(const gsl_vector* par, void* d, gsl_vector* f, gsl_matri
 ClusterShapes::ClusterShapes(int nhits, float* a, float* x, float* y, float* z)
     :
 
-      m_nHits(nhits), m_aHit(nhits, 0.0), m_xHit(nhits, 0.0), m_yHit(nhits, 0.0), m_zHit(nhits, 0.0), m_exHit(nhits, 1.0),
-      m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0), m_xl(nhits, 0.0), m_xt(nhits, 0.0), m_t(nhits, 0.0), m_s(nhits, 0.0),
-      m_types(nhits, 1), // all hits are assumed to be "cylindrical"
+      m_nHits(nhits), m_aHit(nhits, 0.0), m_xHit(nhits, 0.0), m_yHit(nhits, 0.0), m_zHit(nhits, 0.0),
+      m_exHit(nhits, 1.0), m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0), m_xl(nhits, 0.0), m_xt(nhits, 0.0),
+      m_t(nhits, 0.0), m_s(nhits, 0.0), m_types(nhits, 1), // all hits are assumed to be "cylindrical"
 
       m_ifNotGravity(1), m_ifNotInertia(1) {
   for (int i = 0; i < nhits; ++i) {
@@ -569,8 +534,6 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, f
 
   return returnvalue;
 }
-
-
 
 int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, double* parameter, double* dparameter,
                             double& chi2, double& distmax, int direction) {
@@ -1039,8 +1002,6 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 // #####                                #####
 // ##########################################
 
-
-
 void ClusterShapes::findElipsoid() {
   /**   Elipsoid parameter calculations see cluster_proper.f  */
   float cx, cy, cz;
@@ -1075,8 +1036,6 @@ void ClusterShapes::findElipsoid() {
   //	  m_r1 = 1.05*r_hit_max; // + 5% of length
 }
 
-
-
 void ClusterShapes::findGravity() {
   m_totAmpl = 0.;
   for (int i = 0; i < 3; ++i) {
@@ -1096,8 +1055,6 @@ void ClusterShapes::findGravity() {
   m_zgr = m_analogGravity[2];
   m_ifNotGravity = 0;
 }
-
-
 
 void ClusterShapes::findInertia() {
   double aIne[3][3];
@@ -1173,8 +1130,6 @@ void ClusterShapes::findInertia() {
   gsl_matrix_free(aEigenVec);
 }
 
-
-
 void ClusterShapes::findWidth() {
   if (m_ifNotInertia == 1)
     findInertia();
@@ -1200,7 +1155,6 @@ void ClusterShapes::findWidth() {
    return
    end
 */
-
 
 double ClusterShapes::DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz,
                                     double phi0, double* distRPZ) {
@@ -1236,4 +1190,3 @@ double ClusterShapes::DistanceHelix(double x, double y, double z, double X0, dou
 
   return sqrt(dXY2 + dZ2);
 }
-
