@@ -260,6 +260,8 @@ private:
   mutable Gaudi::Accumulators::StaticWeightedHistogram<1> fEcalRLayerNorm{
       this, "fEcalRLayerNorm", "Ecal R layer Norm", {100, 0., 5000.0}};
 
+  Gaudi::Property<bool> m_smearHitsTime{this, "enableHitsTimeSmearing", false, "Enable gaussian smearing of hits time"};
+
   // timing parameters for ECAL
   Gaudi::Property<int> m_useEcalTiming{this, "UseEcalTiming", {0}, "Use ECAL hit times"};
   Gaudi::Property<int> m_ecalCorrectTimesForPropagation{
