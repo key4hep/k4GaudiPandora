@@ -36,7 +36,6 @@
 #include <k4Interface/IGeoSvc.h>
 #include <k4Interface/IUniqueIDGenSvc.h>
 
-
 #include <CLHEP/Random/MTwistEngine.h>
 
 #include <string>
@@ -100,26 +99,28 @@
 
 #if GAUDI_MAJOR_VERSION < 39
 namespace Gaudi::Accumulators {
-  template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double>
-  using StaticHistogram =
-      Gaudi::Accumulators::HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::histogramString,
-                                                   HistogramingAccumulator>;
+template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double>
+using StaticHistogram = Gaudi::Accumulators::HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::histogramString,
+                                                                     HistogramingAccumulator>;
 
-  /// helper class to create a tuple of N identical types
-  template <typename T, unsigned int ND, typename = std::make_integer_sequence<unsigned int, ND>> struct make_tuple;
-  template <typename T, unsigned int ND, unsigned int... S>
-  struct make_tuple<T, ND, std::integer_sequence<unsigned int, S...>> {
-    template <unsigned int> using typeMap = T;
-    using type                            = std::tuple<typeMap<S>...>;
-  };
-  template <typename T, unsigned int ND> using make_tuple_t = typename make_tuple<T, ND>::type;
+/// helper class to create a tuple of N identical types
+template <typename T, unsigned int ND, typename = std::make_integer_sequence<unsigned int, ND>>
+struct make_tuple;
+template <typename T, unsigned int ND, unsigned int... S>
+struct make_tuple<T, ND, std::integer_sequence<unsigned int, S...>> {
+  template <unsigned int>
+  using typeMap = T;
+  using type = std::tuple<typeMap<S>...>;
+};
+template <typename T, unsigned int ND>
+using make_tuple_t = typename make_tuple<T, ND>::type;
 
-  template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double,
-            typename AxisTupleType = make_tuple_t<Axis<Arithmetic>, ND>>
-  using StaticWeightedHistogram = HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::weightedHistogramString,
-                                                          WeightedHistogramingAccumulator>;
+template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double,
+          typename AxisTupleType = make_tuple_t<Axis<Arithmetic>, ND>>
+using StaticWeightedHistogram = HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::weightedHistogramString,
+                                                        WeightedHistogramingAccumulator>;
 
-}  // namespace Gaudi::Accumulators
+} // namespace Gaudi::Accumulators
 
 #endif
 
@@ -137,7 +138,7 @@ struct DDCaloDigi final : DDCaloDigi_t {
   StatusCode initialize() override;
 
   retType operator()(const edm4hep::SimCalorimeterHitCollection& simCaloHits,
-                     const edm4hep::EventHeaderCollection&       headers) const override;
+                     const edm4hep::EventHeaderCollection& headers) const override;
 
 private:
   // check if input collection is ECAL or HCAL
@@ -145,7 +146,7 @@ private:
       this, "InputColIsECAL", {true}, "Input SimCalorimeterHit collection is ECAL? If false, then is HCAL."};
 
   // digitazing parameters for ECAL and HCAL
-  Gaudi::Property<float>       m_thresholdEcal{this, "ECALThreshold", {5.0e-5f}, "Threshold for ECAL Hits in GeV"};
+  Gaudi::Property<float> m_thresholdEcal{this, "ECALThreshold", {5.0e-5f}, "Threshold for ECAL Hits in GeV"};
   Gaudi::Property<std::string> m_unitThresholdEcal{
       this,
       "ECALThresholdUnit",
@@ -158,8 +159,8 @@ private:
       "HCALThresholdUnit",
       {"GeV"},
       "Unit for HCAL Threshold. Can be \"GeV\", \"MIP\" or \"px\". MIP and px need properly set calibration constants"};
-  Gaudi::Property<std::vector<int>>   m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECAL Layers"};
-  Gaudi::Property<std::vector<int>>   m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
+  Gaudi::Property<std::vector<int>> m_ecalLayers{this, "ECALLayers", {20, 100}, "Index of ECAL Layers"};
+  Gaudi::Property<std::vector<int>> m_hcalLayers{this, "HCALLayers", {100}, "Index of HCAL Layers"};
   Gaudi::Property<std::vector<double>> m_calibrCoeffEcal{
       this, "CalibrECAL", {40.91f, 81.81f}, "Calibration coefficients for ECAL"};
   Gaudi::Property<std::vector<double>> m_calibrCoeffHcalBarrel{
@@ -171,9 +172,9 @@ private:
   Gaudi::Property<int> m_digitalEcal{this, "IfDigitalEcal", {0}, "Digital ECAL"};
   Gaudi::Property<int> m_mapsEcalCorrection{
       this, "MapsEcalCorrection", {0}, "Ecal correction for theta dependency of calibration for MAPS"};
-  Gaudi::Property<int>   m_digitalHcal{this, "IfDigitalHcal", {0}, "Digital Hcal"};
-  Gaudi::Property<int>   m_ecalGapCorrection{this, "ECALGapCorrection", {1}, "Correct for ECAL gaps"};
-  Gaudi::Property<int>   m_hcalGapCorrection{this, "HCALGapCorrection", {1}, "Correct for HCAL gaps"};
+  Gaudi::Property<int> m_digitalHcal{this, "IfDigitalHcal", {0}, "Digital Hcal"};
+  Gaudi::Property<int> m_ecalGapCorrection{this, "ECALGapCorrection", {1}, "Correct for ECAL gaps"};
+  Gaudi::Property<int> m_hcalGapCorrection{this, "HCALGapCorrection", {1}, "Correct for HCAL gaps"};
   Gaudi::Property<float> m_ecalEndcapCorrectionFactor{
       this, "ECALEndcapCorrectionFactor", {1.025f}, "Energy correction for ECAL endcap"};
   Gaudi::Property<float> m_hcalEndcapCorrectionFactor{
@@ -410,15 +411,17 @@ private:
       this, "HCAL_elec_noise_mips", {0.}, "Typical electronics noise for HCAL (in MIP units)"};
   Gaudi::Property<float> m_hcalMaxDynMip{
       this, "HCAL_maxDynamicRange_MIP", {2500.}, "Maximum of electronis dynamic range for HCAL (in MIPs)"};
-  //Gaudi::Property<int> m_hcalStrip_default_nVirt{this, "StripHcal_default_nVirtualCells", {9}, "Default number of virtual cells (used if not found in gear file)"};
-  //Gaudi::Property<std::string> m_hcal_deafult_layer_config{this, "HCAL_default_layerConfig", {"000000000000000"}, "Default HCAL layer configuration (used if not found in gear file"};
-  //Gaudi::Property<std::string> m_encodingStringVariable{this, "EncodingStringParameterName", "GlobalTrackerReadoutID",
-  //"The name of the DD4hep constant that contains the Encoding string for tracking detectors"};
+  // Gaudi::Property<int> m_hcalStrip_default_nVirt{this, "StripHcal_default_nVirtualCells", {9}, "Default number of
+  // virtual cells (used if not found in gear file)"}; Gaudi::Property<std::string> m_hcal_deafult_layer_config{this,
+  // "HCAL_default_layerConfig", {"000000000000000"}, "Default HCAL layer configuration (used if not found in gear
+  // file"}; Gaudi::Property<std::string> m_encodingStringVariable{this, "EncodingStringParameterName",
+  // "GlobalTrackerReadoutID", "The name of the DD4hep constant that contains the Encoding string for tracking
+  // detectors"};
 
-  SmartIF<IGeoSvc>         m_geoSvc;
+  SmartIF<IGeoSvc> m_geoSvc;
   SmartIF<IUniqueIDGenSvc> m_uidSvc;
 
-  //const float slop = 0.25; // (mm)
+  // const float slop = 0.25; // (mm)
 
   virtual void fillECALGaps(std::vector<edm4hep::MutableCalorimeterHit*> m_calHitsByStaveLayer[MAX_STAVES][MAX_LAYERS],
                             std::vector<int> m_calHitsByStaveLayerModule[MAX_STAVES][MAX_LAYERS]) const;
@@ -434,9 +437,9 @@ private:
   float siliconDigi(float energy, CLHEP::MTwistEngine&) const;
   float scintillatorDigi(float energy, bool isEcal, CLHEP::MTwistEngine&) const;
 
-  void                                 checkConsistency(std::string_view colName, long layer) const;
-  std::pair<int, int>                  getLayerProperties(std::string_view colName, long layer) const;
-  int                                  getStripOrientationFromColName(std::string_view colName) const;
+  void checkConsistency(std::string_view colName, long layer) const;
+  std::pair<int, int> getLayerProperties(std::string_view colName, long layer) const;
+  int getStripOrientationFromColName(std::string_view colName) const;
   dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) const;
 
   float m_zOfEcalEndcap = 0.0;
@@ -451,12 +454,12 @@ private:
 
   // internal variables
   mutable int m_countWarnings = 0;
-  std::string m_ecalLayout    = "";
+  std::string m_ecalLayout = "";
 
   std::map<int, float> m_ECAL_cell_miscalibs{};
-  std::map<int, bool>  m_ECAL_cell_dead{};
+  std::map<int, bool> m_ECAL_cell_dead{};
   std::map<int, float> m_HCAL_cell_miscalibs{};
-  std::map<int, bool>  m_HCAL_cell_dead{};
+  std::map<int, bool> m_HCAL_cell_dead{};
 
   std::vector<std::pair<int, int>> m_layerTypes;
 
