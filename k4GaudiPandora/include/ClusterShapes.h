@@ -1,5 +1,5 @@
-#ifndef ClusterShapes_h
-#define ClusterShapes_h
+#ifndef K4GAUDIPANDORA_CLUSTERSHAPES_H
+#define K4GAUDIPANDORA_CLUSTERSHAPES_H
 
 #include <array>
 #include <vector>
