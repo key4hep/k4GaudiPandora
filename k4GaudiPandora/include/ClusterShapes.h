@@ -46,55 +46,6 @@ public:
   // this is (for now) a pure dummy to allow MarlinPandora development!
   float* getEigenVecInertiaErrors();
 
-  /**
-   * performs a least square fit on a helix path in space, which
-   * which is defined as (Cartesian coordiantes):
-   *
-   * 1. parametrisation:
-   * x[i] = x0 + R*cos(b*z[i] + phi0)
-   * y[i] = y0 + R*sin(b*z[i] + phi0)
-   * z[i] = z[i],
-   * where x0,y0,R,b and phi0 are the parameters to be fitted and
-   * x[i],y[i],z[i] are the (Cartesian) coordiantes of the space
-   * points.
-   *
-   * 2. parametrisation:
-   * x[i] = x0 + R*cos(phi)
-   * y[i] = y0 + R*sin(phi)
-   * z[i] = z0 + b*phi
-   * and phi = atan2( y[i]-y0 , x[i]-x0 ),
-   * where x0,y0,z0,R and b are the parameters to be fitted and
-   * x[i],y[i],z[i] are the (Cartesian) coordiantes of the space
-   * points.
-   *
-   * The method returns 1 if an error occured and 0 if not.
-   *
-   * The following output/input parameters are returned/needed:
-   *
-   * OUTPUTS:
-   * @param parameter     : array of parameters to be fitted.
-   *                        For parametrisation 1: parameter[5] = {x0,y0,R,b,phi0}
-   *                        For parametrisation 2: parameter[5] = {x0,y0,z0,R,b}
-   * @param dparameter    : error on the parameters, that means:
-   *                        dparameter[i] = sqrt( CovarMatrix[i][i] )
-   * @param chi2          : chi2 of the fit
-   * @param distmax       : maximal distance between the points x[i],y[i]
-   *                        z[i] and the fitted function
-   *
-   * INPUTS:
-   * @param parametrisation : 1 for first and 2 for second parametrisation (see above)
-   * @param max_iter        : maximal number of iterations, before fit cancels
-   * @param status_out      : if set to 1, only the initial parameters of
-   *                          the fit are calculated and are stored in
-   *                          parameter. The entries of dparameter are
-   *                          set to 0.0
-   */
-  int FitHelix(int max_iter, int status_out, int parametrisation, double* parameter, double* dparameter, double& chi2,
-               double& distmax, int direction = 1);
-
-  int FitHelix(int max_iter, int status_out, int parametrisation, float* parameter, float* dparameter, float& chi2,
-               float& distmax, int direction = 1);
-
 private:
   int m_nHits;
 
@@ -121,13 +72,6 @@ private:
   void findGravity();
   void findInertia();
   void findWidth();
-  double DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz, double phi0,
-                       std::array<double, 2>& distRPhiZ);
-
-  // private methods for non-linear, multidim. fitting (helix)
-  // static int functParametrisation1(const gsl_vector* par, void* data, gsl_vector* f);
-  // static int dfunctParametrisation1(const gsl_vector* par, void* d, gsl_matrix* J);
-  // static int fdfParametrisation1(const gsl_vector* par, void* d, gsl_vector* f, gsl_matrix* J);
 };
 
 #endif
