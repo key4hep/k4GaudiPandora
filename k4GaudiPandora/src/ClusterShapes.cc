@@ -349,9 +349,8 @@ ClusterShapes::ClusterShapes(int nhits, float* a, float* x, float* y, float* z)
     :
 
       m_nHits(nhits), m_aHit(nhits, 0.0), m_xHit(nhits, 0.0), m_yHit(nhits, 0.0), m_zHit(nhits, 0.0),
-      m_exHit(nhits, 1.0), m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0), m_xl(nhits, 0.0), m_xt(nhits, 0.0),
-      m_t(nhits, 0.0), m_s(nhits, 0.0), m_types(nhits, 1), // all hits are assumed to be "cylindrical"
-
+      m_exHit(nhits, 1.0), m_eyHit(nhits, 1.0), m_ezHit(nhits, 1.0),
+      // all hits are assumed to be "cylindrical"
       m_ifNotGravity(1), m_ifNotInertia(1) {
   for (int i = 0; i < nhits; ++i) {
     m_aHit[i] = a[i];
@@ -710,8 +709,8 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   double chi2_nofit = 0.0;
   int iFirst = 1;
-  for (int ipoint(0); ipoint < m_nHits; ipoint++) {
-    double distRPZ[2];
+  for (int ipoint = 0; ipoint < m_nHits; ipoint++) {
+    std::array<double, 2> distRPZ;
     double Dist = DistanceHelix(m_xHit[ipoint], m_yHit[ipoint], m_zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
     double chi2rphi = distRPZ[0] / m_exHit[ipoint];
     chi2rphi = chi2rphi * chi2rphi;
@@ -831,8 +830,8 @@ int ClusterShapes::FitHelix(int max_iter, int status_out, int parametrisation, d
 
   iFirst = 1;
   double ddmax = 0.0;
-  for (int ipoint(0); ipoint < m_nHits; ipoint++) {
-    double distRPZ[2];
+  for (int ipoint = 0; ipoint < m_nHits; ipoint++) {
+    std::array<double, 2> distRPZ;
     double Dist = DistanceHelix(m_xHit[ipoint], m_yHit[ipoint], m_zHit[ipoint], X0, Y0, R0, bz, phi0, distRPZ);
     double chi2rphi = distRPZ[0] / m_exHit[ipoint];
     chi2rphi = chi2rphi * chi2rphi;
@@ -1029,7 +1028,7 @@ void ClusterShapes::findWidth() {
 */
 
 double ClusterShapes::DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz,
-                                    double phi0, double* distRPZ) {
+                                    double phi0, std::array<double, 2>& distRPZ) {
   double phi = atan2(y - Y0, x - X0);
   double R = sqrt((y - Y0) * (y - Y0) + (x - X0) * (x - X0));
   double dXY2 = (R - R0) * (R - R0);

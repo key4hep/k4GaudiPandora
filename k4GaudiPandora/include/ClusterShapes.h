@@ -105,11 +105,6 @@ private:
   std::vector<float> m_exHit;
   std::vector<float> m_eyHit;
   std::vector<float> m_ezHit;
-  std::vector<float> m_xl;
-  std::vector<float> m_xt;
-  std::vector<float> m_t;
-  std::vector<float> m_s;
-  std::vector<int> m_types;
 
   int m_ifNotGravity = 1;
   float m_totAmpl = 0.0;
@@ -127,7 +122,7 @@ private:
   void findInertia();
   void findWidth();
   double DistanceHelix(double x, double y, double z, double X0, double Y0, double R0, double bz, double phi0,
-                       double* distRPhiZ);
+                       std::array<double, 2>& distRPhiZ);
 
   // private methods for non-linear, multidim. fitting (helix)
   // static int functParametrisation1(const gsl_vector* par, void* data, gsl_vector* f);
