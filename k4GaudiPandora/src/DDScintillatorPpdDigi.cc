@@ -63,8 +63,8 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
     // 1. convert energy to expected # photoelectrons (via MIPs)
     float Npe = m_PEperMIP * energy / m_calibMIP;
 
-    //oh: commented out Daniel's digitisation model. (npe -> poisson -> saturation -> stoykov smearing).
-    // Stoykov smearing used with Gaussian shape for lack of better model.
+    // oh: commented out Daniel's digitisation model. (npe -> poisson -> saturation -> stoykov smearing).
+    //  Stoykov smearing used with Gaussian shape for lack of better model.
     /*
     // 2. smear according to poisson (PE statistics)
     npe = CLHEP::RandPoisson::shoot( npe );
@@ -84,16 +84,17 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
     }
   */
 
-    //AHCAL TB style digitisation: npe -> saturation -> binomial smearing
-    //shown to be mathematically equivalent to Daniel's model above, but slightly faster and automatically generates correct shape instead of Gaussian approximation
+    // AHCAL TB style digitisation: npe -> saturation -> binomial smearing
+    // shown to be mathematically equivalent to Daniel's model above, but slightly faster and automatically generates
+    // correct shape instead of Gaussian approximation
 
     if (m_Npix > 0) {
       // apply average SiPM saturation behaviour
       Npe = m_Npix * (1.0 - std::exp(-Npe / m_Npix));
 
-      //apply binomial smearing
-      float p = Npe / m_Npix;                                      // fraction of hit pixels on SiPM
-      Npe = CLHEP::RandBinomial::shoot(&randomEngine, m_Npix, p);  // # photoelectrons now quantised to integer pixels
+      // apply binomial smearing
+      float p = Npe / m_Npix;                                     // fraction of hit pixels on SiPM
+      Npe = CLHEP::RandBinomial::shoot(&randomEngine, m_Npix, p); // # photoelectrons now quantised to integer pixels
     }
 
     if (m_pixSpread > 0) {
@@ -118,7 +119,8 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
       float smearedNpix =
           m_misCalibNpix > 0 ? m_Npix * CLHEP::RandGauss::shoot(&randomEngine, 1.0, m_misCalibNpix) : m_Npix;
 
-      //oh: commented out daniel's implmentation of dealing with hits>smearedNpix. using linearisation of saturation-reconstruction for high amplitude hits instead.
+      // oh: commented out daniel's implmentation of dealing with hits>smearedNpix. using linearisation of
+      // saturation-reconstruction for high amplitude hits instead.
       /*
     // - this is to deal with case when #pe is larger than #pixels (would mean taking log of negative number)
     float epsilon=1; // any small number...
@@ -127,12 +129,13 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
     npe = -smearedNpix * std::log ( 1. - ( npe / smearedNpix ) );
     */
 
-      const float r =
-          0.95;  //this is the fraction of SiPM pixels fired above which a linear continuation of the saturation-reconstruction function is used. 0.95 of nPixel corresponds to a energy correction of factor ~3.
+      const float r = 0.95; // this is the fraction of SiPM pixels fired above which a linear continuation of the
+                            // saturation-reconstruction function is used. 0.95 of nPixel corresponds to a energy
+                            // correction of factor ~3.
 
-      if (Npe < r * smearedNpix) {  //current hit below linearisation threshold, reconstruct energy normally:
+      if (Npe < r * smearedNpix) { // current hit below linearisation threshold, reconstruct energy normally:
         Npe = -smearedNpix * std::log(1. - (Npe / smearedNpix));
-      } else {  //current hit is aove linearisation threshold, reconstruct using linear continuation function:
+      } else { // current hit is aove linearisation threshold, reconstruct using linear continuation function:
         Npe = 1 / (1 - r) * (Npe - r * smearedNpix) - smearedNpix * std::log(1 - r);
       }
     }

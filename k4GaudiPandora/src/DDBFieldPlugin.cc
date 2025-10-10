@@ -31,8 +31,7 @@
 
 #include "DD4hep/DD4hepUnits.h"
 
-DDBFieldPlugin::DDBFieldPlugin(const dd4hep::Detector& detector) : m_field(detector.field()) { /* nop */
-}
+DDBFieldPlugin::DDBFieldPlugin(const dd4hep::Detector& detector) : m_field(detector.field()) { /* nop */ }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 

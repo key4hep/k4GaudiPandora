@@ -58,12 +58,12 @@ public:
   void printParameters(MsgStream&);
 
 private:
-  float m_PEperMIP            = -99;
-  float m_calibMIP            = -99;
-  int   m_Npix                = -99;
-  float m_misCalibNpix        = 0;
-  float m_pixSpread           = 0;
-  float m_elecNoise           = 0;
+  float m_PEperMIP = -99;
+  float m_calibMIP = -99;
+  int m_Npix = -99;
+  float m_misCalibNpix = 0;
+  float m_pixSpread = 0;
+  float m_elecNoise = 0;
   float m_elecMaxDynRange_MIP = 0;
 };
 

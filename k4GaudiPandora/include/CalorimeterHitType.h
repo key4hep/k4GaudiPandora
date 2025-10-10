@@ -107,20 +107,20 @@ protected:
   int m_type;
 
   static const int fCaloType = 1;
-  static const int fCaloID   = 10;
-  static const int fLayout   = 1000;
-  static const int fLayer    = 10000;
+  static const int fCaloID = 10;
+  static const int fLayout = 1000;
+  static const int fLayer = 10000;
 };
 
 /** detailed string for calo type */
 std::ostream& operator<<(std::ostream& os, const CHT& cht);
 
-/** Return Layout based on the collection name, e.g. if name contains tolower("endcap") CHT::endcap is returned. In case no known layout
-    is found, CHT::any is returned.*/
+/** Return Layout based on the collection name, e.g. if name contains tolower("endcap") CHT::endcap is returned. In case
+   no known layout is found, CHT::any is returned.*/
 CHT::Layout layoutFromString(const std::string& name);
 
-/** Return caloID based on the collection name, e.g. if name contains tolower("HCal") CHT::hcal is returned. In case no known type
-    is found, CHT::unknown is returned.*/
+/** Return caloID based on the collection name, e.g. if name contains tolower("HCal") CHT::hcal is returned. In case no
+   known type is found, CHT::unknown is returned.*/
 CHT::CaloID caloIDFromString(const std::string& name);
 
 /** Return caloType from string, e.g. if name contains tolower("Had") CHT::had is returned. In case no known type

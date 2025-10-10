@@ -30,7 +30,7 @@
 #include "Pandora/Algorithm.h"
 
 namespace pandora {
-  class CaloHit;
+class CaloHit;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -41,16 +41,16 @@ namespace pandora {
 class DDExternalClusteringAlgorithm : public pandora::Algorithm {
 public:
   /**
-     *  @brief  Factory class for instantiating algorithm
-     */
+   *  @brief  Factory class for instantiating algorithm
+   */
   class Factory : public pandora::AlgorithmFactory {
   public:
     pandora::Algorithm* CreateAlgorithm() const;
   };
 
   /**
-     *  @brief  Default constructor
-     */
+   *  @brief  Default constructor
+   */
   DDExternalClusteringAlgorithm();
 
 private:
@@ -59,8 +59,8 @@ private:
 
   typedef std::map<const void*, const pandora::CaloHit*> ParentAddressToCaloHitMap;
 
-  std::string m_externalClusterCollectionName = "";    ///< The collection name for the external clusters
-  bool        m_flagClustersAsPhotons         = true;  ///< Whether to automatically flag new clusters as fixed photons
+  std::string m_externalClusterCollectionName = ""; ///< The collection name for the external clusters
+  bool m_flagClustersAsPhotons = true;              ///< Whether to automatically flag new clusters as fixed photons
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,4 +69,4 @@ inline pandora::Algorithm* DDExternalClusteringAlgorithm::Factory::CreateAlgorit
   return new DDExternalClusteringAlgorithm();
 }
 
-#endif  // #ifndef DDEXTERNALCLUSTERINGALGORITHM_H
+#endif // #ifndef DDEXTERNALCLUSTERINGALGORITHM_H

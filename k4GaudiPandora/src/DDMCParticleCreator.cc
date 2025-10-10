@@ -42,7 +42,7 @@
 
 #include <string>
 
-//forward declarations. See in DDPandoraPFANewProcessor.cc
+// forward declarations. See in DDPandoraPFANewProcessor.cc
 double getFieldFromCompact();
 
 DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, const pandora::Pandora* const pPandora)
@@ -55,7 +55,7 @@ DDMCParticleCreator::~DDMCParticleCreator() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent* const pLCEvent) const {
-  for (StringVector::const_iterator iter    = m_settings.m_mcParticleCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_mcParticleCollections.begin(),
                                     iterEnd = m_settings.m_mcParticleCollections.end();
        iter != iterEnd; ++iter) {
     try {
@@ -69,11 +69,11 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent*
             throw EVENT::Exception("Collection type mismatch");
 
           PandoraApi::MCParticle::Parameters mcParticleParameters;
-          mcParticleParameters.m_energy         = pMcParticle->getEnergy();
-          mcParticleParameters.m_particleId     = pMcParticle->getPDG();
+          mcParticleParameters.m_energy = pMcParticle->getEnergy();
+          mcParticleParameters.m_particleId = pMcParticle->getPDG();
           mcParticleParameters.m_mcParticleType = pandora::MC_3D;
           mcParticleParameters.m_pParentAddress = pMcParticle;
-          mcParticleParameters.m_momentum       = pandora::CartesianVector(
+          mcParticleParameters.m_momentum = pandora::CartesianVector(
               pMcParticle->getMomentum()[0], pMcParticle->getMomentum()[1], pMcParticle->getMomentum()[2]);
           mcParticleParameters.m_vertex = pandora::CartesianVector(
               pMcParticle->getVertex()[0], pMcParticle->getVertex()[1], pMcParticle->getVertex()[2]);
@@ -84,7 +84,7 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent*
                                   PandoraApi::MCParticle::Create(m_pandora, mcParticleParameters));
 
           // Create parent-daughter relationships
-          for (MCParticleVec::const_iterator itDaughter    = pMcParticle->getDaughters().begin(),
+          for (MCParticleVec::const_iterator itDaughter = pMcParticle->getDaughters().begin(),
                                              itDaughterEnd = pMcParticle->getDaughters().end();
                itDaughter != itDaughterEnd; ++itDaughter) {
             PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
@@ -108,20 +108,20 @@ pandora::StatusCode DDMCParticleCreator::CreateMCParticles(const EVENT::LCEvent*
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(const CollectionMaps& collectionMaps,
-                                                                              const TrackVector&    trackVector) const {
+                                                                              const TrackVector& trackVector) const {
   for (unsigned ik = 0; ik < trackVector.size(); ik++) {
     const edm4hep::Track* pTrack = trackVector.at(ik);
     // Get reconstructed momentum at dca
     const pandora::Helix helixFit(pTrack->getTrackStates(0).phi, pTrack->getTrackStates(0).D0,
                                   pTrack->getTrackStates(0).Z0, pTrack->getTrackStates(0).omega,
                                   pTrack->getTrackStates(0).tanLambda, m_bField);
-    const float          recoMomentum(helixFit.GetMomentum().GetMagnitude());
+    const float recoMomentum(helixFit.GetMomentum().GetMagnitude());
 
     // Use momentum magnitude to identify best mc particle
     edm4hep::MCParticle* pBestMCParticle = NULL;
-    float                bestDeltaMomentum(std::numeric_limits<float>::max());
+    float bestDeltaMomentum(std::numeric_limits<float>::max());
     try {
-      for (StringVector::const_iterator iter    = m_settings.m_TrackRelationCollections.begin(),
+      for (StringVector::const_iterator iter = m_settings.m_TrackRelationCollections.begin(),
                                         iterEnd = m_settings.m_TrackRelationCollections.end();
            iter != iterEnd; ++iter) {
         if (collectionMaps.collectionMap_TrkRel.find(*iter) == collectionMaps.collectionMap_TrkRel.end())
@@ -133,7 +133,7 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
             if (pMCRecoTrackerAssociationCollection.at(ic).getRec().id() != pTrack->getTrackerHits(ith).id())
               continue;
             const edm4hep::ConstSimTrackerHit pSimHit = pMCRecoTrackerAssociationCollection.at(ic).getSim();
-            const edm4hep::ConstMCParticle    ipa     = pSimHit.getMCParticle();
+            const edm4hep::ConstMCParticle ipa = pSimHit.getMCParticle();
             if (m_id_pMC_map->find(ipa.id()) == m_id_pMC_map->end())
               continue;
             const float trueMomentum(
@@ -141,7 +141,7 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
                     .GetMagnitude());
             const float deltaMomentum(std::fabs(recoMomentum - trueMomentum));
             if (deltaMomentum < bestDeltaMomentum) {
-              pBestMCParticle   = const_cast<edm4hep::MCParticle*>((*m_id_pMC_map)[ipa.id()]);
+              pBestMCParticle = const_cast<edm4hep::MCParticle*>((*m_id_pMC_map)[ipa.id()]);
               bestDeltaMomentum = deltaMomentum;
             }
           }
@@ -171,12 +171,13 @@ pandora::StatusCode DDMCParticleCreator::CreateTrackToMCParticleRelationships(co
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
-    const CollectionMaps& collectionMaps, const CalorimeterHitVector& calorimeterHitVector) const {
+pandora::StatusCode
+DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(const CollectionMaps& collectionMaps,
+                                                            const CalorimeterHitVector& calorimeterHitVector) const {
   typedef std::map<MCParticle*, float> MCParticleToEnergyWeightMap;
-  MCParticleToEnergyWeightMap          mcParticleToEnergyWeightMap;
+  MCParticleToEnergyWeightMap mcParticleToEnergyWeightMap;
 
-  for (StringVector::const_iterator iter    = m_settings.m_lcCaloHitRelationCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_lcCaloHitRelationCollections.begin(),
                                     iterEnd = m_settings.m_lcCaloHitRelationCollections.end();
        iter != iterEnd; ++iter) {
     if (collectionMaps.collectionMap_CaloRel.find(*iter) == collectionMaps.collectionMap_CaloRel.end())
@@ -195,8 +196,8 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
             const edm4hep::ConstSimCalorimeterHit pSimHit = pMCRecoCaloAssociationCollection.at(ic).getSim();
             for (int iCont = 0, iEnd = pSimHit.contributions_size(); iCont < iEnd; ++iCont) {
               edm4hep::ConstCaloHitContribution conb = pSimHit.getContributions(iCont);
-              const edm4hep::ConstMCParticle    ipa  = conb.getParticle();
-              float                             ien  = conb.getEnergy();
+              const edm4hep::ConstMCParticle ipa = conb.getParticle();
+              float ien = conb.getEnergy();
               if (m_id_pMC_map->find(ipa.id()) == m_id_pMC_map->end())
                 continue;
               const edm4hep::MCParticle* p_tmp = (*m_id_pMC_map)[ipa.id()];
@@ -204,7 +205,7 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
             }
           }
 
-          for (MCParticleToEnergyWeightMap::const_iterator mcParticleIter    = mcParticleToEnergyWeightMap.begin(),
+          for (MCParticleToEnergyWeightMap::const_iterator mcParticleIter = mcParticleToEnergyWeightMap.begin(),
                                                            mcParticleIterEnd = mcParticleToEnergyWeightMap.end();
                mcParticleIter != mcParticleIterEnd; ++mcParticleIter) {
             PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,

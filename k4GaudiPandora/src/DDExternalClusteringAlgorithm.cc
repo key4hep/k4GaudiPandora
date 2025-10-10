@@ -49,7 +49,7 @@ StatusCode DDExternalClusteringAlgorithm::Run() {
       return STATUS_CODE_SUCCESS;
 
     // Get external photon cluster collection
-    const EVENT::LCEvent* const      pLCEvent(DDPandoraPFANewProcessor::GetCurrentEvent(&(this->GetPandora())));
+    const EVENT::LCEvent* const pLCEvent(DDPandoraPFANewProcessor::GetCurrentEvent(&(this->GetPandora())));
     const EVENT::LCCollection* const pExternalClusterCollection =
         pLCEvent->getCollection(m_externalClusterCollectionName);
     const unsigned int nExternalClusters(pExternalClusterCollection->getNumberOfElements());
