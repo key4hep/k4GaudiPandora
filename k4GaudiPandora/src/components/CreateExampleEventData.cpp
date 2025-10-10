@@ -29,7 +29,7 @@ struct CreateExampleEventData final : k4FWCore::Producer<edm4hep::MCParticleColl
       : Producer(name, svcLoc, {}, KeyValues("OutputLocation", {"ExampleParticles"})) {}
 
   edm4hep::MCParticleCollection operator()() const override {
-    auto coll     = edm4hep::MCParticleCollection();
+    auto coll = edm4hep::MCParticleCollection();
     auto particle = coll.create();
     particle.setMass(m_exampleEnergy);
     info() << "Producing a particle with mass = " << m_exampleEnergy << " GeV" << endmsg;

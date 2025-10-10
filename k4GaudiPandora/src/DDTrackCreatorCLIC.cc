@@ -49,33 +49,26 @@
 #include <cmath>
 #include <limits>
 
-//forward declarations. See in DDPandoraPFANewProcessor.cc
+// forward declarations. See in DDPandoraPFANewProcessor.cc
 std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::Pandora* const pPandora)
-    : DDTrackCreatorBase(settings, pPandora),
-      m_trackerInnerR(0.f),
-      m_trackerOuterR(0.f),
-      m_trackerZmax(0.f),
-      m_cosTracker(0.f),
-      m_endcapDiskInnerRadii(DoubleVector()),
-      m_endcapDiskOuterRadii(DoubleVector()),
-      m_endcapDiskZPositions(DoubleVector()),
-      m_nEndcapDiskLayers(0),
-      m_barrelTrackerLayers(0),
+    : DDTrackCreatorBase(settings, pPandora), m_trackerInnerR(0.f), m_trackerOuterR(0.f), m_trackerZmax(0.f),
+      m_cosTracker(0.f), m_endcapDiskInnerRadii(DoubleVector()), m_endcapDiskOuterRadii(DoubleVector()),
+      m_endcapDiskZPositions(DoubleVector()), m_nEndcapDiskLayers(0), m_barrelTrackerLayers(0),
       m_tanLambdaEndcapDisk(0.f)
 
 {
   m_trackerInnerR = getTrackingRegionExtent()[0];
   m_trackerOuterR = getTrackingRegionExtent()[1];
-  m_trackerZmax   = getTrackingRegionExtent()[2];
+  m_trackerZmax = getTrackingRegionExtent()[2];
 
-  ///FIXME: Probably need to be something relating to last disk inner radius
+  /// FIXME: Probably need to be something relating to last disk inner radius
   m_cosTracker = m_trackerZmax / std::sqrt(m_trackerZmax * m_trackerZmax + m_trackerInnerR * m_trackerInnerR);
 
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
 
-  //Maybe we need to veto the vertex? That was done in the ILD case
+  // Maybe we need to veto the vertex? That was done in the ILD case
   const std::vector<dd4hep::DetElement>& barrelDets =
       dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
 
@@ -86,9 +79,9 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::
       dd4hep::rec::ZPlanarData* theExtension = 0;
 
       const dd4hep::DetElement& theDetector = *iter;
-      theExtension                          = theDetector.extension<dd4hep::rec::ZPlanarData>();
+      theExtension = theDetector.extension<dd4hep::rec::ZPlanarData>();
 
-      unsigned int N        = theExtension->layers.size();
+      unsigned int N = theExtension->layers.size();
       m_barrelTrackerLayers = m_barrelTrackerLayers + N;
 
       streamlog_out(DEBUG2) << " Adding layers for barrel tracker from DD4hep for " << theDetector.name()
@@ -103,7 +96,7 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::
   m_endcapDiskInnerRadii.clear();
   m_endcapDiskOuterRadii.clear();
 
-  //Instead of gear, loop over a provided list of forward (read: endcap) tracking detectors. For ILD this would be FTD
+  // Instead of gear, loop over a provided list of forward (read: endcap) tracking detectors. For ILD this would be FTD
 
   const std::vector<dd4hep::DetElement>& endcapDets =
       dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
@@ -114,7 +107,7 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::
       dd4hep::rec::ZDiskPetalsData* theExtension = 0;
 
       const dd4hep::DetElement& theDetector = *iter;
-      theExtension                          = theDetector.extension<dd4hep::rec::ZDiskPetalsData>();
+      theExtension = theDetector.extension<dd4hep::rec::ZDiskPetalsData>();
 
       unsigned int N = theExtension->layers.size();
 
@@ -125,7 +118,7 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, const pandora::
         dd4hep::rec::ZDiskPetalsData::LayerLayout thisLayer = theExtension->layers[i];
 
         // Create a disk to represent even number petals front side
-        //FIXME! VERIFY THAT TIS MAKES SENSE!
+        // FIXME! VERIFY THAT TIS MAKES SENSE!
         m_endcapDiskInnerRadii.push_back(thisLayer.distanceSensitive / dd4hep::mm);
         m_endcapDiskOuterRadii.push_back(thisLayer.distanceSensitive / dd4hep::mm +
                                          thisLayer.lengthSensitive / dd4hep::mm);
@@ -163,13 +156,13 @@ DDTrackCreatorCLIC::~DDTrackCreatorCLIC() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(EVENT::LCEvent* pLCEvent) {
-  for (StringVector::const_iterator iter    = m_settings.m_trackCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_trackCollections.begin(),
                                     iterEnd = m_settings.m_trackCollections.end();
        iter != iterEnd; ++iter) {
     try {
       const EVENT::LCCollection* pTrackCollection = pLCEvent->getCollection(*iter);
 
-      ///FIXME: Should really move to using surfaces
+      /// FIXME: Should really move to using surfaces
       for (int i = 0, iMax = pTrackCollection->getNumberOfElements(); i < iMax; ++i) {
         EVENT::Track* pTrack = dynamic_cast<Track*>(pTrackCollection->getElementAt(i));
 
@@ -187,12 +180,15 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(EVENT::LCEvent* pLCEvent) {
         //                     {
         //                         int expectedEndcapDiskHits(0);
         //
-        //                         for (unsigned int iEndcapDiskLayer = 0; iEndcapDiskLayer < m_nEndcapDiskLayers; ++iEndcapDiskLayer)
+        //                         for (unsigned int iEndcapDiskLayer = 0; iEndcapDiskLayer < m_nEndcapDiskLayers;
+        //                         ++iEndcapDiskLayer)
         //                         {
         //
         //                             //FIXME: Does not take into account spiral endcap
-        //                             if ((tanLambda > m_endcapDiskZPositions[iEndcapDiskLayer] / m_endcapDiskOuterRadii[iEndcapDiskLayer]) &&
-        //                                 (tanLambda < m_endcapDiskZPositions[iEndcapDiskLayer] / m_endcapDiskInnerRadii[iEndcapDiskLayer]))
+        //                             if ((tanLambda > m_endcapDiskZPositions[iEndcapDiskLayer] /
+        //                             m_endcapDiskOuterRadii[iEndcapDiskLayer]) &&
+        //                                 (tanLambda < m_endcapDiskZPositions[iEndcapDiskLayer] /
+        //                                 m_endcapDiskInnerRadii[iEndcapDiskLayer]))
         //                             {
         //                                 expectedEndcapDiskHits++;
         //                             }
@@ -200,45 +196,48 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(EVENT::LCEvent* pLCEvent) {
         //
         //                         minTrackHits = std::max(m_settings.m_minEndcapDiskTrackHits, expectedEndcapDiskHits);
         //
-        //                         streamlog_out(DEBUG0)<<"XXX minTrackHits: "<<minTrackHits<<" m_minEndcapDiskTrackHits: "<<m_settings.m_minEndcapDiskTrackHits<<" expectedEndcapDiskHits: "<<expectedEndcapDiskHits<<std::endl;
+        //                         streamlog_out(DEBUG0)<<"XXX minTrackHits: "<<minTrackHits<<"
+        //                         m_minEndcapDiskTrackHits: "<<m_settings.m_minEndcapDiskTrackHits<<"
+        //                         expectedEndcapDiskHits: "<<expectedEndcapDiskHits<<std::endl;
         //                     }
         //
         //                     const int nTrackHits(static_cast<int>(pTrack->getTrackerHits().size()));
         //
         //                     if ((nTrackHits < minTrackHits) || (nTrackHits > m_settings.m_maxTrackHits)){
-        //                         streamlog_out(DEBUG0)<<"XXX Dropping track due to nTrackHits= "<<nTrackHits<<" . minTrackHits: "<<minTrackHits<<" maxTrackHits: "<<m_settings.m_maxTrackHits<<std::endl;
-        //                         continue;
+        //                         streamlog_out(DEBUG0)<<"XXX Dropping track due to nTrackHits= "<<nTrackHits<<" .
+        //                         minTrackHits: "<<minTrackHits<<" maxTrackHits:
+        //                         "<<m_settings.m_maxTrackHits<<std::endl; continue;
         //                     }
 
         // Proceed to create the pandora track
         lc_content::LCTrackParameters trackParameters;
-        trackParameters.m_d0             = pTrack->getD0();
-        trackParameters.m_z0             = pTrack->getZ0();
+        trackParameters.m_d0 = pTrack->getD0();
+        trackParameters.m_z0 = pTrack->getZ0();
         trackParameters.m_pParentAddress = pTrack;
 
         // By default, assume tracks are charged pions
         const float signedCurvature(pTrack->getOmega());
         trackParameters.m_particleId = (signedCurvature > 0) ? pandora::PI_PLUS : pandora::PI_MINUS;
-        trackParameters.m_mass       = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
+        trackParameters.m_mass = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
 
         // Use particle id information from V0 and Kink finders
         TrackToPidMap::const_iterator trackPIDiter = m_trackToPidMap.find(pTrack);
 
         if (trackPIDiter != m_trackToPidMap.end()) {
           trackParameters.m_particleId = trackPIDiter->second;
-          trackParameters.m_mass       = pandora::PdgTable::GetParticleMass(trackPIDiter->second);
+          trackParameters.m_mass = pandora::PdgTable::GetParticleMass(trackPIDiter->second);
         }
 
         if (0.f != signedCurvature)
           trackParameters.m_charge = static_cast<int>(signedCurvature / std::fabs(signedCurvature));
 
         try {
-          //FIXME: Should consider adding a try-catch block to check
-          //against cases where a track has invalid parameters like
-          //very small omega. Especially for omega<epsilon=1e-7,
-          //pandora throws a pandora::StatusCodeException
+          // FIXME: Should consider adding a try-catch block to check
+          // against cases where a track has invalid parameters like
+          // very small omega. Especially for omega<epsilon=1e-7,
+          // pandora throws a pandora::StatusCodeException
           //&statusCodeException which is not caught.
-          //FIXED: if an exception happens we ignore the track
+          // FIXED: if an exception happens we ignore the track
 
           this->GetTrackStates(pTrack, trackParameters);
           this->TrackReachesECAL(pTrack, trackParameters);
@@ -270,7 +269,7 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(EVENT::LCEvent* pLCEvent) {
   return pandora::STATUS_CODE_SUCCESS;
 }
 
-bool DDTrackCreatorCLIC::PassesQualityCuts(const EVENT::Track* const            pTrack,
+bool DDTrackCreatorCLIC::PassesQualityCuts(const EVENT::Track* const pTrack,
                                            const PandoraApi::Track::Parameters& trackParameters) const {
   // First simple sanity checks
   if (trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetMagnitude() <
@@ -288,7 +287,7 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const EVENT::Track* const            
 
   // Check momentum uncertainty is reasonable to use track
   const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float                     sigmaPOverP(std::sqrt(pTrack->getCovMatrix()[5]) / std::fabs(pTrack->getOmega()));
+  const float sigmaPOverP(std::sqrt(pTrack->getCovMatrix()[5]) / std::fabs(pTrack->getOmega()));
 
   if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
     streamlog_out(WARNING) << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
@@ -333,29 +332,29 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const EVENT::Track* const            
     const EVENT::IntVec& hitsBySubdetector(pTrack->getSubdetectorHitNumbers());
 
     // ---- use hitsInFit :
-    //Use flags to access detectors and then access their ids to get hits in fit by ID
+    // Use flags to access detectors and then access their ids to get hits in fit by ID
     //(new way of storing hits in MarlinTrkUtils)
 
-    //Initialize hits to 0
-    int                                    nBarrelTrackerHits = 0;
-    dd4hep::Detector&                      mainDetector       = dd4hep::Detector::getInstance();
+    // Initialize hits to 0
+    int nBarrelTrackerHits = 0;
+    dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
     const std::vector<dd4hep::DetElement>& barrelDets =
         dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL));
     for (std::vector<dd4hep::DetElement>::const_iterator iter = barrelDets.begin(), iterEnd = barrelDets.end();
          iter != iterEnd; ++iter) {
       const dd4hep::DetElement& theDetector = *iter;
-      int                       detId       = theDetector.id();
-      nBarrelTrackerHits += hitsBySubdetector[2 * detId - 2];  //Offset is 2 for hits in fit
+      int detId = theDetector.id();
+      nBarrelTrackerHits += hitsBySubdetector[2 * detId - 2]; // Offset is 2 for hits in fit
     }
 
-    int                                    nEndcapTrackerHits = 0;
+    int nEndcapTrackerHits = 0;
     const std::vector<dd4hep::DetElement>& endcapDets =
         dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
     for (std::vector<dd4hep::DetElement>::const_iterator iter = endcapDets.begin(), iterEnd = endcapDets.end();
          iter != iterEnd; ++iter) {
       const dd4hep::DetElement& theDetector = *iter;
-      int                       detId       = theDetector.id();
-      nEndcapTrackerHits += hitsBySubdetector[2 * detId - 2];  //Offset is 2 for hits in fit
+      int detId = theDetector.id();
+      nEndcapTrackerHits += hitsBySubdetector[2 * detId - 2]; // Offset is 2 for hits in fit
     }
 
     const int minTrackerHits =
@@ -377,7 +376,7 @@ bool DDTrackCreatorCLIC::PassesQualityCuts(const EVENT::Track* const            
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const      pTrack,
+void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const pTrack,
                                              PandoraApi::Track::Parameters& trackParameters) const {
   bool canFormPfo(false);
   bool canFormClusterlessPfo(false);
@@ -386,13 +385,13 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const      pTra
     const float d0(std::fabs(pTrack->getD0())), z0(std::fabs(pTrack->getZ0()));
 
     EVENT::TrackerHitVec trackerHitvec(pTrack->getTrackerHits());
-    float                rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
+    float rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
 
     for (EVENT::TrackerHitVec::const_iterator iter = trackerHitvec.begin(), iterEnd = trackerHitvec.end();
          iter != iterEnd; ++iter) {
       const double* pPosition((*iter)->getPosition());
-      const float   x(pPosition[0]), y(pPosition[1]), absoluteZ(std::fabs(pPosition[2]));
-      const float   r(std::sqrt(x * x + y * y));
+      const float x(pPosition[0]), y(pPosition[1]), absoluteZ(std::fabs(pPosition[2]));
+      const float r(std::sqrt(x * x + y * y));
 
       if (r < rInner)
         rInner = r;
@@ -403,12 +402,12 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const      pTra
 
     if (this->PassesQualityCuts(pTrack, trackParameters)) {
       const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-      const float                     pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
-      const float                     pT(std::sqrt(pX * pX + pY * pY));
+      const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
+      const float pT(std::sqrt(pX * pX + pY * pY));
 
       const float zCutForNonVertexTracks(m_trackerInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks);
-      const bool  passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
-                                    (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
+      const bool passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
+                                   (rInner < m_trackerInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
 
       const bool isV0(this->IsV0(pTrack));
       const bool isDaughter(this->IsDaughter(pTrack));
@@ -423,7 +422,8 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const      pTra
         canFormPfo = true;
       }
 
-      // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora cluster
+      // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora
+      // cluster
       const float particleMass(trackParameters.m_mass.Get());
       const float trackEnergy(std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass));
 
@@ -446,13 +446,13 @@ void DDTrackCreatorCLIC::DefineTrackPfoUsage(const EVENT::Track* const      pTra
     }
   }
 
-  trackParameters.m_canFormPfo            = canFormPfo;
+  trackParameters.m_canFormPfo = canFormPfo;
   trackParameters.m_canFormClusterlessPfo = canFormClusterlessPfo;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorCLIC::TrackReachesECAL(const EVENT::Track* const      pTrack,
+void DDTrackCreatorCLIC::TrackReachesECAL(const EVENT::Track* const pTrack,
                                           PandoraApi::Track::Parameters& trackParameters) const {
   // Calculate hit position information
   float hitZMin(std::numeric_limits<float>::max());
@@ -464,7 +464,7 @@ void DDTrackCreatorCLIC::TrackReachesECAL(const EVENT::Track* const      pTrack,
   int maxOccupiedEndcapDiskLayer(0);
 
   const EVENT::TrackerHitVec& trackerHitVec(pTrack->getTrackerHits());
-  const unsigned int          nTrackHits(trackerHitVec.size());
+  const unsigned int nTrackHits(trackerHitVec.size());
 
   for (unsigned int i = 0; i < nTrackHits; ++i) {
     const float x(static_cast<float>(trackerHitVec[i]->getPosition()[0]));
@@ -513,9 +513,9 @@ void DDTrackCreatorCLIC::TrackReachesECAL(const EVENT::Track* const      pTrack,
 
   // If track is lowpt, it may curl up and end inside tpc inner radius
   const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float                     cosAngleAtDca(std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude());
-  const float                     pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY());
-  const float                     pT(std::sqrt(pX * pX + pY * pY));
+  const float cosAngleAtDca(std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude());
+  const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY());
+  const float pT(std::sqrt(pX * pX + pY * pY));
 
   if ((cosAngleAtDca > m_cosTracker) ||
       (pT < m_settings.m_curvatureToMomentumFactor * m_settings.m_bField * m_trackerOuterR)) {

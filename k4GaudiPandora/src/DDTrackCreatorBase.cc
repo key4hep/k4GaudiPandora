@@ -34,9 +34,9 @@
 #include "UTIL/ILDConf.h"
 #include "UTIL/Operators.h"
 
-#include <LCObjects/LCTrack.h>
 #include "DDTrackCreatorBase.h"
 #include "Pandora/PdgTable.h"
+#include <LCObjects/LCTrack.h>
 
 #include <MarlinTrk/Factory.h>
 #include <MarlinTrk/IMarlinTrack.h>
@@ -49,27 +49,22 @@
 #include <cmath>
 #include <limits>
 
-//forward declaration
+// forward declaration
 std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings),
-      m_pandora(*pPandora),
-      m_trackVector(0),
-      m_v0TrackList(TrackList()),
-      m_parentTrackList(TrackList()),
-      m_daughterTrackList(TrackList()),
-      m_trackToPidMap(TrackToPidMap()),
+    : m_settings(settings), m_pandora(*pPandora), m_trackVector(0), m_v0TrackList(TrackList()),
+      m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()), m_trackToPidMap(TrackToPidMap()),
       m_minimalTrackStateRadiusSquared(0.f) {
-  const float ecalInnerR           = settings.m_eCalBarrelInnerR;
-  const float tsTolerance          = settings.m_trackStateTolerance;
+  const float ecalInnerR = settings.m_eCalBarrelInnerR;
+  const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
-  //wrap in shared_ptr with a dummy destructor
+  // wrap in shared_ptr with a dummy destructor
   m_trackingSystem = std::shared_ptr<MarlinTrk::IMarlinTrkSystem>(
       MarlinTrk::Factory::createMarlinTrkSystem(settings.m_trackingSystemName, nullptr, ""),
       [](MarlinTrk::IMarlinTrkSystem*) {});
   m_trackingSystem->init();
-  m_encoder        = std::make_shared<UTIL::BitField64>(lcio::LCTrackerCellID::encoding_string());
+  m_encoder = std::make_shared<UTIL::BitField64>(lcio::LCTrackerCellID::encoding_string());
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -90,7 +85,7 @@ pandora::StatusCode DDTrackCreatorBase::CreateTrackAssociations(const EVENT::LCE
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const EVENT::LCEvent* const pLCEvent) {
-  for (StringVector::const_iterator iter    = m_settings.m_kinkVertexCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_kinkVertexCollections.begin(),
                                     iterEnd = m_settings.m_kinkVertexCollections.end();
        iter != iterEnd; ++iter) {
     try {
@@ -104,7 +99,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const EVENT::LCEvent* const
             throw EVENT::Exception("Collection type mismatch");
 
           EVENT::ReconstructedParticle* pReconstructedParticle = pVertex->getAssociatedParticle();
-          const EVENT::TrackVec&        trackVec(pReconstructedParticle->getTracks());
+          const EVENT::TrackVec& trackVec(pReconstructedParticle->getTracks());
 
           if (this->IsConflictingRelationship(trackVec))
             continue;
@@ -124,25 +119,25 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const EVENT::LCEvent* const
               trackPdgCode = vertexPdgCode;
             } else {
               switch (vertexPdgCode) {
-                case pandora::PI_PLUS:
-                case pandora::K_PLUS:
-                  trackPdgCode = pandora::MU_PLUS;
-                  break;
-                case pandora::PI_MINUS:
-                case pandora::K_MINUS:
-                  trackPdgCode = pandora::MU_MINUS;
-                  break;
-                case pandora::HYPERON_MINUS_BAR:
-                case pandora::SIGMA_PLUS:
-                  trackPdgCode = pandora::PI_PLUS;
-                  break;
-                case pandora::SIGMA_MINUS:
-                case pandora::HYPERON_MINUS:
-                  trackPdgCode = pandora::PI_PLUS;
-                  break;
-                default:
-                  (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
-                  break;
+              case pandora::PI_PLUS:
+              case pandora::K_PLUS:
+                trackPdgCode = pandora::MU_PLUS;
+                break;
+              case pandora::PI_MINUS:
+              case pandora::K_MINUS:
+                trackPdgCode = pandora::MU_MINUS;
+                break;
+              case pandora::HYPERON_MINUS_BAR:
+              case pandora::SIGMA_PLUS:
+                trackPdgCode = pandora::PI_PLUS;
+                break;
+              case pandora::SIGMA_MINUS:
+              case pandora::HYPERON_MINUS:
+                trackPdgCode = pandora::PI_PLUS;
+                break;
+              default:
+                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+                break;
               }
             }
 
@@ -184,7 +179,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractKinks(const EVENT::LCEvent* const
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const EVENT::LCEvent* const pLCEvent) {
-  for (StringVector::const_iterator iter    = m_settings.m_prongSplitVertexCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_prongSplitVertexCollections.begin(),
                                     iterEnd = m_settings.m_prongSplitVertexCollections.end();
        iter != iterEnd; ++iter) {
     try {
@@ -198,7 +193,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const EVENT::LCEv
             throw EVENT::Exception("Collection type mismatch");
 
           EVENT::ReconstructedParticle* pReconstructedParticle = pVertex->getAssociatedParticle();
-          const EVENT::TrackVec&        trackVec(pReconstructedParticle->getTracks());
+          const EVENT::TrackVec& trackVec(pReconstructedParticle->getTracks());
 
           if (this->IsConflictingRelationship(trackVec))
             continue;
@@ -246,7 +241,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractProngsAndSplits(const EVENT::LCEv
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const EVENT::LCEvent* const pLCEvent) {
-  for (StringVector::const_iterator iter    = m_settings.m_v0VertexCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_v0VertexCollections.begin(),
                                     iterEnd = m_settings.m_v0VertexCollections.end();
        iter != iterEnd; ++iter) {
     try {
@@ -260,7 +255,7 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const EVENT::LCEvent* const p
             throw EVENT::Exception("Collection type mismatch");
 
           EVENT::ReconstructedParticle* pReconstructedParticle = pVertex->getAssociatedParticle();
-          const EVENT::TrackVec&        trackVec(pReconstructedParticle->getTracks());
+          const EVENT::TrackVec& trackVec(pReconstructedParticle->getTracks());
 
           if (this->IsConflictingRelationship(trackVec))
             continue;
@@ -276,21 +271,21 @@ pandora::StatusCode DDTrackCreatorBase::ExtractV0s(const EVENT::LCEvent* const p
             int trackPdgCode = pandora::UNKNOWN_PARTICLE_TYPE;
 
             switch (vertexPdgCode) {
-              case pandora::PHOTON:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::E_PLUS : trackPdgCode = pandora::E_MINUS;
-                break;
-              case pandora::LAMBDA:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PROTON : trackPdgCode = pandora::PI_MINUS;
-                break;
-              case pandora::LAMBDA_BAR:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PROTON_BAR;
-                break;
-              case pandora::K_SHORT:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
-                break;
-              default:
-                (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
-                break;
+            case pandora::PHOTON:
+              (pTrack->getOmega() > 0) ? trackPdgCode = pandora::E_PLUS : trackPdgCode = pandora::E_MINUS;
+              break;
+            case pandora::LAMBDA:
+              (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PROTON : trackPdgCode = pandora::PI_MINUS;
+              break;
+            case pandora::LAMBDA_BAR:
+              (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PROTON_BAR;
+              break;
+            case pandora::K_SHORT:
+              (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+              break;
+            default:
+              (pTrack->getOmega() > 0) ? trackPdgCode = pandora::PI_PLUS : trackPdgCode = pandora::PI_MINUS;
+              break;
             }
 
             m_trackToPidMap.insert(TrackToPidMap::value_type(pTrack, trackPdgCode));
@@ -332,7 +327,7 @@ bool DDTrackCreatorBase::IsConflictingRelationship(const EVENT::TrackVec& trackV
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorBase::GetTrackStates(const EVENT::Track* const      pTrack,
+void DDTrackCreatorBase::GetTrackStates(const EVENT::Track* const pTrack,
                                         PandoraApi::Track::Parameters& trackParameters) const {
   const TrackState* pTrackState = pTrack->getTrackState(TrackState::AtIP);
 
@@ -347,7 +342,7 @@ void DDTrackCreatorBase::GetTrackStates(const EVENT::Track* const      pTrack,
 
   this->CopyTrackState(pTrack->getTrackState(TrackState::AtFirstHit), trackParameters.m_trackStateAtStart);
 
-  //fg: curling TPC tracks have pointers to track segments stored -> need to get track states from last segment!
+  // fg: curling TPC tracks have pointers to track segments stored -> need to get track states from last segment!
   const EVENT::Track* pEndTrack = (pTrack->getTracks().empty() ? pTrack : pTrack->getTracks().back());
 
   this->CopyTrackState(pEndTrack->getTrackState(TrackState::AtLastHit), trackParameters.m_trackStateAtEnd);
@@ -390,7 +385,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(EVENT::Track* track, lc_content::L
     pandora::InputTrackState pandoraTrackState;
     this->CopyTrackState(trackAtCalo, pandoraTrackState);
     trackParameters.m_trackStates.push_back(pandoraTrackState);
-  } else {  // if track state is in endcap we do not repeat track state calculation, because the barrel cannot be hit
+  } else { // if track state is in endcap we do not repeat track state calculation, because the barrel cannot be hit
     streamlog_out(DEBUG5) << "Original track state is at Endcap" << std::endl;
     pandora::InputTrackState pandoraTrackState;
     this->CopyTrackState(trackAtCalo, pandoraTrackState);
@@ -398,15 +393,15 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(EVENT::Track* track, lc_content::L
     return;
   }
 
-  auto                        marlintrk  = std::unique_ptr<MarlinTrk::IMarlinTrack>(m_trackingSystem->createTrack());
-  const EVENT::TrackerHitVec& trkHits    = track->getTrackerHits();
-  const int                   nHitsTrack = trkHits.size();
+  auto marlintrk = std::unique_ptr<MarlinTrk::IMarlinTrack>(m_trackingSystem->createTrack());
+  const EVENT::TrackerHitVec& trkHits = track->getTrackerHits();
+  const int nHitsTrack = trkHits.size();
 
   for (int iHit = 0; iHit < nHitsTrack; ++iHit) {
     EVENT::TrackerHit* trkHit = trkHits[iHit];
     if (UTIL::BitSet32(
-            trkHit->getType())[UTIL::ILDTrkHitTypeBit::COMPOSITE_SPACEPOINT]) {  //it is a composite spacepoint
-      //Split it up and add both hits to the MarlinTrk
+            trkHit->getType())[UTIL::ILDTrkHitTypeBit::COMPOSITE_SPACEPOINT]) { // it is a composite spacepoint
+      // Split it up and add both hits to the MarlinTrk
       const EVENT::LCObjectVec& rawObjects = trkHit->getRawHits();
       for (unsigned k = 0; k < rawObjects.size(); k++) {
         EVENT::TrackerHit* rawHit = static_cast<EVENT::TrackerHit*>(rawObjects[k]);
@@ -434,16 +429,16 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(EVENT::Track* track, lc_content::L
   }
 
   double chi2 = -DBL_MAX;
-  int    ndf  = 0;
+  int ndf = 0;
 
   TrackStateImpl trackStateAtCaloEndcap;
 
   unsigned ecal_endcap_face_ID = lcio::ILDDetID::ECAL_ENDCAP;
-  int      detElementID        = 0;
-  m_encoder->reset();  // reset to 0
+  int detElementID = 0;
+  m_encoder->reset(); // reset to 0
   (*m_encoder)[lcio::LCTrackerCellID::subdet()] = ecal_endcap_face_ID;
-  (*m_encoder)[lcio::LCTrackerCellID::side()]   = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
-  (*m_encoder)[lcio::LCTrackerCellID::layer()]  = 0;
+  (*m_encoder)[lcio::LCTrackerCellID::side()] = tanL_is_positive ? lcio::ILDDetID::fwd : lcio::ILDDetID::bwd;
+  (*m_encoder)[lcio::LCTrackerCellID::layer()] = 0;
 
   return_error = marlintrk->propagateToLayer(m_encoder->lowWord(), trackStateAtCaloEndcap, chi2, ndf, detElementID,
                                              MarlinTrk::IMarlinTrack::modeForward);
@@ -451,13 +446,13 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(EVENT::Track* track, lc_content::L
 
   if (return_error == MarlinTrk::IMarlinTrack::success) {
     streamlog_out(DEBUG3) << "Endcap" << toString(&trackStateAtCaloEndcap) << std::endl;
-    const auto*  tsEP       = trackStateAtCaloEndcap.getReferencePoint();
+    const auto* tsEP = trackStateAtCaloEndcap.getReferencePoint();
     const double radSquared = (tsEP[0] * tsEP[0] + tsEP[1] * tsEP[1]);
     if (radSquared < m_minimalTrackStateRadiusSquared) {
       streamlog_out(DEBUG5) << "new track state is below tolerance radius" << std::endl;
       return;
     }
-    //for curling tracks the propagated track has the wrong z0 whereas it should be 0. really
+    // for curling tracks the propagated track has the wrong z0 whereas it should be 0. really
     if (std::abs(trackStateAtCaloEndcap.getZ0()) >
         std::abs(2. * M_PI / trackStateAtCaloEndcap.getOmega() * trackStateAtCaloEndcap.getTanLambda())) {
       trackStateAtCaloEndcap.setZ0(0.);
@@ -474,15 +469,15 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(EVENT::Track* track, lc_content::L
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const EVENT::Track* const pTrack) const {
-  const pandora::Helix            helix(pTrack->getPhi(), pTrack->getD0(), pTrack->getZ0(), pTrack->getOmega(),
-                                        pTrack->getTanLambda(), m_settings.m_bField);
+  const pandora::Helix helix(pTrack->getPhi(), pTrack->getD0(), pTrack->getZ0(), pTrack->getOmega(),
+                             pTrack->getTanLambda(), m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
 
   // First project to endcap
   float minGenericTime(std::numeric_limits<float>::max());
 
   pandora::CartesianVector bestECalProjection(0.f, 0.f, 0.f);
-  const int                signPz((helix.GetMomentum().GetZ() > 0.f) ? 1 : -1);
+  const int signPz((helix.GetMomentum().GetZ() > 0.f) ? 1 : -1);
   (void)helix.GetPointInZ(static_cast<float>(signPz) * m_settings.m_eCalEndCapInnerZ, referencePoint,
                           bestECalProjection, minGenericTime);
 
@@ -493,7 +488,7 @@ float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const EVENT::Track* co
     float twopi_n = 2. * M_PI / (static_cast<float>(m_settings.m_eCalBarrelInnerSymmetry));
 
     for (int i = 0; i < m_settings.m_eCalBarrelInnerSymmetry; ++i) {
-      float       genericTime(std::numeric_limits<float>::max());
+      float genericTime(std::numeric_limits<float>::max());
       const float phi(twopi_n * static_cast<float>(i) + m_settings.m_eCalBarrelInnerPhi0);
 
       const pandora::StatusCode statusCode(helix.GetPointInXY(
@@ -501,18 +496,18 @@ float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const EVENT::Track* co
           std::cos(phi + 0.5 * M_PI), std::sin(phi + 0.5 * M_PI), referencePoint, barrelProjection, genericTime));
 
       if ((pandora::STATUS_CODE_SUCCESS == statusCode) && (genericTime < minGenericTime)) {
-        minGenericTime     = genericTime;
+        minGenericTime = genericTime;
         bestECalProjection = barrelProjection;
       }
     }
   } else {
     // Cylinder
-    float                     genericTime(std::numeric_limits<float>::max());
+    float genericTime(std::numeric_limits<float>::max());
     const pandora::StatusCode statusCode(
         helix.GetPointOnCircle(m_settings.m_eCalBarrelInnerR, referencePoint, barrelProjection, genericTime));
 
     if ((pandora::STATUS_CODE_SUCCESS == statusCode) && (genericTime < minGenericTime)) {
-      minGenericTime     = genericTime;
+      minGenericTime = genericTime;
       bestECalProjection = barrelProjection;
     }
   }
@@ -525,7 +520,7 @@ float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const EVENT::Track* co
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorBase::CopyTrackState(const TrackState* const   pTrackState,
+void DDTrackCreatorBase::CopyTrackState(const TrackState* const pTrackState,
                                         pandora::InputTrackState& inputTrackState) const {
   if (!pTrackState)
     throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
@@ -546,42 +541,17 @@ void DDTrackCreatorBase::CopyTrackState(const TrackState* const   pTrackState,
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 DDTrackCreatorBase::Settings::Settings()
-    : m_trackCollections(StringVector()),
-      m_kinkVertexCollections(StringVector()),
-      m_prongVertexCollections(StringVector()),
-      m_splitVertexCollections(StringVector()),
-      m_v0VertexCollections(StringVector()),
-      m_prongSplitVertexCollections(StringVector()),
-      m_shouldFormTrackRelationships(1),
-      m_minTrackHits(5),
-      m_minFtdTrackHits(0),
-      m_maxTrackHits(5000.f),
-      m_d0TrackCut(50.f),
-      m_z0TrackCut(50.f),
-      m_usingNonVertexTracks(1),
-      m_usingUnmatchedNonVertexTracks(0),
-      m_usingUnmatchedVertexTracks(1),
-      m_unmatchedVertexTrackMaxEnergy(5.f),
-      m_d0UnmatchedVertexTrackCut(5.f),
-      m_z0UnmatchedVertexTrackCut(5.f),
-      m_zCutForNonVertexTracks(250.f),
-      m_reachesECalNBarrelTrackerHits(11),
-      m_reachesECalNFtdHits(4),
-      m_reachesECalBarrelTrackerOuterDistance(-100.f),
-      m_reachesECalMinFtdLayer(9),
-      m_reachesECalBarrelTrackerZMaxDistance(-50.f),
-      m_reachesECalFtdZMaxDistance(1.f),
-      m_curvatureToMomentumFactor(0.3f / 2000.f),
-      m_minTrackECalDistanceFromIp(100.f),
-      m_maxTrackSigmaPOverP(0.15f),
-      m_minMomentumForTrackHitChecks(1.f),
-      m_maxBarrelTrackerInnerRDistance(50.f),
-      m_minBarrelTrackerHitFractionOfExpected(0.2f),
-      m_minFtdHitsForBarrelTrackerHitFraction(2),
-      m_trackStateTolerance(0.f),
-      m_trackingSystemName("DDKalTest"),
-      m_bField(0.f),
-      m_eCalBarrelInnerSymmetry(0),
-      m_eCalBarrelInnerPhi0(0.f),
-      m_eCalBarrelInnerR(0.f),
-      m_eCalEndCapInnerZ(0.f) {}
+    : m_trackCollections(StringVector()), m_kinkVertexCollections(StringVector()),
+      m_prongVertexCollections(StringVector()), m_splitVertexCollections(StringVector()),
+      m_v0VertexCollections(StringVector()), m_prongSplitVertexCollections(StringVector()),
+      m_shouldFormTrackRelationships(1), m_minTrackHits(5), m_minFtdTrackHits(0), m_maxTrackHits(5000.f),
+      m_d0TrackCut(50.f), m_z0TrackCut(50.f), m_usingNonVertexTracks(1), m_usingUnmatchedNonVertexTracks(0),
+      m_usingUnmatchedVertexTracks(1), m_unmatchedVertexTrackMaxEnergy(5.f), m_d0UnmatchedVertexTrackCut(5.f),
+      m_z0UnmatchedVertexTrackCut(5.f), m_zCutForNonVertexTracks(250.f), m_reachesECalNBarrelTrackerHits(11),
+      m_reachesECalNFtdHits(4), m_reachesECalBarrelTrackerOuterDistance(-100.f), m_reachesECalMinFtdLayer(9),
+      m_reachesECalBarrelTrackerZMaxDistance(-50.f), m_reachesECalFtdZMaxDistance(1.f),
+      m_curvatureToMomentumFactor(0.3f / 2000.f), m_minTrackECalDistanceFromIp(100.f), m_maxTrackSigmaPOverP(0.15f),
+      m_minMomentumForTrackHitChecks(1.f), m_maxBarrelTrackerInnerRDistance(50.f),
+      m_minBarrelTrackerHitFractionOfExpected(0.2f), m_minFtdHitsForBarrelTrackerHitFraction(2),
+      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_eCalBarrelInnerSymmetry(0),
+      m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}

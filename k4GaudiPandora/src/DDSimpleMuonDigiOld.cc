@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "DDSimpleMuonDigi.h"
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCParameters.h>
 #include <EVENT/SimCalorimeterHit.h>
@@ -25,12 +26,11 @@
 #include <IMPL/LCRelationImpl.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/LCRelationNavigator.h>
-#include "DDSimpleMuonDigi.h"
 
 // #include <algorithm>
 // #include <string>
 #include <cctype>
-#include <cstdlib>  // abs
+#include <cstdlib> // abs
 
 #include "DD4hep/DD4hepUnits.h"
 #include "DD4hep/Detector.h"
@@ -91,16 +91,17 @@ void DDSimpleMuonDigi::init() {
   _nRun = -1;
   _nEvt = 0;
 
-  //fg: there cannot be any reasonable default for this string - so we set it to sth. that will cause an exception in case
-  //    the cellID encoding string is not in the collection:
+  // fg: there cannot be any reasonable default for this string - so we set it to sth. that will cause an exception in
+  // case
+  //     the cellID encoding string is not in the collection:
   UTIL::CellIDDecoder<CalorimeterHit>::setDefaultEncoding("undefined_cellID_encoding:100");
 
-  //Get the number of Layers in the Endcap
+  // Get the number of Layers in the Endcap
   int layersEndcap = 0, layersBarrel = 0;
 
   try {
-    dd4hep::Detector&                          mainDetector = dd4hep::Detector::getInstance();
-    dd4hep::DetElement                         theDetector  = mainDetector.detector(_detectorNameBarrel);
+    dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
+    dd4hep::DetElement theDetector = mainDetector.detector(_detectorNameBarrel);
     const dd4hep::rec::LayeredCalorimeterData* yokeBarrelParameters =
         theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
     layersBarrel = yokeBarrelParameters->layers.size();
@@ -108,8 +109,8 @@ void DDSimpleMuonDigi::init() {
     streamlog_out(WARNING) << "  oops - no Yoke Barrel available: " << e.what() << std::endl;
   }
   try {
-    dd4hep::Detector&                          mainDetector = dd4hep::Detector::getInstance();
-    dd4hep::DetElement                         theDetector  = mainDetector.detector(_detectorNameEndcap);
+    dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
+    dd4hep::DetElement theDetector = mainDetector.detector(_detectorNameEndcap);
     const dd4hep::rec::LayeredCalorimeterData* yokeEndcapParameters =
         theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
     layersEndcap = yokeEndcapParameters->layers.size();
@@ -117,9 +118,9 @@ void DDSimpleMuonDigi::init() {
     streamlog_out(WARNING) << "  oops - no Yoke Endcap available: " << e.what() << std::endl;
   }
 
-  //If the vectors are empty, we are keeping everything
+  // If the vectors are empty, we are keeping everything
   if (_layersToKeepBarrelVec.size() > 0) {
-    //layers start at 0
+    // layers start at 0
     for (int i = 0; i < layersBarrel; ++i) {
       _useLayersBarrelVec.push_back(false);
       for (IntVec::iterator iter = _layersToKeepBarrelVec.begin(); iter < _layersToKeepBarrelVec.end(); ++iter) {
@@ -132,7 +133,7 @@ void DDSimpleMuonDigi::init() {
   }
 
   if (_layersToKeepEndcapVec.size() > 0) {
-    //layers start at 0
+    // layers start at 0
     for (int i = 0; i < layersEndcap; ++i) {
       _useLayersEndcapVec.push_back(false);
       for (IntVec::iterator iter = _layersToKeepEndcapVec.begin(); iter < _layersToKeepEndcapVec.end(); ++iter) {
@@ -156,7 +157,7 @@ void DDSimpleMuonDigi::processEvent(LCEvent* evt) {
 
   LCCollectionVec* muoncol = new LCCollectionVec(LCIO::CALORIMETERHIT);
   // Relation collection CalorimeterHit, SimCalorimeterHit
-  LCCollection*             chschcol   = 0;
+  LCCollection* chschcol = 0;
   UTIL::LCRelationNavigator calohitNav = UTIL::LCRelationNavigator(LCIO::CALORIMETERHIT, LCIO::SIMCALORIMETERHIT);
 
   LCFlagImpl flag;
@@ -173,27 +174,27 @@ void DDSimpleMuonDigi::processEvent(LCEvent* evt) {
   for (unsigned int i(0); i < _muonCollections.size(); ++i) {
     std::string colName = _muonCollections[i];
 
-    //fg: need to establish the yoke subdetetcor part here
-    //    use collection name as cellID does not seem to have that information
+    // fg: need to establish the yoke subdetetcor part here
+    //     use collection name as cellID does not seem to have that information
     CHT::Layout caloLayout = layoutFromString(colName);
 
     try {
-      LCCollection* col                            = evt->getCollection(_muonCollections[i].c_str());
-      initString                                   = col->getParameters().getStringVal(LCIO::CellIDEncoding);
-      int                              numElements = col->getNumberOfElements();
+      LCCollection* col = evt->getCollection(_muonCollections[i].c_str());
+      initString = col->getParameters().getStringVal(LCIO::CellIDEncoding);
+      int numElements = col->getNumberOfElements();
       CellIDDecoder<SimCalorimeterHit> idDecoder(col);
       for (int j(0); j < numElements; ++j) {
-        SimCalorimeterHit* hit     = dynamic_cast<SimCalorimeterHit*>(col->getElementAt(j));
-        float              energy  = hit->getEnergy();
-        int                cellid  = hit->getCellID0();
-        int                cellid1 = hit->getCellID1();
-        //Get The LayerNumber
+        SimCalorimeterHit* hit = dynamic_cast<SimCalorimeterHit*>(col->getElementAt(j));
+        float energy = hit->getEnergy();
+        int cellid = hit->getCellID0();
+        int cellid1 = hit->getCellID1();
+        // Get The LayerNumber
         unsigned int layer = abs(idDecoder(hit)[_cellIDLayerString]);
-        //Check if we want to use this layer, else go to the next hit
+        // Check if we want to use this layer, else go to the next hit
         if (!useLayer(caloLayout, layer))
           continue;
         float calibr_coeff(1.);
-        calibr_coeff    = _calibrCoeffMuon;
+        calibr_coeff = _calibrCoeffMuon;
         float hitEnergy = calibr_coeff * energy;
         if (hitEnergy > _maxHitEnergyMuon)
           hitEnergy = _maxHitEnergyMuon;
@@ -228,19 +229,19 @@ void DDSimpleMuonDigi::end() {}
 
 bool DDSimpleMuonDigi::useLayer(CHT::Layout caloLayout, unsigned int layer) {
   switch (caloLayout) {
-    case CHT::barrel:
-      if (layer > _useLayersBarrelVec.size() || _useLayersBarrelVec.size() == 0)
-        return true;
-      return _useLayersBarrelVec[layer];  //break not needed, because of return
-    case CHT::endcap:
-      if (layer > _useLayersEndcapVec.size() || _useLayersEndcapVec.size() == 0)
-        return true;
-      return _useLayersEndcapVec[layer];  //break not needed, because of return
-    //For all other cases, always keep the hit
-    default:
+  case CHT::barrel:
+    if (layer > _useLayersBarrelVec.size() || _useLayersBarrelVec.size() == 0)
       return true;
+    return _useLayersBarrelVec[layer]; // break not needed, because of return
+  case CHT::endcap:
+    if (layer > _useLayersEndcapVec.size() || _useLayersEndcapVec.size() == 0)
+      return true;
+    return _useLayersEndcapVec[layer]; // break not needed, because of return
+  // For all other cases, always keep the hit
+  default:
+    return true;
   }
-}  //useLayer
+} // useLayer
 
 float DDSimpleMuonDigi::computeHitTime(const EVENT::SimCalorimeterHit* h) const {
   if (nullptr == h) {

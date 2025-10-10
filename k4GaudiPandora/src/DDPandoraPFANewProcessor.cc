@@ -53,32 +53,34 @@ DDPandoraPFANewProcessor aDDPandoraPFANewProcessor;
 
 double getFieldFromCompact() {
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
-  const double      position[3]  = {0, 0, 0};  // position to calculate magnetic field at (the origin in this case)
-  double            magneticFieldVector[3] = {0, 0, 0};               // initialise object to hold magnetic field
-  mainDetector.field().magneticField(position, magneticFieldVector);  // get the magnetic field vector from DD4hep
+  const double position[3] = {0, 0, 0};      // position to calculate magnetic field at (the origin in this case)
+  double magneticFieldVector[3] = {0, 0, 0}; // initialise object to hold magnetic field
+  mainDetector.field().magneticField(position, magneticFieldVector); // get the magnetic field vector from DD4hep
 
-  return magneticFieldVector[2] / dd4hep::tesla;  // z component at (0,0,0)
+  return magneticFieldVector[2] / dd4hep::tesla; // z component at (0,0,0)
 }
 
-//Not needed anymore; to be removed
-// double getCoilOuterR(){
+// Not needed anymore; to be removed
+//  double getCoilOuterR(){
 //
-//   try{
-//     dd4hep::Detector & mainDetector = dd4hep::Detector::getInstance();
-//     const std::vector< dd4hep::DetElement>& theDetectors = dd4hep::DetectorSelector(mainDetector).detectors(  dd4hep::DetType::COIL ) ;
-//     //access the detelement and create a shape from the envelope since only minimal info needed
-//     dd4hep::Tube coilTube = dd4hep::Tube( theDetectors.at(0).volume().solid() )  ;
-//     return coilTube->GetRmax()/ dd4hep::mm;
-//   } catch ( std::exception & e ) {
+//    try{
+//      dd4hep::Detector & mainDetector = dd4hep::Detector::getInstance();
+//      const std::vector< dd4hep::DetElement>& theDetectors = dd4hep::DetectorSelector(mainDetector).detectors(
+//      dd4hep::DetType::COIL ) ;
+//      //access the detelement and create a shape from the envelope since only minimal info needed
+//      dd4hep::Tube coilTube = dd4hep::Tube( theDetectors.at(0).volume().solid() )  ;
+//      return coilTube->GetRmax()/ dd4hep::mm;
+//    } catch ( std::exception & e ) {
 //
-//           streamlog_out(ERROR)<< "BIG WARNING! CANNOT GET EXTENSION FOR COIL: "<<e.what()<<" MAKE SURE YOU CHANGE THIS!"<< std::endl;
+//            streamlog_out(ERROR)<< "BIG WARNING! CANNOT GET EXTENSION FOR COIL: "<<e.what()<<" MAKE SURE YOU CHANGE
+//            THIS!"<< std::endl;
 //
-//   }
+//    }
 //
-//   return 0;
-// }
+//    return 0;
+//  }
 
-///Not needed anymore. To be removed
+/// Not needed anymore. To be removed
 // DD4hep::DDRec::LayeredCalorimeterData * getExtension(std::string detectorName){
 //
 //
@@ -88,7 +90,8 @@ double getFieldFromCompact() {
 //     dd4hep::Detector & mainDetector = dd4hep::Detector::getInstance();
 //     const dd4hep::DetElement & theDetector = mainDetector.detector(detectorName);
 //     theExtension = theDetector.extension<DD4hep::DDRec::LayeredCalorimeterData>();
-//     //     std::cout<< "DEBUG: in getExtension(\""<<detectorName<<"\"): size of layers: "<<theExtension->layers.size()<<" positions not shown. "<<std::endl;
+//     //     std::cout<< "DEBUG: in getExtension(\""<<detectorName<<"\"): size of layers:
+//     "<<theExtension->layers.size()<<" positions not shown. "<<std::endl;
 //
 //     //     for(int i=0; i< theExtension->layers.size(); i++){
 //     //       std::cout<<theExtension->layers[i].distance/dd4hep::mm<<" ";
@@ -96,7 +99,8 @@ double getFieldFromCompact() {
 //     //     std::cout<<std::endl;
 //   } catch ( ... ){
 //
-//     streamlog_out(ERROR) << "BIG WARNING! EXTENSION DOES NOT EXIST FOR " << detectorName<<". MAKE SURE YOU CHANGE THIS!"<< std::endl;
+//     streamlog_out(ERROR) << "BIG WARNING! EXTENSION DOES NOT EXIST FOR " << detectorName<<". MAKE SURE YOU CHANGE
+//     THIS!"<< std::endl;
 //   }
 //
 //   return theExtension;
@@ -105,7 +109,7 @@ double getFieldFromCompact() {
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0) {
   dd4hep::rec::LayeredCalorimeterData* theExtension = 0;
 
-  dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
+  dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
   const std::vector<dd4hep::DetElement>& theDetectors =
       dd4hep::DetectorSelector(mainDetector).detectors(includeFlag, excludeFlag);
 
@@ -129,14 +133,14 @@ dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsi
 }
 
 std::vector<double> getTrackingRegionExtent() {
-  ///Rmin, Rmax, Zmax
+  /// Rmin, Rmax, Zmax
   std::vector<double> extent;
 
   extent.reserve(3);
 
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
 
-  extent[0] = 0.1;  ///FIXME! CLIC-specific: Inner radius was set to 0 for SiD-type detectors
+  extent[0] = 0.1; /// FIXME! CLIC-specific: Inner radius was set to 0 for SiD-type detectors
   extent[1] = mainDetector.constantAsDouble("tracker_region_rmax") / dd4hep::mm;
   extent[2] = mainDetector.constantAsDouble("tracker_region_zmax") / dd4hep::mm;
 
@@ -160,11 +164,11 @@ void DDPandoraPFANewProcessor::init() {
     streamlog_out(MESSAGE) << "DDPandoraPFANewProcessor - Init" << std::endl;
     this->FinaliseSteeringParameters();
 
-    m_pPandora         = new pandora::Pandora();
+    m_pPandora = new pandora::Pandora();
     m_pGeometryCreator = new DDGeometryCreator(m_geometryCreatorSettings, m_pPandora);
-    m_pCaloHitCreator  = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora);
+    m_pCaloHitCreator = new DDCaloHitCreator(m_caloHitCreatorSettings, m_pPandora);
 
-    ///FIXME: IMPLEMENT FACTORY
+    /// FIXME: IMPLEMENT FACTORY
     if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
       m_pTrackCreator = new DDTrackCreatorCLIC(m_trackCreatorSettings, m_pPandora);
     else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
@@ -173,7 +177,7 @@ void DDPandoraPFANewProcessor::init() {
       streamlog_out(ERROR) << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << std::endl;
 
     m_pDDMCParticleCreator = new DDMCParticleCreator(m_mcParticleCreatorSettings, m_pPandora);
-    m_pDDPfoCreator        = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
+    m_pDDPfoCreator = new DDPfoCreator(m_pfoCreatorSettings, m_pPandora);
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, this->RegisterUserComponents());
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_pGeometryCreator->CreateGeometry());
@@ -284,10 +288,10 @@ pandora::StatusCode DDPandoraPFANewProcessor::RegisterUserComponents() const {
     PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                              PandoraApi::SetBFieldPlugin(*m_pPandora, new DDBFieldPlugin(mainDetector)));
   } else {
-    PANDORA_RETURN_RESULT_IF(
-        pandora::STATUS_CODE_SUCCESS, !=,
-        LCContent::RegisterBFieldPlugin(*m_pPandora, m_settings.m_innerBField, m_settings.m_muonBarrelBField,
-                                        m_settings.m_muonEndCapBField));
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                             LCContent::RegisterBFieldPlugin(*m_pPandora, m_settings.m_innerBField,
+                                                             m_settings.m_muonBarrelBField,
+                                                             m_settings.m_muonEndCapBField));
   }
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
@@ -300,13 +304,13 @@ pandora::StatusCode DDPandoraPFANewProcessor::RegisterUserComponents() const {
                                                                 new DDExternalClusteringAlgorithm::Factory));
 
   lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
-  softwareCompensationParameters.m_softCompParameters              = m_settings.m_softCompParameters;
-  softwareCompensationParameters.m_softCompEnergyDensityBins       = m_settings.m_softCompEnergyDensityBins;
-  softwareCompensationParameters.m_energyDensityFinalBin           = m_settings.m_energyDensityFinalBin;
+  softwareCompensationParameters.m_softCompParameters = m_settings.m_softCompParameters;
+  softwareCompensationParameters.m_softCompEnergyDensityBins = m_settings.m_softCompEnergyDensityBins;
+  softwareCompensationParameters.m_energyDensityFinalBin = m_settings.m_energyDensityFinalBin;
   softwareCompensationParameters.m_maxClusterEnergyToApplySoftComp = m_settings.m_maxClusterEnergyToApplySoftComp;
-  softwareCompensationParameters.m_minCleanHitEnergy               = m_settings.m_minCleanHitEnergy;
-  softwareCompensationParameters.m_minCleanHitEnergyFraction       = m_settings.m_minCleanHitEnergyFraction;
-  softwareCompensationParameters.m_minCleanCorrectedHitEnergy      = m_settings.m_minCleanCorrectedHitEnergy;
+  softwareCompensationParameters.m_minCleanHitEnergy = m_settings.m_minCleanHitEnergy;
+  softwareCompensationParameters.m_minCleanHitEnergyFraction = m_settings.m_minCleanHitEnergyFraction;
+  softwareCompensationParameters.m_minCleanCorrectedHitEnergy = m_settings.m_minCleanCorrectedHitEnergy;
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                            LCContent::RegisterSoftwareCompensationEnergyCorrection(*m_pPandora, "SoftwareCompensation",
@@ -568,11 +572,11 @@ void DDPandoraPFANewProcessor::ProcessSteeringFile() {
 
   // Parameters for hybrid ECAL
   // Energy to MIP for Si-layers and Sc-layers, respectively.
-  //Si
+  // Si
   registerProcessorParameter("ECalSiToMipCalibration", "The calibration from deposited Si-layer energy to mip",
                              m_caloHitCreatorSettings.m_eCalSiToMip, float(1.));
 
-  //Sc
+  // Sc
   registerProcessorParameter("ECalScToMipCalibration", "The calibration from deposited Sc-layer energy to mip",
                              m_caloHitCreatorSettings.m_eCalScToMip, float(1.));
 
@@ -582,38 +586,38 @@ void DDPandoraPFANewProcessor::ProcessSteeringFile() {
                              "Threshold for creating calo hits in the Si-layers of ECAL, units mip",
                              m_caloHitCreatorSettings.m_eCalSiMipThreshold, float(0.));
 
-  //Sc
+  // Sc
   registerProcessorParameter("ECalScMipThreshold",
                              "Threshold for creating calo hits in the Sc-layers of ECAL, units mip",
                              m_caloHitCreatorSettings.m_eCalScMipThreshold, float(0.));
 
   // EcalToEM for Si-layers and Sc-layers, respectively.
-  //Si
+  // Si
   registerProcessorParameter("ECalSiToEMGeVCalibration", "The calibration from deposited Si-layer energy to EM energy",
                              m_caloHitCreatorSettings.m_eCalSiToEMGeV, float(1.));
 
-  //Sc
+  // Sc
   registerProcessorParameter("ECalScToEMGeVCalibration", "The calibration from deposited Sc-layer energy to EM energy",
                              m_caloHitCreatorSettings.m_eCalScToEMGeV, float(1.));
 
   // EcalToHad for Si-layers and Sc-layers of the endcaps, respectively.
-  //Si
+  // Si
   registerProcessorParameter("ECalSiToHadGeVCalibrationEndCap",
                              "The calibration from deposited Si-layer energy on the enecaps to hadronic energy",
                              m_caloHitCreatorSettings.m_eCalSiToHadGeVEndCap, float(1.));
 
-  //Sc
+  // Sc
   registerProcessorParameter("ECalScToHadGeVCalibrationEndCap",
                              "The calibration from deposited Sc-layer energy on the endcaps to hadronic energy",
                              m_caloHitCreatorSettings.m_eCalScToHadGeVEndCap, float(1.));
 
   // EcalToHad for Si-layers and Sc-layers of the barrel, respectively.
-  //Si
+  // Si
   registerProcessorParameter("ECalSiToHadGeVCalibrationBarrel",
                              "The calibration from deposited Si-layer energy on the barrel to hadronic energy",
                              m_caloHitCreatorSettings.m_eCalSiToHadGeVBarrel, float(1.));
 
-  //Sc
+  // Sc
   registerProcessorParameter("ECalScToHadGeVCalibrationBarrel",
                              "The calibration from deposited Sc-layer energy to the barrel hadronic energy",
                              m_caloHitCreatorSettings.m_eCalScToHadGeVBarrel, float(1.));
@@ -625,7 +629,7 @@ void DDPandoraPFANewProcessor::ProcessSteeringFile() {
   registerProcessorParameter("OutputEnergyCorrectionPoints", "The output energy points for hadronic energy correction",
                              m_settings.m_outputEnergyCorrectionPoints, FloatVector());
 
-  ///EXTRA PARAMETERS FROM NIKIFOROS
+  /// EXTRA PARAMETERS FROM NIKIFOROS
   registerProcessorParameter("TrackCreatorName", "The name of the DDTrackCreator implementation",
                              m_settings.m_trackCreatorName, std::string("DDTrackCreatorCLIC"));
 
@@ -679,8 +683,8 @@ void DDPandoraPFANewProcessor::ProcessSteeringFile() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
-  // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the processor,
-  // when the steering file is parsed e.g. the call to GEAR to get the inner bfield
+  // ATTN: This function seems to be necessary for operations that cannot easily be performed at construction of the
+  // processor, when the steering file is parsed e.g. the call to GEAR to get the inner bfield
   m_trackCreatorSettings.m_prongSplitVertexCollections = m_trackCreatorSettings.m_prongVertexCollections;
   m_trackCreatorSettings.m_prongSplitVertexCollections.insert(
       m_trackCreatorSettings.m_prongSplitVertexCollections.end(),
@@ -688,53 +692,54 @@ void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
 
   m_trackCreatorSettings.m_bField = getFieldFromCompact();
 
-  //Get ECal Barrel extension by type, ignore plugs and rings
+  // Get ECal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
-  //Get ECal Endcap extension by type, ignore plugs and rings
+  // Get ECal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalEndcapExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::ENDCAP),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
-  //Get HCal Barrel extension by type, ignore plugs and rings
+  // Get HCal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
-  //Get HCal Endcap extension by type, ignore plugs and rings
+  // Get HCal Endcap extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* hCalEndcapExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
-  //Get Muon Barrel extension by type, ignore plugs and rings
+  // Get Muon Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* muonBarrelExtension =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
-  //fg: muon endcap is not used :
-  // //Get Muon Endcap extension by type, ignore plugs and rings
-  // const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP), ( dd4hep::DetType::AUXILIARY ) );
+  // fg: muon endcap is not used :
+  //  //Get Muon Endcap extension by type, ignore plugs and rings
+  //  const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER |
+  //  dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP), ( dd4hep::DetType::AUXILIARY ) );
 
-  //Get COIL extension
+  // Get COIL extension
   const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL));
 
   m_trackCreatorSettings.m_eCalBarrelInnerSymmetry = eCalBarrelExtension->inner_symmetry;
-  m_trackCreatorSettings.m_eCalBarrelInnerPhi0     = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
-  m_trackCreatorSettings.m_eCalBarrelInnerR        = eCalBarrelExtension->extent[0] / dd4hep::mm;
-  m_trackCreatorSettings.m_eCalEndCapInnerZ        = eCalEndcapExtension->extent[2] / dd4hep::mm;
+  m_trackCreatorSettings.m_eCalBarrelInnerPhi0 = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
+  m_trackCreatorSettings.m_eCalBarrelInnerR = eCalBarrelExtension->extent[0] / dd4hep::mm;
+  m_trackCreatorSettings.m_eCalEndCapInnerZ = eCalEndcapExtension->extent[2] / dd4hep::mm;
 
-  m_caloHitCreatorSettings.m_eCalBarrelOuterZ             = eCalBarrelExtension->extent[3] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_hCalBarrelOuterZ             = hCalBarrelExtension->extent[3] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_muonBarrelOuterZ             = muonBarrelExtension->extent[3] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_coilOuterR                   = coilExtension->extent[1] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_eCalBarrelInnerPhi0          = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
-  m_caloHitCreatorSettings.m_eCalBarrelInnerSymmetry      = eCalBarrelExtension->inner_symmetry;
-  m_caloHitCreatorSettings.m_hCalBarrelInnerPhi0          = hCalBarrelExtension->inner_phi0 / dd4hep::rad;
-  m_caloHitCreatorSettings.m_hCalBarrelInnerSymmetry      = hCalBarrelExtension->inner_symmetry;
-  m_caloHitCreatorSettings.m_muonBarrelInnerPhi0          = muonBarrelExtension->inner_phi0 / dd4hep::rad;
-  m_caloHitCreatorSettings.m_muonBarrelInnerSymmetry      = muonBarrelExtension->inner_symmetry;
-  m_caloHitCreatorSettings.m_hCalEndCapOuterR             = hCalEndcapExtension->extent[1] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_hCalEndCapOuterZ             = hCalEndcapExtension->extent[3] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_hCalBarrelOuterR             = hCalBarrelExtension->extent[1] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_hCalBarrelOuterPhi0          = hCalBarrelExtension->outer_phi0 / dd4hep::rad;
-  m_caloHitCreatorSettings.m_hCalBarrelOuterSymmetry      = hCalBarrelExtension->outer_symmetry;
+  m_caloHitCreatorSettings.m_eCalBarrelOuterZ = eCalBarrelExtension->extent[3] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_hCalBarrelOuterZ = hCalBarrelExtension->extent[3] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_muonBarrelOuterZ = muonBarrelExtension->extent[3] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_coilOuterR = coilExtension->extent[1] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_eCalBarrelInnerPhi0 = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
+  m_caloHitCreatorSettings.m_eCalBarrelInnerSymmetry = eCalBarrelExtension->inner_symmetry;
+  m_caloHitCreatorSettings.m_hCalBarrelInnerPhi0 = hCalBarrelExtension->inner_phi0 / dd4hep::rad;
+  m_caloHitCreatorSettings.m_hCalBarrelInnerSymmetry = hCalBarrelExtension->inner_symmetry;
+  m_caloHitCreatorSettings.m_muonBarrelInnerPhi0 = muonBarrelExtension->inner_phi0 / dd4hep::rad;
+  m_caloHitCreatorSettings.m_muonBarrelInnerSymmetry = muonBarrelExtension->inner_symmetry;
+  m_caloHitCreatorSettings.m_hCalEndCapOuterR = hCalEndcapExtension->extent[1] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_hCalEndCapOuterZ = hCalEndcapExtension->extent[3] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_hCalBarrelOuterR = hCalBarrelExtension->extent[1] / dd4hep::mm;
+  m_caloHitCreatorSettings.m_hCalBarrelOuterPhi0 = hCalBarrelExtension->outer_phi0 / dd4hep::rad;
+  m_caloHitCreatorSettings.m_hCalBarrelOuterSymmetry = hCalBarrelExtension->outer_symmetry;
   m_caloHitCreatorSettings.m_hCalEndCapInnerSymmetryOrder = hCalEndcapExtension->inner_symmetry;
   ;
   m_caloHitCreatorSettings.m_hCalEndCapInnerPhiCoordinate = hCalEndcapExtension->inner_phi0 / dd4hep::rad;
@@ -742,11 +747,11 @@ void DDPandoraPFANewProcessor::FinaliseSteeringParameters() {
 
   // Get the magnetic field
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
-  const double      position[3]  = {0, 0, 0};  // position to calculate magnetic field at (the origin in this case)
-  double            magneticFieldVector[3] = {0, 0, 0};               // initialise object to hold magnetic field
-  mainDetector.field().magneticField(position, magneticFieldVector);  // get the magnetic field vector from DD4hep
+  const double position[3] = {0, 0, 0};      // position to calculate magnetic field at (the origin in this case)
+  double magneticFieldVector[3] = {0, 0, 0}; // initialise object to hold magnetic field
+  mainDetector.field().magneticField(position, magneticFieldVector); // get the magnetic field vector from DD4hep
 
-  m_settings.m_innerBField = magneticFieldVector[2] / dd4hep::tesla;  // z component at (0,0,0)
+  m_settings.m_innerBField = magneticFieldVector[2] / dd4hep::tesla; // z component at (0,0,0)
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -767,11 +772,7 @@ void DDPandoraPFANewProcessor::Reset() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 DDPandoraPFANewProcessor::Settings::Settings()
-    : m_innerBField(3.5f),
-      m_muonBarrelBField(-1.5f),
-      m_muonEndCapBField(0.01f),
-      m_inputEnergyCorrectionPoints(0),
-      m_outputEnergyCorrectionPoints(0),
-      m_trackCreatorName("")
+    : m_innerBField(3.5f), m_muonBarrelBField(-1.5f), m_muonEndCapBField(0.01f), m_inputEnergyCorrectionPoints(0),
+      m_outputEnergyCorrectionPoints(0), m_trackCreatorName("")
 
 {}

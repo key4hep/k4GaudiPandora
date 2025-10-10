@@ -38,8 +38,8 @@
 
 #include <utility>
 
-//Forward declarations. See DDPandoraPFANewProcessor.cc
-// dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
+// Forward declarations. See DDPandoraPFANewProcessor.cc
+//  dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 std::vector<double> getTrackingRegionExtent();
@@ -67,7 +67,7 @@ pandora::StatusCode DDGeometryCreator::CreateGeometry() const {
 
     streamlog_out(DEBUG) << "Creating geometry for detector " << detectorName << std::endl;
 
-    //Before it was checking the detector name for the "ILD" substring
+    // Before it was checking the detector name for the "ILD" substring
     if (m_settings.m_createGaps)
       this->SetILDSpecificGeometry(subDetectorTypeMap, subDetectorNameMap);
 
@@ -137,40 +137,40 @@ void DDGeometryCreator::SetMandatorySubDetectorParameters(SubDetectorTypeMap& su
 
   PandoraApi::Geometry::SubDetector::Parameters trackerParameters;
 
-  trackerParameters.m_subDetectorName        = "Tracker";
-  trackerParameters.m_subDetectorType        = pandora::INNER_TRACKER;
-  trackerParameters.m_innerRCoordinate       = getTrackingRegionExtent()[0];
-  trackerParameters.m_innerZCoordinate       = 0.f;
-  trackerParameters.m_innerPhiCoordinate     = 0.f;
-  trackerParameters.m_innerSymmetryOrder     = 0;
-  trackerParameters.m_outerRCoordinate       = getTrackingRegionExtent()[1];
-  trackerParameters.m_outerZCoordinate       = getTrackingRegionExtent()[2];
-  trackerParameters.m_outerPhiCoordinate     = 0.f;
-  trackerParameters.m_outerSymmetryOrder     = 0;
-  trackerParameters.m_isMirroredInZ          = true;
-  trackerParameters.m_nLayers                = 0;
+  trackerParameters.m_subDetectorName = "Tracker";
+  trackerParameters.m_subDetectorType = pandora::INNER_TRACKER;
+  trackerParameters.m_innerRCoordinate = getTrackingRegionExtent()[0];
+  trackerParameters.m_innerZCoordinate = 0.f;
+  trackerParameters.m_innerPhiCoordinate = 0.f;
+  trackerParameters.m_innerSymmetryOrder = 0;
+  trackerParameters.m_outerRCoordinate = getTrackingRegionExtent()[1];
+  trackerParameters.m_outerZCoordinate = getTrackingRegionExtent()[2];
+  trackerParameters.m_outerPhiCoordinate = 0.f;
+  trackerParameters.m_outerSymmetryOrder = 0;
+  trackerParameters.m_isMirroredInZ = true;
+  trackerParameters.m_nLayers = 0;
   subDetectorTypeMap[pandora::INNER_TRACKER] = trackerParameters;
 
-  ///FIXME:Implement a parameter for the Coil/Solenoid name
-  ///NOTE: Is this the way to go, or should we go with reco structure?
+  /// FIXME:Implement a parameter for the Coil/Solenoid name
+  /// NOTE: Is this the way to go, or should we go with reco structure?
   try {
     PandoraApi::Geometry::SubDetector::Parameters coilParameters;
 
     const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL));
 
-    coilParameters.m_subDetectorName    = "Coil";
-    coilParameters.m_subDetectorType    = pandora::COIL;
-    coilParameters.m_innerRCoordinate   = coilExtension->extent[0] / dd4hep::mm;
-    coilParameters.m_innerZCoordinate   = 0.f;
+    coilParameters.m_subDetectorName = "Coil";
+    coilParameters.m_subDetectorType = pandora::COIL;
+    coilParameters.m_innerRCoordinate = coilExtension->extent[0] / dd4hep::mm;
+    coilParameters.m_innerZCoordinate = 0.f;
     coilParameters.m_innerPhiCoordinate = 0.f;
     coilParameters.m_innerSymmetryOrder = 0;
-    coilParameters.m_outerRCoordinate   = coilExtension->extent[1] / dd4hep::mm;
-    coilParameters.m_outerZCoordinate   = coilExtension->extent[3] / dd4hep::mm;
+    coilParameters.m_outerRCoordinate = coilExtension->extent[1] / dd4hep::mm;
+    coilParameters.m_outerZCoordinate = coilExtension->extent[3] / dd4hep::mm;
     coilParameters.m_outerPhiCoordinate = 0.f;
     coilParameters.m_outerSymmetryOrder = 0;
-    coilParameters.m_isMirroredInZ      = true;
-    coilParameters.m_nLayers            = 0;
-    subDetectorTypeMap[pandora::COIL]   = coilParameters;
+    coilParameters.m_isMirroredInZ = true;
+    coilParameters.m_nLayers = 0;
+    subDetectorTypeMap[pandora::COIL] = coilParameters;
   } catch (std::exception& e) {
     streamlog_out(ERROR) << "Failed to access COIL parameters: " << e.what() << std::endl;
   }
@@ -179,15 +179,15 @@ void DDGeometryCreator::SetMandatorySubDetectorParameters(SubDetectorTypeMap& su
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& subDetectorNameMap) const {
-  dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
+  dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
   const std::vector<dd4hep::DetElement>& theECalOtherDetectors =
       dd4hep::DetectorSelector(mainDetector)
           .detectors(dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::AUXILIARY);
-  for (std::vector<dd4hep::DetElement>::const_iterator iter    = theECalOtherDetectors.begin(),
+  for (std::vector<dd4hep::DetElement>::const_iterator iter = theECalOtherDetectors.begin(),
                                                        iterEnd = theECalOtherDetectors.end();
        iter != iterEnd; ++iter) {
     try {
-      const dd4hep::DetElement&                  theDetector = *iter;
+      const dd4hep::DetElement& theDetector = *iter;
       const dd4hep::rec::LayeredCalorimeterData* theExtension =
           theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
 
@@ -204,11 +204,11 @@ void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& s
   const std::vector<dd4hep::DetElement>& theHCalOtherDetectors =
       dd4hep::DetectorSelector(mainDetector)
           .detectors(dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::AUXILIARY);
-  for (std::vector<dd4hep::DetElement>::const_iterator iter    = theHCalOtherDetectors.begin(),
+  for (std::vector<dd4hep::DetElement>::const_iterator iter = theHCalOtherDetectors.begin(),
                                                        iterEnd = theHCalOtherDetectors.end();
        iter != iterEnd; ++iter) {
     try {
-      const dd4hep::DetElement&                  theDetector = *iter;
+      const dd4hep::DetElement& theDetector = *iter;
       const dd4hep::rec::LayeredCalorimeterData* theExtension =
           theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
 
@@ -225,11 +225,11 @@ void DDGeometryCreator::SetAdditionalSubDetectorParameters(SubDetectorNameMap& s
   const std::vector<dd4hep::DetElement>& theMuonOtherDetectors =
       dd4hep::DetectorSelector(mainDetector)
           .detectors(dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::AUXILIARY);
-  for (std::vector<dd4hep::DetElement>::const_iterator iter    = theMuonOtherDetectors.begin(),
+  for (std::vector<dd4hep::DetElement>::const_iterator iter = theMuonOtherDetectors.begin(),
                                                        iterEnd = theMuonOtherDetectors.end();
        iter != iterEnd; ++iter) {
     try {
-      const dd4hep::DetElement&                  theDetector = *iter;
+      const dd4hep::DetElement& theDetector = *iter;
       const dd4hep::rec::LayeredCalorimeterData* theExtension =
           theDetector.extension<dd4hep::rec::LayeredCalorimeterData>();
 
@@ -251,18 +251,18 @@ void DDGeometryCreator::SetDefaultSubDetectorParameters(
     const pandora::SubDetectorType subDetectorType, PandoraApi::Geometry::SubDetector::Parameters& parameters) const {
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers = inputParameters.layers;
 
-  parameters.m_subDetectorName    = subDetectorName;
-  parameters.m_subDetectorType    = subDetectorType;
-  parameters.m_innerRCoordinate   = inputParameters.extent[0] / dd4hep::mm;
-  parameters.m_innerZCoordinate   = inputParameters.extent[2] / dd4hep::mm;
+  parameters.m_subDetectorName = subDetectorName;
+  parameters.m_subDetectorType = subDetectorType;
+  parameters.m_innerRCoordinate = inputParameters.extent[0] / dd4hep::mm;
+  parameters.m_innerZCoordinate = inputParameters.extent[2] / dd4hep::mm;
   parameters.m_innerPhiCoordinate = inputParameters.inner_phi0 / dd4hep::rad;
   parameters.m_innerSymmetryOrder = inputParameters.inner_symmetry;
-  parameters.m_outerRCoordinate   = inputParameters.extent[1] / dd4hep::mm;
-  parameters.m_outerZCoordinate   = inputParameters.extent[3] / dd4hep::mm;
+  parameters.m_outerRCoordinate = inputParameters.extent[1] / dd4hep::mm;
+  parameters.m_outerZCoordinate = inputParameters.extent[3] / dd4hep::mm;
   parameters.m_outerPhiCoordinate = inputParameters.outer_phi0 / dd4hep::rad;
   parameters.m_outerSymmetryOrder = inputParameters.outer_symmetry;
-  parameters.m_isMirroredInZ      = true;
-  parameters.m_nLayers            = layers.size();
+  parameters.m_isMirroredInZ = true;
+  parameters.m_nLayers = layers.size();
 
   for (size_t i = 0; i < layers.size(); i++) {
     const dd4hep::rec::LayeredCalorimeterStruct::Layer& theLayer = layers.at(i);
@@ -273,14 +273,14 @@ void DDGeometryCreator::SetDefaultSubDetectorParameters(
     double totalNumberOfIntLengths = theLayer.inner_nInteractionLengths;
 
     if (i > 0) {
-      //Add the numbers from previous layer's outer side
+      // Add the numbers from previous layer's outer side
       totalNumberOfRadLengths += layers.at(i - 1).outer_nRadiationLengths;
       totalNumberOfIntLengths += layers.at(i - 1).outer_nInteractionLengths;
     }
 
     layerParameters.m_closestDistanceToIp =
-        (theLayer.distance + theLayer.inner_thickness) / dd4hep::mm;  //Distance to center of sensitive element
-    layerParameters.m_nRadiationLengths   = totalNumberOfRadLengths;
+        (theLayer.distance + theLayer.inner_thickness) / dd4hep::mm; // Distance to center of sensitive element
+    layerParameters.m_nRadiationLengths = totalNumberOfRadLengths;
     layerParameters.m_nInteractionLengths = totalNumberOfIntLengths;
 
     parameters.m_layerParametersVector.push_back(layerParameters);
@@ -342,10 +342,10 @@ pandora::StatusCode DDGeometryCreator::CreateHCalBarrelBoxGaps() const {
 
   const float middleStaveGap(hCalBarrelParameters->gap1 / dd4hep::mm);
 
-  PANDORA_RETURN_RESULT_IF(
-      pandora::STATUS_CODE_SUCCESS, !=,
-      this->CreateRegularBoxGaps(innerSymmetryOrder, outerPseudoPhi0, innerRadius / cosOuterPseudoPhi0, outerRadius,
-                                 -outerZ, outerZ, middleStaveGap));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                           this->CreateRegularBoxGaps(innerSymmetryOrder, outerPseudoPhi0,
+                                                      innerRadius / cosOuterPseudoPhi0, outerRadius, -outerZ, outerZ,
+                                                      middleStaveGap));
 
   return pandora::STATUS_CODE_SUCCESS;
 }
@@ -357,13 +357,13 @@ pandora::StatusCode DDGeometryCreator::CreateHCalEndCapBoxGaps() const {
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::ENDCAP),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD));
 
-  const float        staveGap(hCalEndCapParameters->gap0 / dd4hep::mm);
-  const float        innerRadius(hCalEndCapParameters->extent[0] / dd4hep::mm);
-  const float        outerRadius(hCalEndCapParameters->extent[1] / dd4hep::mm);
-  const float        innerZ(hCalEndCapParameters->extent[2] / dd4hep::mm);
-  const float        outerZ(hCalEndCapParameters->extent[3] / dd4hep::mm);
+  const float staveGap(hCalEndCapParameters->gap0 / dd4hep::mm);
+  const float innerRadius(hCalEndCapParameters->extent[0] / dd4hep::mm);
+  const float outerRadius(hCalEndCapParameters->extent[1] / dd4hep::mm);
+  const float innerZ(hCalEndCapParameters->extent[2] / dd4hep::mm);
+  const float outerZ(hCalEndCapParameters->extent[3] / dd4hep::mm);
   const unsigned int innerSymmetryOrder(hCalEndCapParameters->inner_symmetry);
-  const float        inner_phi0(hCalEndCapParameters->inner_phi0 / dd4hep::rad);
+  const float inner_phi0(hCalEndCapParameters->inner_phi0 / dd4hep::rad);
 
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                            this->CreateRegularBoxGaps(innerSymmetryOrder, inner_phi0, innerRadius, outerRadius, innerZ,
@@ -386,12 +386,12 @@ pandora::StatusCode DDGeometryCreator::CreateHCalBarrelConcentricGaps() const {
 
   PandoraApi::Geometry::ConcentricGap::Parameters gapParameters;
 
-  gapParameters.m_minZCoordinate     = -0.5f * gapWidth;
-  gapParameters.m_maxZCoordinate     = 0.5f * gapWidth;
-  gapParameters.m_innerRCoordinate   = hCalBarrelParameters->extent[0] / dd4hep::mm;
+  gapParameters.m_minZCoordinate = -0.5f * gapWidth;
+  gapParameters.m_maxZCoordinate = 0.5f * gapWidth;
+  gapParameters.m_innerRCoordinate = hCalBarrelParameters->extent[0] / dd4hep::mm;
   gapParameters.m_innerPhiCoordinate = hCalBarrelParameters->inner_phi0 / dd4hep::rad;
   gapParameters.m_innerSymmetryOrder = hCalBarrelParameters->inner_symmetry;
-  gapParameters.m_outerRCoordinate   = hCalBarrelParameters->extent[1] / dd4hep::mm;
+  gapParameters.m_outerRCoordinate = hCalBarrelParameters->extent[1] / dd4hep::mm;
   gapParameters.m_outerPhiCoordinate = hCalBarrelParameters->outer_phi0 / dd4hep::rad;
   gapParameters.m_outerSymmetryOrder = hCalBarrelParameters->outer_symmetry;
 

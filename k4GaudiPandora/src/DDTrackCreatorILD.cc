@@ -49,29 +49,18 @@
 #include "DDRec/DetectorData.h"
 
 DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pandora* const pPandora)
-    : DDTrackCreatorBase(settings, pPandora),
-      m_cosTpc(0.f),
-      m_tpcInnerR(0.f),
-      m_tpcOuterR(0.f),
-      m_tpcMaxRow(0),
-      m_tpcZmax(0.f),
-      m_tpcMembraneMaxZ(0.f),
-      m_ftdInnerRadii(DoubleVector()),
-      m_ftdOuterRadii(DoubleVector()),
-      m_ftdZPositions(DoubleVector()),
-      m_nFtdLayers(0),
-      m_tanLambdaFtd(0.f),
-      m_minEtdZPosition(0.f),
-      m_minSetRadius(0.f)
+    : DDTrackCreatorBase(settings, pPandora), m_cosTpc(0.f), m_tpcInnerR(0.f), m_tpcOuterR(0.f), m_tpcMaxRow(0),
+      m_tpcZmax(0.f), m_tpcMembraneMaxZ(0.f), m_ftdInnerRadii(DoubleVector()), m_ftdOuterRadii(DoubleVector()),
+      m_ftdZPositions(DoubleVector()), m_nFtdLayers(0), m_tanLambdaFtd(0.f), m_minEtdZPosition(0.f), m_minSetRadius(0.f)
 
 {
   m_nFtdLayers = 0;
   m_ftdInnerRadii.clear();
   m_ftdOuterRadii.clear();
 
-  //Instead of gear, loop over a provided list of forward (read: endcap) tracking detectors. For ILD this would be FTD
-  ///FIXME: Should we use surfaces instead?
-  dd4hep::Detector&                      mainDetector = dd4hep::Detector::getInstance();
+  // Instead of gear, loop over a provided list of forward (read: endcap) tracking detectors. For ILD this would be FTD
+  /// FIXME: Should we use surfaces instead?
+  dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
   const std::vector<dd4hep::DetElement>& endcapDets =
       dd4hep::DetectorSelector(mainDetector).detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::ENDCAP));
   for (std::vector<dd4hep::DetElement>::const_iterator iter = endcapDets.begin(), iterEnd = endcapDets.end();
@@ -80,7 +69,7 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pa
       dd4hep::rec::ZDiskPetalsData* theExtension = 0;
 
       const dd4hep::DetElement& theDetector = *iter;
-      theExtension                          = theDetector.extension<dd4hep::rec::ZDiskPetalsData>();
+      theExtension = theDetector.extension<dd4hep::rec::ZDiskPetalsData>();
 
       unsigned int N = theExtension->layers.size();
 
@@ -91,7 +80,7 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pa
         dd4hep::rec::ZDiskPetalsData::LayerLayout thisLayer = theExtension->layers[i];
 
         // Create a disk to represent even number petals front side
-        //FIXME! VERIFY THAT TIS MAKES SENSE!
+        // FIXME! VERIFY THAT TIS MAKES SENSE!
         m_ftdInnerRadii.push_back(thisLayer.distanceSensitive / dd4hep::mm);
         m_ftdOuterRadii.push_back(thisLayer.distanceSensitive / dd4hep::mm + thisLayer.lengthSensitive / dd4hep::mm);
 
@@ -113,21 +102,21 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pa
 
   try {
     dd4hep::rec::FixedPadSizeTPCData* theExtension = 0;
-    //Get the TPC, make sure not to get the vertex
+    // Get the TPC, make sure not to get the vertex
     const std::vector<dd4hep::DetElement>& tpcDets =
         dd4hep::DetectorSelector(mainDetector)
             .detectors((dd4hep::DetType::TRACKER | dd4hep::DetType::BARREL | dd4hep::DetType::GASEOUS),
                        dd4hep::DetType::VERTEX);
 
-    //There should only be one TPC
+    // There should only be one TPC
     theExtension = tpcDets[0].extension<dd4hep::rec::FixedPadSizeTPCData>();
 
     m_tpcInnerR = theExtension->rMin / dd4hep::mm;
     m_tpcOuterR = theExtension->rMax / dd4hep::mm;
     m_tpcMaxRow = theExtension->maxRow;
-    m_tpcZmax   = theExtension->zHalf / dd4hep::mm;
+    m_tpcZmax = theExtension->zHalf / dd4hep::mm;
 
-    //FIXME! Add to reco structrure and access
+    // FIXME! Add to reco structrure and access
     m_tpcMembraneMaxZ = 10;
     std::cout << "WARNING! DO NOT MASK! HANDLE m_tpcMembraneMaxZ (currently hardcoded to 10)!" << std::endl;
 
@@ -160,17 +149,19 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pa
 
   // Calculate etd and set parameters
   // fg: make SET and ETD optional - as they might not be in the model ...
-  //FIXME: THINK OF A UNIVERSAL WAY TO HANDLE EXISTENCE OF ADDITIONAL DETECTORS
+  // FIXME: THINK OF A UNIVERSAL WAY TO HANDLE EXISTENCE OF ADDITIONAL DETECTORS
 
   streamlog_out(WARNING) << " ETDLayerZ or SETLayerRadius parameters Not being handled!" << std::endl
                          << "     -> both will be set to " << std::numeric_limits<float>::quiet_NaN() << std::endl;
   m_minEtdZPosition = std::numeric_limits<float>::quiet_NaN();
-  m_minSetRadius    = std::numeric_limits<float>::quiet_NaN();
+  m_minSetRadius = std::numeric_limits<float>::quiet_NaN();
 
   //     try
   //     {
-  //         const DoubleVector &etdZPositions(marlin::Global::GEAR->getGearParameters("ETD").getDoubleVals("ETDLayerZ"));
-  //         const DoubleVector &setInnerRadii(marlin::Global::GEAR->getGearParameters("SET").getDoubleVals("SETLayerRadius"));
+  //         const DoubleVector
+  //         &etdZPositions(marlin::Global::GEAR->getGearParameters("ETD").getDoubleVals("ETDLayerZ")); const
+  //         DoubleVector
+  //         &setInnerRadii(marlin::Global::GEAR->getGearParameters("SET").getDoubleVals("SETLayerRadius"));
   //
   //         if (etdZPositions.empty() || setInnerRadii.empty())
   //             throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
@@ -180,8 +171,10 @@ DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, const pandora::Pa
   //     }
   //     catch(gear::UnknownParameterException &)
   //     {
-  //         streamlog_out(WARNING) << " ETDLayerZ or SETLayerRadius parameters missing from GEAR parameters!" << std::endl
-  //                                << "     -> both will be set to " << std::numeric_limits<float>::quiet_NaN() << std::endl;
+  //         streamlog_out(WARNING) << " ETDLayerZ or SETLayerRadius parameters missing from GEAR parameters!" <<
+  //         std::endl
+  //                                << "     -> both will be set to " << std::numeric_limits<float>::quiet_NaN() <<
+  //                                std::endl;
   //
   //         //fg: Set them to NAN, so that they cannot be used to set   trackParameters.m_reachesCalorimeter = true;
   //         m_minEtdZPosition = std::numeric_limits<float>::quiet_NaN();
@@ -196,7 +189,7 @@ DDTrackCreatorILD::~DDTrackCreatorILD() {}
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDTrackCreatorILD::CreateTracks(EVENT::LCEvent* pLCEvent) {
-  for (StringVector::const_iterator iter    = m_settings.m_trackCollections.begin(),
+  for (StringVector::const_iterator iter = m_settings.m_trackCollections.begin(),
                                     iterEnd = m_settings.m_trackCollections.end();
        iter != iterEnd; ++iter) {
     try {
@@ -208,7 +201,7 @@ pandora::StatusCode DDTrackCreatorILD::CreateTracks(EVENT::LCEvent* pLCEvent) {
         if (NULL == pTrack)
           throw EVENT::Exception("Collection type mismatch");
 
-        int         minTrackHits = m_settings.m_minTrackHits;
+        int minTrackHits = m_settings.m_minTrackHits;
         const float tanLambda(std::fabs(pTrack->getTanLambda()));
 
         if (tanLambda > m_tanLambdaFtd) {
@@ -231,27 +224,28 @@ pandora::StatusCode DDTrackCreatorILD::CreateTracks(EVENT::LCEvent* pLCEvent) {
 
         // Proceed to create the pandora track
         lc_content::LCTrackParameters trackParameters;
-        trackParameters.m_d0             = pTrack->getD0();
-        trackParameters.m_z0             = pTrack->getZ0();
+        trackParameters.m_d0 = pTrack->getD0();
+        trackParameters.m_z0 = pTrack->getZ0();
         trackParameters.m_pParentAddress = pTrack;
 
         // By default, assume tracks are charged pions
         const float signedCurvature(pTrack->getOmega());
         trackParameters.m_particleId = (signedCurvature > 0) ? pandora::PI_PLUS : pandora::PI_MINUS;
-        trackParameters.m_mass       = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
+        trackParameters.m_mass = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
 
         // Use particle id information from V0 and Kink finders
         TrackToPidMap::const_iterator trIter = m_trackToPidMap.find(pTrack);
 
         if (trIter != m_trackToPidMap.end()) {
           trackParameters.m_particleId = trIter->second;
-          trackParameters.m_mass       = pandora::PdgTable::GetParticleMass(trIter->second);
+          trackParameters.m_mass = pandora::PdgTable::GetParticleMass(trIter->second);
         }
 
         if (std::numeric_limits<float>::epsilon() < std::fabs(signedCurvature))
           trackParameters.m_charge = static_cast<int>(signedCurvature / std::fabs(signedCurvature));
 
-        try  //fg: include the next calls in the try block to catch tracks that are yet not fitted properly as ERROR and not exceptions
+        try // fg: include the next calls in the try block to catch tracks that are yet not fitted properly as ERROR and
+            // not exceptions
         {
           this->GetTrackStates(pTrack, trackParameters);
           this->TrackReachesECAL(pTrack, trackParameters);
@@ -278,7 +272,7 @@ pandora::StatusCode DDTrackCreatorILD::CreateTracks(EVENT::LCEvent* pLCEvent) {
   return pandora::STATUS_CODE_SUCCESS;
 }
 
-bool DDTrackCreatorILD::PassesQualityCuts(const EVENT::Track* const            pTrack,
+bool DDTrackCreatorILD::PassesQualityCuts(const EVENT::Track* const pTrack,
                                           const PandoraApi::Track::Parameters& trackParameters) const {
   // First simple sanity checks
   if (trackParameters.m_trackStateAtCalorimeter.Get().GetPosition().GetMagnitude() <
@@ -297,7 +291,7 @@ bool DDTrackCreatorILD::PassesQualityCuts(const EVENT::Track* const            p
 
   // Check momentum uncertainty is reasonable to use track
   const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float                     sigmaPOverP(std::sqrt(pTrack->getCovMatrix()[5]) / std::fabs(pTrack->getOmega()));
+  const float sigmaPOverP(std::sqrt(pTrack->getCovMatrix()[5]) / std::fabs(pTrack->getOmega()));
 
   if (sigmaPOverP > m_settings.m_maxTrackSigmaPOverP) {
     streamlog_out(WARNING) << " Dropping track : " << momentumAtDca.GetMagnitude() << "+-"
@@ -361,7 +355,7 @@ bool DDTrackCreatorILD::PassesQualityCuts(const EVENT::Track* const            p
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const      pTrack,
+void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const pTrack,
                                             PandoraApi::Track::Parameters& trackParameters) const {
   bool canFormPfo(false);
   bool canFormClusterlessPfo(false);
@@ -372,13 +366,13 @@ void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const      pTrac
     streamlog_out(DEBUG3) << " -- DefineTrackPfoUsage called for track : " << UTIL::lcshort(pTrack) << std::endl;
 
     EVENT::TrackerHitVec trackerHitvec(pTrack->getTrackerHits());
-    float                rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
+    float rInner(std::numeric_limits<float>::max()), zMin(std::numeric_limits<float>::max());
 
     for (EVENT::TrackerHitVec::const_iterator iter = trackerHitvec.begin(), iterEnd = trackerHitvec.end();
          iter != iterEnd; ++iter) {
       const double* pPosition((*iter)->getPosition());
-      const float   x(pPosition[0]), y(pPosition[1]), absoluteZ(std::fabs(pPosition[2]));
-      const float   r(std::sqrt(x * x + y * y));
+      const float x(pPosition[0]), y(pPosition[1]), absoluteZ(std::fabs(pPosition[2]));
+      const float r(std::sqrt(x * x + y * y));
 
       if (r < rInner)
         rInner = r;
@@ -389,12 +383,12 @@ void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const      pTrac
 
     if (this->PassesQualityCuts(pTrack, trackParameters)) {
       const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-      const float                     pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
-      const float                     pT(std::sqrt(pX * pX + pY * pY));
+      const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
+      const float pT(std::sqrt(pX * pX + pY * pY));
 
       const float zCutForNonVertexTracks(m_tpcInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks);
-      const bool  passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
-                                    (rInner < m_tpcInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
+      const bool passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
+                                   (rInner < m_tpcInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
 
       const bool isV0(this->IsV0(pTrack));
       const bool isDaughter(this->IsDaughter(pTrack));
@@ -413,7 +407,8 @@ void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const      pTrac
         canFormPfo = true;
       }
 
-      // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora cluster
+      // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora
+      // cluster
       const float particleMass(trackParameters.m_mass.Get());
       const float trackEnergy(std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass));
 
@@ -440,15 +435,15 @@ void DDTrackCreatorILD::DefineTrackPfoUsage(const EVENT::Track* const      pTrac
                           << " -  canFormClusterlessPfo = " << canFormClusterlessPfo << std::endl;
   }
 
-  trackParameters.m_canFormPfo            = canFormPfo;
+  trackParameters.m_canFormPfo = canFormPfo;
   trackParameters.m_canFormClusterlessPfo = canFormClusterlessPfo;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-void DDTrackCreatorILD::TrackReachesECAL(const EVENT::Track* const      pTrack,
+void DDTrackCreatorILD::TrackReachesECAL(const EVENT::Track* const pTrack,
                                          PandoraApi::Track::Parameters& trackParameters) const {
-  //fg: return true  for now - there are quality checks in DefineTrackPfoUsage() ...
+  // fg: return true  for now - there are quality checks in DefineTrackPfoUsage() ...
   trackParameters.m_reachesCalorimeter = true;
   return;
 
@@ -463,7 +458,7 @@ void DDTrackCreatorILD::TrackReachesECAL(const EVENT::Track* const      pTrack,
   int maxOccupiedFtdLayer(0);
 
   const EVENT::TrackerHitVec& trackerHitVec(pTrack->getTrackerHits());
-  const unsigned int          nTrackHits(trackerHitVec.size());
+  const unsigned int nTrackHits(trackerHitVec.size());
 
   for (unsigned int i = 0; i < nTrackHits; ++i) {
     const float x(static_cast<float>(trackerHitVec[i]->getPosition()[0]));
@@ -518,9 +513,9 @@ void DDTrackCreatorILD::TrackReachesECAL(const EVENT::Track* const      pTrack,
 
   // If track is lowpt, it may curl up and end inside tpc inner radius
   const pandora::CartesianVector& momentumAtDca(trackParameters.m_momentumAtDca.Get());
-  const float                     cosAngleAtDca(std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude());
-  const float                     pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY());
-  const float                     pT(std::sqrt(pX * pX + pY * pY));
+  const float cosAngleAtDca(std::fabs(momentumAtDca.GetZ()) / momentumAtDca.GetMagnitude());
+  const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY());
+  const float pT(std::sqrt(pX * pX + pY * pY));
 
   if ((cosAngleAtDca > m_cosTpc) || (pT < m_settings.m_curvatureToMomentumFactor * m_settings.m_bField * m_tpcOuterR)) {
     trackParameters.m_reachesCalorimeter = true;
@@ -532,8 +527,8 @@ void DDTrackCreatorILD::TrackReachesECAL(const EVENT::Track* const      pTrack,
 
 int DDTrackCreatorILD::GetNTpcHits(const EVENT::Track* const pTrack) const {
   // ATTN
-  //According to FG: [ 2 * lcio::ILDDetID::TPC - 2 ] is the first number and it is supposed to
-  //be the number of hits in the fit and this is what should be used !
+  // According to FG: [ 2 * lcio::ILDDetID::TPC - 2 ] is the first number and it is supposed to
+  // be the number of hits in the fit and this is what should be used !
   // at least for DD4hep/DDSim
 
   // ---- use hitsInFit :
@@ -544,7 +539,7 @@ int DDTrackCreatorILD::GetNTpcHits(const EVENT::Track* const pTrack) const {
 
 int DDTrackCreatorILD::GetNFtdHits(const EVENT::Track* const pTrack) const {
   // ATTN
-  //see above
+  // see above
   // ---- use hitsInFit :
   return pTrack->getSubdetectorHitNumbers()[2 * lcio::ILDDetID::FTD - 2];
 }
