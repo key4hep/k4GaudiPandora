@@ -18,23 +18,22 @@ limitations under the License.
 ]]
 
 set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
-					src/CalorimeterHitType.cc
-					src/ClusterShapes.cc
+                    src/CalorimeterHitType.cc
+                    src/ClusterShapes.cc
                     src/DDCaloDigi.cc
                     src/DDScintillatorPpdDigi.cc
-					src/DDBFieldPlugin.cc
-					src/DDCaloHitCreator.cc
-					# src/DDExternalClusteringAlgorithm.cc
-			 		src/DDGeometryCreator.cc
-					src/DDMCParticleCreator.cc
-					# src/DDPandoraPFANewProcessor.cc
-					src/DDPfoCreator.cc
-					src/DDSimpleMuonDigi.cc
-					src/DDTrackCreatorBase.cc
-                                        src/DDTrackCreatorCLIC.cc
-					# src/DDTrackCreatorILD.cc
-                                        src/DDPandoraPFANewAlgorithm.cpp
-					)
+                    src/DDBFieldPlugin.cc
+                    src/DDCaloHitCreator.cc
+                    # src/DDExternalClusteringAlgorithm.cc
+                    src/DDGeometryCreator.cc
+                    src/DDMCParticleCreator.cc
+                    src/DDPfoCreator.cc
+                    src/DDSimpleMuonDigi.cc
+                    src/DDTrackCreatorBase.cc
+                    src/DDTrackCreatorCLIC.cc
+                    src/DDTrackCreatorILD.cc
+                    src/DDPandoraPFANewAlgorithm.cpp
+)
 
 gaudi_add_module(k4GaudiPandoraPlugins
                  SOURCES ${_plugin_sources}

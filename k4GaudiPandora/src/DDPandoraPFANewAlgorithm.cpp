@@ -26,7 +26,7 @@
 #include "DDTrackCreatorBase.h"
 
 #include "DDTrackCreatorCLIC.h"
-// #include "DDTrackCreatorILD.h"
+#include "DDTrackCreatorILD.h"
 #include "DDBFieldPlugin.h"
 
 #include <Api/PandoraApi.h>
@@ -130,8 +130,8 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   /// TODO: IMPLEMENT ILD
   if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
     m_pTrackCreator = std::make_unique<DDTrackCreatorCLIC>(m_trackCreatorSettings, m_pPandora, this, m_geoSvc);
-  // else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
-  // m_pTrackCreator = std::make_unique<DDTrackCreatorILD>(m_trackCreatorSettings, m_pPandora);
+  else if (m_settings.m_trackCreatorName == "DDTrackCreatorILD")
+    m_pTrackCreator = std::make_unique<DDTrackCreatorILD>(m_trackCreatorSettings, m_pPandora, this, m_geoSvc);
   else
     error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
