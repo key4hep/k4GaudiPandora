@@ -147,7 +147,7 @@ public:
   /**
    *  @brief  Create tracks, insert user code here. Implement accordin to detector model
    *
-   *  @param  pLCEvent the lcio event
+   *  @param  tracks the collection of tracks
    */
   virtual pandora::StatusCode CreateTracks(const std::vector<edm4hep::Track>& tracks) = 0;
 
@@ -222,14 +222,14 @@ protected:
   /**
    *  @brief  Extract kink information from specified collection
    *
-   *  @param  kinkCollection: reconstructed particle collection containing information about kinked tracks
+   *  @param  kinkCollections reconstructed particle collection containing information about kinked tracks
    */
   pandora::StatusCode ExtractKinks(const std::vector<const edm4hep::VertexCollection*>& kinkCollections);
 
   /**
    *  @brief  Extract prong and split information from specified collections
    *
-   *  @param  prongsCollection the collection of reconstructed particles
+   *  @param  prongsCollections the collection of reconstructed particles
    */
   pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections,
                                              const std::vector<const edm4hep::VertexCollection*>& splitCollections);
@@ -237,7 +237,7 @@ protected:
   /**
    *  @brief  Extract v0 information from specified collections
    *
-   *  @param  v0Collection the collection of V0 reconstructed particles
+   *  @param  v0Collections the collection of V0 reconstructed particles
    */
   pandora::StatusCode ExtractV0s(const std::vector<const edm4hep::VertexCollection*>& v0Collections);
 
