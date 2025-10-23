@@ -75,6 +75,7 @@ DDMCParticleCreator::CreateMCParticles(const std::vector<edm4hep::MCParticle>& m
 pandora::StatusCode
 DDMCParticleCreator::CreateTrackToMCParticleRelationships(const TrackMCLinkCollectionVector& trackRelCollections,
                                                           const TrackVector& trackVector) const {
+  throw std::runtime_error("DDMCParticleCreator::CreateTrackToMCParticleRelationships not implemented yet");
   for (const auto& trackRelCollection : trackRelCollections) {
     for (const auto& pTrack : trackVector) {
       try {
@@ -133,6 +134,7 @@ DDMCParticleCreator::CreateTrackToMCParticleRelationships(const TrackMCLinkColle
 
 pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
     const CaloHitSimCaloHitLinkCollectionVector& caloRelCollections, const HitVector& calorimeterHitVector) const {
+  throw std::runtime_error("DDMCParticleCreator::CreateCaloHitToMCParticleRelationships not implemented yet");
   using MCParticleToEnergyWeightMap = std::map<const edm4hep::MCParticle*, float>;
   MCParticleToEnergyWeightMap mcParticleToEnergyWeightMap;
 
