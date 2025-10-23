@@ -153,7 +153,7 @@ private:
    */
   void Reset() const;
 
-  pandora::Pandora* m_pPandora = NULL;                ///< Address of the pandora instance
+  pandora::Pandora m_pPandora{};                        ///< Pandora instance
   DDCaloHitCreator* m_pCaloHitCreator = NULL;         ///< The calo hit creator
   DDGeometryCreator* m_pGeometryCreator = NULL;       ///< The geometry creator
   DDTrackCreatorBase* m_pTrackCreator = NULL;         ///< The track creator

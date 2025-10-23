@@ -46,8 +46,8 @@
 #include <algorithm>
 #include <cmath>
 
-DDPfoCreator::DDPfoCreator(const Settings& settings, const pandora::Pandora* const pPandora)
-    : m_settings(settings), m_pandora(*pPandora) {}
+DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora)
+    : m_settings(settings), m_pandora(pandora) {}
 
 pandora::StatusCode
 DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterCollection,
