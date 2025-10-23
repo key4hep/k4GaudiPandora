@@ -451,3 +451,4 @@ void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
 
 DDPfoCreator::Settings::Settings()
     : m_emStochasticTerm(0.17f), m_hadStochasticTerm(0.6f), m_emConstantTerm(0.01f), m_hadConstantTerm(0.03f) {}
+

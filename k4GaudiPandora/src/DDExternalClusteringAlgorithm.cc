@@ -25,14 +25,14 @@
  *  $Log: $
  */
 
-#include "EVENT/Cluster.h"
-#include "EVENT/LCCollection.h"
-#include "EVENT/LCEvent.h"
+#include "edm4hep/ClusterCollection.h"
+#include "edm4hep/Cluster.h"
 
 #include "DDExternalClusteringAlgorithm.h"
 #include "DDPandoraPFANewProcessor.h"
 
 #include "Pandora/AlgorithmHeaders.h"
+#include "XmlHelper.h"
 
 using namespace pandora;
 
@@ -49,10 +49,10 @@ StatusCode DDExternalClusteringAlgorithm::Run() {
       return STATUS_CODE_SUCCESS;
 
     // Get external photon cluster collection
-    const EVENT::LCEvent* const pLCEvent(DDPandoraPFANewProcessor::GetCurrentEvent(&(this->GetPandora())));
-    const EVENT::LCCollection* const pExternalClusterCollection =
-        pLCEvent->getCollection(m_externalClusterCollectionName);
-    const unsigned int nExternalClusters(pExternalClusterCollection->getNumberOfElements());
+    const edm4hep::EventHeader* const pEventHeader = DDPandoraPFANewProcessor::GetCurrentEvent(&(this->GetPandora()));
+    const edm4hep::ClusterCollection* pExternalClusterCollection =
+        pEventHeader->getCollection(m_externalClusterCollectionName);
+    const unsigned int nExternalClusters(pExternalClusterCollection->size());
 
     if (0 == nExternalClusters)
       return STATUS_CODE_SUCCESS;
@@ -68,19 +68,17 @@ StatusCode DDExternalClusteringAlgorithm::Run() {
 
     // Recreate external clusters within the pandora framework
     for (unsigned int iCluster = 0; iCluster < nExternalClusters; ++iCluster) {
-      const EVENT::Cluster* const pExternalCluster =
-          dynamic_cast<const EVENT::Cluster*>(pExternalClusterCollection->getElementAt(iCluster));
+      const edm4hep::Cluster* const pExternalCluster = &pExternalClusterCollection->at(iCluster);
 
-      if (NULL == pExternalCluster)
-        throw EVENT::Exception("Collection type mismatch");
+      if (nullptr == pExternalCluster)
+        throw std::runtime_error("Collection type mismatch");
 
-      const CalorimeterHitVec& calorimeterHitVec(pExternalCluster->getCalorimeterHits());
+      const std::vector<edm4hep::ConstCalorimeterHit> calorimeterHitVec = pExternalCluster->getHits();
 
       const pandora::Cluster* pPandoraCluster = NULL;
 
-      for (CalorimeterHitVec::const_iterator iter = calorimeterHitVec.begin(), iterEnd = calorimeterHitVec.end();
-           iter != iterEnd; ++iter) {
-        ParentAddressToCaloHitMap::const_iterator pandoraCaloHitIter = parentAddressToCaloHitMap.find(*iter);
+      for (auto iter = calorimeterHitVec.begin(), iterEnd = calorimeterHitVec.end(); iter != iterEnd; ++iter) {
+        ParentAddressToCaloHitMap::const_iterator pandoraCaloHitIter = parentAddressToCaloHitMap.find(iter->id());
 
         if (parentAddressToCaloHitMap.end() == pandoraCaloHitIter) {
           continue;
@@ -108,7 +106,7 @@ StatusCode DDExternalClusteringAlgorithm::Run() {
     }
   } catch (StatusCodeException& statusCodeException) {
     return statusCodeException.GetStatusCode();
-  } catch (EVENT::Exception& exception) {
+  } catch (std::exception& exception) {
     std::cout << "DDExternalClusteringAlgorithm failure: " << exception.what() << std::endl;
     return STATUS_CODE_FAILURE;
   }
@@ -128,3 +126,4 @@ StatusCode DDExternalClusteringAlgorithm::ReadSettings(const TiXmlHandle xmlHand
 
   return STATUS_CODE_SUCCESS;
 }
+
