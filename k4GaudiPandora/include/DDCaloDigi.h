@@ -305,7 +305,7 @@ private:
       this, "CalibECALMIP", {1.0e-4f}, "Calibration to convert ECAL deposited energy to MIPs"};
   Gaudi::Property<int> m_applyEcalDigi{
       this,
-      "ECALApplyRealisticDigi",
+      "ECAL_apply_realistic_digi",
       {0},
       "Apply realistic digitisation to ECAL hits? (0=none, 1=silicon, 2=scintillator)"};
   Gaudi::Property<float> m_ecal_PPD_pe_per_mip{
@@ -365,7 +365,7 @@ private:
       this, "CalibHCALMIP", {1.0e-4f}, "Calibration to convert HCAL deposited energy to MIPs"};
   Gaudi::Property<int> m_applyHcalDigi{
       this,
-      "HCALApplyRealisticDigi",
+      "HCAL_apply_realistic_digi",
       {0},
       "Apply realistic digitisation to HCAL hits? (0=none, 1=silicon, 2=scintillator)"};
   Gaudi::Property<float> m_hcal_PPD_pe_per_mip{
