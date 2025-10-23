@@ -111,7 +111,7 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
     calodigicol.ECAL_PPD_N_Pixels = 10000
     calodigicol.ECAL_PPD_N_Pixels_uncertainty = 0.05
     calodigicol.ECAL_PPD_PE_per_MIP = 7.0
-    calodigicol.ECALApplyRealisticDigi = 0
+    calodigicol.ECAL_apply_realistic_digi = 0
     calodigicol.ECAL_deadCellRate = 0.0
     calodigicol.ECAL_deadCell_memorise = False
     calodigicol.ECAL_elec_noise_mips = 0.0
@@ -139,7 +139,7 @@ for calodigicol, ecalorhcal, inputcol, outputcol, relcol in zip(
     calodigicol.HCAL_PPD_N_Pixels = 400
     calodigicol.HCAL_PPD_N_Pixels_uncertainty = 0.05
     calodigicol.HCAL_PPD_PE_per_MIP = 10.0
-    calodigicol.HCALApplyRealisticDigi = 0
+    calodigicol.HCAL_apply_realistic_digi = 0
     calodigicol.HCAL_deadCellRate = 0.0
     calodigicol.HCAL_deadCell_memorise = False
     calodigicol.HCAL_elec_noise_mips = 0.0
