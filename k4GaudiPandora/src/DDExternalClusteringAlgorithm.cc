@@ -25,8 +25,8 @@
  *  $Log: $
  */
 
-#include "edm4hep/ClusterCollection.h"
 #include "edm4hep/Cluster.h"
+#include "edm4hep/ClusterCollection.h"
 
 #include "DDExternalClusteringAlgorithm.h"
 #include "DDPandoraPFANewProcessor.h"
@@ -126,4 +126,3 @@ StatusCode DDExternalClusteringAlgorithm::ReadSettings(const TiXmlHandle xmlHand
 
   return STATUS_CODE_SUCCESS;
 }
-

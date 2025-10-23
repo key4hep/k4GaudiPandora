@@ -196,8 +196,8 @@ private:
   bool AreAnyOtherSiblingsInList(const pandora::Track* const pPandoraTrack,
                                  const pandora::TrackList& allTrackList) const;
 
-  const Settings m_settings;   ///< The pfo creator settings
-  pandora::Pandora& m_pandora; ///< Reference to the pandora object from which to extract the pfos
+  const Settings m_settings;           ///< The pfo creator settings
+  pandora::Pandora& m_pandora;         ///< Reference to the pandora object from which to extract the pfos
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for message streaming
 };
 

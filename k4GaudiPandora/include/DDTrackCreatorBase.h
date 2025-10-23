@@ -131,8 +131,7 @@ public:
    *  @param  pandora reference to the relevant pandora instance
    *  @param  pAlgorithm address of the parent gaudi algorithm
    */
-  DDTrackCreatorBase(const Settings& settings, pandora::Pandora& pandora,
-                     const Gaudi::Algorithm* pAlgorithm);
+  DDTrackCreatorBase(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* pAlgorithm);
 
   /**
    *  @brief  Destructor

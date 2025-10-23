@@ -48,7 +48,7 @@ private:
   pandora::StatusCode Initialize() override;
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle) override;
 
-  dd4hep::OverlayedField m_field;  ///< The field instance from DD4hep
+  dd4hep::OverlayedField m_field; ///< The field instance from DD4hep
 };
 
-#endif  // #ifndef K4GAUDIPANDORA_DDBFIELD_PLUGIN_H
+#endif // #ifndef K4GAUDIPANDORA_DDBFIELD_PLUGIN_H

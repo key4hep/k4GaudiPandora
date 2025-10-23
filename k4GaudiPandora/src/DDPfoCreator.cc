@@ -176,9 +176,8 @@ void DDPfoCreator::setClusterSubDetectorEnergies(const pandora::StringVector& su
       subDetectorEnergies[BCAL_INDEX] += caloHitEnergy;
       break;
     default:
-      m_algorithm.warning()
-          << "DDPfoCreator::setClusterSubDetectorEnergies: no subdetector found for hit with type: "
-          << pCalorimeterHit.getType() << endmsg;
+      m_algorithm.warning() << "DDPfoCreator::setClusterSubDetectorEnergies: no subdetector found for hit with type: "
+                            << pCalorimeterHit.getType() << endmsg;
       break; // pass
     }
   }
@@ -318,9 +317,9 @@ bool DDPfoCreator::hasValidSiblingTrack(const pandora::Track* const pPandoraTrac
 
     // ATTN This track must have a sibling not in the all track list; still use it if it has a second sibling that is in
     // the list
-    m_algorithm.warning()
-        << "DDPfoCreator::hasValidSiblingTrack: mismatch in track relationship information, use information as available "
-        << endmsg;
+    m_algorithm.warning() << "DDPfoCreator::hasValidSiblingTrack: mismatch in track relationship information, use "
+                             "information as available "
+                          << endmsg;
 
     if (this->AreAnyOtherSiblingsInList(pPandoraTrack, allTrackList))
       return true;
@@ -381,4 +380,3 @@ void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
 
 DDPfoCreator::Settings::Settings()
     : m_emStochasticTerm(0.17f), m_hadStochasticTerm(0.6f), m_emConstantTerm(0.01f), m_hadConstantTerm(0.03f) {}
-

@@ -45,9 +45,9 @@ std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandora& pandora,
                                        const Gaudi::Algorithm* pAlgorithm)
-    : m_settings(settings), m_pandora(pandora), m_algorithm(*pAlgorithm), m_trackVector(0),
-      m_v0TrackList(TrackList()), m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()),
-      m_trackToPidMap(TrackToPidMap()), m_minimalTrackStateRadiusSquared(0.f) {
+    : m_settings(settings), m_pandora(pandora), m_algorithm(*pAlgorithm), m_trackVector(0), m_v0TrackList(TrackList()),
+      m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()), m_trackToPidMap(TrackToPidMap()),
+      m_minimalTrackStateRadiusSquared(0.f) {
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
@@ -417,8 +417,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   m_encoder.set(cellID, 1, tanL_is_positive ? 1 : -1);
   m_encoder.set(cellID, 2, 0);
 
-  return_error = trk.propagateToLayer(m_encoder.lowWord(cellID), trackStateAtCaloEndcap, chi2, ndf,
-                                      detElementID, true);
+  return_error = trk.propagateToLayer(m_encoder.lowWord(cellID), trackStateAtCaloEndcap, chi2, ndf, detElementID, true);
   m_algorithm.debug() << "Found trackState at endcap? Error code: " << return_error << endmsg;
 
   if (return_error == 0) {
