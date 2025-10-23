@@ -17,14 +17,10 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/src/DDMCParticleCreator.cc
- *
- *  @brief  Implementation of the mc particle creator class.
- *
- *  $Log: $
- */
 #include "DDMCParticleCreator.h"
+
+#include <Api/PandoraApi.h>
+#include <Objects/Helix.h>
 
 #include <edm4hep/CaloHitContribution.h>
 #include <edm4hep/CaloHitMCParticleLinkCollection.h>
@@ -34,19 +30,18 @@
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackMCParticleLinkCollection.h>
 
-#include <Objects/Helix.h>
-
 #include <cmath>
 #include <limits>
-#include <stdexcept>
+#include <map>
+#include <utility>
+#include <vector>
 
 // forward declarations. See in DDPandoraPFANewProcessor.cc
 double getFieldFromCompact();
 
-DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora)
-    : m_settings(settings), m_pandora(pandora), m_bField(getFieldFromCompact()) {}
-
-DDMCParticleCreator::~DDMCParticleCreator() {}
+DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora,
+                                         const Gaudi::Algorithm* algorithm)
+    : m_settings(settings), m_pandora(pandora), m_bField(getFieldFromCompact()), m_algorithm(*algorithm) {}
 
 pandora::StatusCode
 DDMCParticleCreator::CreateMCParticles(const std::vector<edm4hep::MCParticle>& mcParticleCollections) const {
@@ -78,8 +73,7 @@ DDMCParticleCreator::CreateMCParticles(const std::vector<edm4hep::MCParticle>& m
 }
 
 pandora::StatusCode
-DDMCParticleCreator::CreateTrackToMCParticleRelationships(const MCPCollectionVector& mcParticleCollections,
-                                                          const TrackMCLinkCollectionVector& trackRelCollections,
+DDMCParticleCreator::CreateTrackToMCParticleRelationships(const TrackMCLinkCollectionVector& trackRelCollections,
                                                           const TrackVector& trackVector) const {
   for (const auto& trackRelCollection : trackRelCollections) {
     for (const auto& pTrack : trackVector) {
@@ -116,7 +110,7 @@ DDMCParticleCreator::CreateTrackToMCParticleRelationships(const MCPCollectionVec
         }
 
         if (pBestMCParticle == nullptr) {
-          // streamlog_out(WARNING) << "No suitable MC particle found for track association." << std::endl;
+          m_algorithm.warning() << "No suitable MC particle found for track association." << endmsg;
           continue;
         }
 
@@ -124,10 +118,10 @@ DDMCParticleCreator::CreateTrackToMCParticleRelationships(const MCPCollectionVec
                                 PandoraApi::SetTrackToMCParticleRelationship(m_pandora, &pTrack, pBestMCParticle))
 
       } catch (const pandora::StatusCodeException& statusCodeException) {
-        // m_algorithm.error() << "Failed to extract track to MC particle relationship: "
-        //                      << statusCodeException.ToString() << std::endl;
+        m_algorithm.error() << "Failed to extract track to MC particle relationship: " << statusCodeException.ToString()
+                            << endmsg;
       } catch (const std::exception& exception) {
-        // streamlog_out(WARNING) << "Exception encountered: " << exception.what() << std::endl;
+        m_algorithm.warning() << "Exception encountered: " << exception.what() << endmsg;
       }
     }
   }
@@ -163,29 +157,25 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
             for (const auto& mcPToE : mcParticleToEnergyWeightMap) {
               PANDORA_THROW_RESULT_IF(
                   pandora::STATUS_CODE_SUCCESS, !=,
-                  PandoraApi::SetCaloHitToMCParticleRelationship(m_pandora, &caloHit, mcPToE.first, mcPToE.second));
+                  PandoraApi::SetCaloHitToMCParticleRelationship(m_pandora, &caloHit, mcPToE.first, mcPToE.second))
             }
           } catch (const pandora::StatusCodeException& statusCodeException) {
-            // m_algorithm.error() << "Failed to extract calo hit to mc particle relationship: "
-            //                      << statusCodeException.ToString() << std::endl;
+            m_algorithm.error() << "Failed to extract calo hit to mc particle relationship: "
+                                << statusCodeException.ToString() << endmsg;
           } catch (const std::exception& exception) {
-            // streamlog_out(WARNING) << "Failed to extract calo hit to mc particle relationship: " << exception.what()
-            //                        << std::endl;
+            m_algorithm.warning() << "Failed to extract calo hit to mc particle relationship: " << exception.what()
+                                  << endmsg;
           }
         }
       } catch (const std::exception& exception) {
-        // streamlog_out(DEBUG5) << "Failed to extract calo hit to mc particle relationships collection: " << *iter <<
-        // ", "
-        //                       << exception.what() << std::endl;
+        m_algorithm.debug() << "Failed to extract calo hit to mc particle relationships collection: "
+                            << exception.what() << endmsg;
       }
     }
   }
 
   return pandora::STATUS_CODE_SUCCESS;
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 DDMCParticleCreator::Settings::Settings()
     : m_mcParticleCollections(StringVector()), m_caloHitRelationCollections(StringVector()),

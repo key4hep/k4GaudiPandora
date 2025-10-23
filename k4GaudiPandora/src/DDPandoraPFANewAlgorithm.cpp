@@ -119,8 +119,8 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
 
   finaliseSteeringParameters();
 
-  m_geometryCreator = std::make_unique<DDGeometryCreator>(m_geometryCreatorSettings, m_pPandora);
-  m_caloHitCreator = std::make_unique<DDCaloHitCreator>(m_caloHitCreatorSettings, m_pPandora);
+  m_geometryCreator = std::make_unique<DDGeometryCreator>(m_geometryCreatorSettings, m_pPandora, this);
+  m_caloHitCreator = std::make_unique<DDCaloHitCreator>(m_caloHitCreatorSettings, m_pPandora, this);
 
   /// TODO: IMPLEMENT ILD
   if (m_settings.m_trackCreatorName == "DDTrackCreatorCLIC")
@@ -130,7 +130,7 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   else
     error() << "Unknown DDTrackCreator: " << m_settings.m_trackCreatorName << endmsg;
 
-  m_pDDMCParticleCreator = std::make_unique<DDMCParticleCreator>(m_mcParticleCreatorSettings, m_pPandora);
+  m_pDDMCParticleCreator = std::make_unique<DDMCParticleCreator>(m_mcParticleCreatorSettings, m_pPandora, this);
   m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora);
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, registerUserComponents())
@@ -454,24 +454,11 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_settings.m_innerBField = magneticFieldVector[2] / dd4hep::tesla; // z component at (0,0,0)
 }
 
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 void DDPandoraPFANewAlgorithm::reset() const {
-  if (m_caloHitCreator)
-    m_caloHitCreator->Reset();
   if (m_pTrackCreator)
     m_pTrackCreator->Reset();
-  /*
-  PandoraToLCEventMap::iterator iter = m_pandoraToLCEventMap.find(&m_pPandora);
-
-  if (m_pandoraToLCEventMap.end() == iter)
-    throw pandora::StatusCodeException(pandora::STATUS_CODE_FAILURE);
-
-  m_pandoraToLCEventMap.erase(iter);*/
 }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------------------------------------------------------------------
 
 DDPandoraPFANewAlgorithm::Settings::Settings()
     : m_innerBField(3.5f), m_muonBarrelBField(-1.5f), m_muonEndCapBField(0.01f), m_inputEnergyCorrectionPoints(0),
