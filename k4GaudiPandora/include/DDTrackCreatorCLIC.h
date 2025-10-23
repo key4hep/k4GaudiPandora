@@ -30,6 +30,8 @@
 
 #include "DDTrackCreatorBase.h"
 
+#include <Gaudi/Algorithm.h>
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -43,19 +45,14 @@ public:
    *  @param  settings the creator settings
    *  @param  pPandora address of the relevant pandora instance
    */
-  DDTrackCreatorCLIC(const Settings& settings, const pandora::Pandora* const pPandora);
-
-  /**
-   *  @brief  Destructor
-   */
-  virtual ~DDTrackCreatorCLIC();
+  DDTrackCreatorCLIC(const Gaudi::Algorithm*, const Settings& settings, const pandora::Pandora* const pPandora);
 
   /**
    *  @brief  Create tracks implementation, insert user code here. Detector specific
    *
    *  @param  pLCEvent the lcio event
    */
-  pandora::StatusCode CreateTracks(EVENT::LCEvent* pLCEvent);
+  pandora::StatusCode CreateTracks(const std::vector<edm4hep::Track>& tracks) override;
 
 protected:
   // Detector-specific configuration variables
@@ -81,8 +78,8 @@ protected:
    *  @return boolean
    */
 
-  virtual bool PassesQualityCuts(const EVENT::Track* const pTrack,
-                                 const PandoraApi::Track::Parameters& trackParameters) const;
+  bool PassesQualityCuts(const edm4hep::Track& pTrack,
+                         const PandoraApi::Track::Parameters& trackParameters) const override;
 
   /**
    *  @brief  Decide whether track reaches the ecal surface. Detector specific
@@ -90,7 +87,7 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void TrackReachesECAL(const EVENT::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+  void TrackReachesECAL(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
 
   /**
    *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -101,8 +98,7 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void DefineTrackPfoUsage(const EVENT::Track* const pTrack,
-                                   PandoraApi::Track::Parameters& trackParameters) const;
+  void DefineTrackPfoUsage(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
 };
 
 #endif // #ifndef DDTRACK_CREATOR_CLIC_H
