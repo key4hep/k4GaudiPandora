@@ -59,8 +59,6 @@ for alg, inputcol, outputcol, outrel in zip(
 
     alg.CellIDLayerString = "layer"
 
-    alg.timethresholdMuon = 0.025
-
     alg.CalibrMUON = 70.1
     alg.MaxHitEnergyMUON = 2.0
     alg.MuonThreshold = 1e-6
