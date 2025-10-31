@@ -62,9 +62,6 @@ and then run the examples like this:
 k4run ../k4ProjectTemplate/options/createHelloWorld.py
 k4run ../k4ProjectTemplate/options/createExampleEventData.py
 ```
-## Time smearing
-By default in `DDCaloDigi.cc` the simhits time is taken "as is" when computing the rechits time. There is the possibility to change this behaviour and get more realistic rechits using the `enableHitsTimeSmearing` flag. If set to `True`, it applies a Gaussian smearing to the simhits time. The `sigma` of the Gaussian is configurable as well with the `{E/H}CALTimeResolution` flag (in `ns`).
-
 ## References:
 These could perhaps be usefule for newcomers.
 1. [lhcb-98-064 COMP](https://cds.cern.ch/record/691746/files/lhcb-98-064.pdf)
