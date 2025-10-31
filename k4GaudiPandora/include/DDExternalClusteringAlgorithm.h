@@ -29,6 +29,8 @@
 
 #include "Pandora/Algorithm.h"
 
+#include <map>
+
 namespace pandora {
 class CaloHit;
 }

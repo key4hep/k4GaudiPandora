@@ -17,29 +17,25 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/include/DDCaloHitCreator.h
- *
- *  @brief  Header file for the calo hit creator class.
- *
- *  $Log: $
- */
+#ifndef K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H
+#define K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H 1
 
-#ifndef DDCALO_HIT_CREATOR_H
-#define DDCALO_HIT_CREATOR_H 1
-
-#include "EVENT/CalorimeterHit.h"
-#include "EVENT/LCEvent.h"
-
-#include <IMPL/CalorimeterHitImpl.h>
-
-#include "Api/PandoraApi.h"
+#include <Api/PandoraApi.h>
 
 #include <DD4hep/DetElement.h>
 #include <DD4hep/Detector.h>
 #include <DDRec/DetectorData.h>
 
-typedef std::vector<EVENT::CalorimeterHit*> CalorimeterHitVector;
+#include <edm4hep/CalorimeterHit.h>
+#include <edm4hep/CalorimeterHitCollection.h>
+
+#include <string>
+#include <vector>
+
+#include "GaudiKernel/Algorithm.h"
+
+typedef std::vector<edm4hep::CalorimeterHit> CalorimeterHitVector;
+typedef std::vector<const edm4hep::CalorimeterHitCollection*> HitCollectionVector;
 
 /**
  *  @brief  DDCaloHitCreator class
@@ -65,14 +61,12 @@ public:
     StringVector m_lHCalCaloHitCollections; ///< The lhcal calorimeter hit collections
     StringVector m_muonCaloHitCollections;  ///< The muon calorimeter hit collections
 
-    // NN: Material properties variables removed; obtained from geometry
-
     float m_eCalToMip;        ///< The calibration from deposited ECal energy to mip
     float m_hCalToMip;        ///< The calibration from deposited HCal energy to mip
     float m_muonToMip;        ///< The calibration from deposited Muon energy to mip
     float m_eCalMipThreshold; ///< Threshold for creating calo hits in the ECal, units mip
     float m_hCalMipThreshold; ///< Threshold for creating calo hits in the HCal, units mip
-    float m_muonMipThreshold; ///< Threshold for creating calo hits in the HCal, units mip
+    float m_muonMipThreshold; ///< Threshold for creating calo hits in the Muon system, units mip
 
     float m_eCalToEMGeV;        ///< The calibration from deposited ECal energy to EM energy
     float m_eCalToHadGeVBarrel; ///< The calibration from deposited ECal barrel energy to hadronic energy
@@ -87,31 +81,26 @@ public:
     float m_layersFromEdgeMaxRearDistance; ///< Maximum number of layers from candidate outer layer hit to rear of
                                            ///< detector
 
-    int m_hCalEndCapInnerSymmetryOrder;   ///< HCal end cap inner symmetry order (missing from ILD00 gear file)
-    float m_hCalEndCapInnerPhiCoordinate; ///< HCal end cap inner phi coordinate (missing from ILD00 gear file)
+    float m_hCalEndCapInnerSymmetryOrder; ///< HCal end cap inner symmetry order
+    float m_hCalEndCapInnerPhiCoordinate; ///< HCal end cap inner phi coordinate
 
-    // For Strip Splitting method and hybrid ECAL.
-    int m_stripSplittingOn;       ///< To use SSA, this should be true (default is false)
-    int m_useEcalScLayers;        ///< To use scintillator layers ~ hybrid ECAL, this should be true (default is false)
-    float m_eCalSiToMip;          ///< The calibration from deposited Si-layer energy to mip
-    float m_eCalScToMip;          ///< The calibration from deposited Sc-layer energy to mip
-    float m_eCalSiMipThreshold;   ///< Threshold for creating calo hits in the Si-layers of ECAL, units mip
-    float m_eCalScMipThreshold;   ///< Threshold for creating calo hits in the Sc-layers of ECAL, units mip
-    float m_eCalSiToEMGeV;        ///< The calibration from deposited Si-layer energy to EM energy
-    float m_eCalScToEMGeV;        ///< The calibration from deposited Sc-layer energy to EM energy
-    float m_eCalSiToHadGeVBarrel; ///< The calibration from deposited Si-layer energy on the enecaps to hadronic energy
-    float m_eCalScToHadGeVBarrel; ///< The calibration from deposited Sc-layer energy on the endcaps to hadronic energy
-    float m_eCalSiToHadGeVEndCap; ///< The calibration from deposited Si-layer energy on the enecaps to hadronic energy
-    float m_eCalScToHadGeVEndCap; ///< The calibration from deposited Sc-layer energy on the endcaps to hadronic energy
+    int m_stripSplittingOn;       ///< Strip splitting activation flag
+    int m_useEcalScLayers;        ///< Hybrid ECAL scintillator layers flag
+    float m_eCalSiToMip;          ///< Calibration for silicon layers
+    float m_eCalScToMip;          ///< Calibration for scintillator layers
+    float m_eCalSiMipThreshold;   ///< MIP threshold for silicon layers
+    float m_eCalScMipThreshold;   ///< MIP threshold for scintillator layers
+    float m_eCalSiToEMGeV;        ///< EM calibration for silicon layers
+    float m_eCalScToEMGeV;        ///< EM calibration for scintillator layers
+    float m_eCalSiToHadGeVBarrel; ///< Hadronic calibration for silicon layers in the barrel
+    float m_eCalScToHadGeVBarrel; ///< Hadronic calibration for scintillator layers in the barrel
+    float m_eCalSiToHadGeVEndCap; ///< Hadronic calibration for silicon layers in the endcap
+    float m_eCalScToHadGeVEndCap; ///< Hadronic calibration for scintillator layers in the endcap
 
-    /// ADDED BY NIKIFOROS
-    // Note that names are not needed anymore since the detector elements can be accessed by type flags
-    // Nikiforos: Moved from main class
-
-    float m_eCalBarrelOuterZ; ///< ECal barrel outer z coordinate
-    float m_hCalBarrelOuterZ; ///< HCal barrel outer z coordinate
-    float m_muonBarrelOuterZ; ///< Muon barrel outer z coordinate
-    float m_coilOuterR;       ///< Coil outer r coordinate
+    float m_eCalBarrelOuterZ; ///< ECal barrel outer Z coordinate
+    float m_hCalBarrelOuterZ; ///< HCal barrel outer Z coordinate
+    float m_muonBarrelOuterZ; ///< Muon barrel outer Z coordinate
+    float m_coilOuterR;       ///< Coil outer radius
 
     float m_eCalBarrelInnerPhi0;            ///< ECal barrel inner phi0 coordinate
     unsigned int m_eCalBarrelInnerSymmetry; ///< ECal barrel inner symmetry order
@@ -120,11 +109,14 @@ public:
     float m_muonBarrelInnerPhi0;            ///< Muon barrel inner phi0 coordinate
     unsigned int m_muonBarrelInnerSymmetry; ///< Muon barrel inner symmetry order
 
-    float m_hCalEndCapOuterR;               ///< HCal endcap outer r coordinate
-    float m_hCalEndCapOuterZ;               ///< HCal endcap outer z coordinate
-    float m_hCalBarrelOuterR;               ///< HCal barrel outer r coordinate
+    float m_hCalEndCapOuterR;               ///< HCal endcap outer radius
+    float m_hCalEndCapOuterZ;               ///< HCal endcap outer Z coordinate
+    float m_hCalBarrelOuterR;               ///< HCal barrel outer radius
     float m_hCalBarrelOuterPhi0;            ///< HCal barrel outer phi0 coordinate
     unsigned int m_hCalBarrelOuterSymmetry; ///< HCal barrel outer symmetry order
+    bool m_useSystemId;                     ///< flag whether to use systemId or not to identify origin of the CaloHit
+    int m_ecalBarrelSystemId;               ///< systemId of ECal Barrel
+    int m_hcalBarrelSystemId;               ///< systemId of HCal Barrel
 
   public:
     FloatVector m_eCalBarrelNormalVector;
@@ -135,22 +127,32 @@ public:
   /**
    *  @brief  Constructor
    *
+   *  @param  pAlgorithm pointer to the Gaudi algorithm instance
    *  @param  settings the creator settings
-   *  @param  pPandora address of the relevant pandora instance
+   *  @param  pandora reference to the relevant pandora instance
    */
-  DDCaloHitCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
+  virtual ~DDCaloHitCreator();
 
-  /**
-   *  @brief  Destructor
-   */
-  ~DDCaloHitCreator();
+  pandora::StatusCode
+  createECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const;
+  pandora::StatusCode createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const;
+  pandora::StatusCode createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const;
+  pandora::StatusCode createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits) const;
+  pandora::StatusCode createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const;
 
   /**
    *  @brief  Create calo hits
    *
-   *  @param  pLCEvent the lcio event
+   *  @param  inputHits
+   *  @param  outputHits
    */
-  pandora::StatusCode CreateCaloHits(const EVENT::LCEvent* const pLCEvent);
+  virtual pandora::StatusCode
+  createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
+                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
+                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
 
   /**
    *  @brief  Get the calorimeter hit vector
@@ -164,49 +166,14 @@ public:
    */
   void Reset();
 
-private:
-  /**
-   *  @brief  Create ecal calo hits
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateECalCaloHits(const EVENT::LCEvent* const pLCEvent);
-
-  /**
-   *  @brief  Create hcal calo hits
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateHCalCaloHits(const EVENT::LCEvent* const pLCEvent);
-
-  /**
-   *  @brief  Create muon calo hits
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateMuonCaloHits(const EVENT::LCEvent* const pLCEvent);
-
-  /**
-   *  @brief  Create lcal calo hits
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateLCalCaloHits(const EVENT::LCEvent* const pLCEvent);
-
-  /**
-   *  @brief  Create lhcal calo hits
-   *
-   *  @param  pLCEvent the lcio event
-   */
-  pandora::StatusCode CreateLHCalCaloHits(const EVENT::LCEvent* const pLCEvent);
-
+protected:
   /**
    *  @brief  Get common calo hit properties: position, parent address, input energy and time
    *
    *  @param  pCaloHit the lcio calorimeter hit
    *  @param  caloHitParameters the calo hit parameters to populate
    */
-  void GetCommonCaloHitProperties(const EVENT::CalorimeterHit* const pCaloHit,
+  void getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                   PandoraApi::CaloHit::Parameters& caloHitParameters) const;
 
   /**
@@ -218,7 +185,7 @@ private:
    *  @param  caloHitParameters the calo hit parameters to populate
    *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
    */
-  void GetEndCapCaloHitProperties(const EVENT::CalorimeterHit* const pCaloHit,
+  void getEndCapCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
                                   PandoraApi::CaloHit::Parameters& caloHitParameters, float& absorberCorrection) const;
 
@@ -233,17 +200,17 @@ private:
    *  @param  normalVector is the normalVector to the sensitive layers in local coordinates
    *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
    */
-  void GetBarrelCaloHitProperties(const EVENT::CalorimeterHit* const pCaloHit,
+  void getBarrelCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
                                   unsigned int barrelSymmetryOrder, PandoraApi::CaloHit::Parameters& caloHitParameters,
-                                  FloatVector const& normalVector, float& absorberCorrection) const;
+                                  const std::vector<float>& normalVector, float& absorberCorrection) const;
 
   /**
    *  @brief  Get number of active layers from position of a calo hit to the edge of the detector
    *
    *  @param  pCaloHit the lcio calorimeter hit
    */
-  int GetNLayersFromEdge(const EVENT::CalorimeterHit* const pCaloHit) const;
+  int getNLayersFromEdge(const edm4hep::CalorimeterHit& hit) const;
 
   /**
    *  @brief  Get the maximum radius of a calo hit in a polygonal detector structure
@@ -254,12 +221,12 @@ private:
    *
    *  @return the maximum radius
    */
-  float GetMaximumRadius(const EVENT::CalorimeterHit* const pCaloHit, const unsigned int symmetryOrder,
+  float getMaximumRadius(const edm4hep::CalorimeterHit& pCaloHit, const unsigned int symmetryOrder,
                          const float phi0) const;
 
   const Settings m_settings; ///< The calo hit creator settings
 
-  const pandora::Pandora& m_pandora; ///< Reference to the pandora object to create calo hits
+  pandora::Pandora& m_pandora; ///< Reference to the pandora object to create calo hits
 
   float m_hCalBarrelLayerThickness; ///< HCal barrel layer thickness
   float m_hCalEndCapLayerThickness; ///< HCal endcap layer thickness
@@ -267,14 +234,8 @@ private:
   CalorimeterHitVector m_calorimeterHitVector; ///< The calorimeter hit vector
 
   dd4hep::VolumeManager m_volumeManager; ///< DD4hep volume manager
+
+  const Gaudi::Algorithm& m_algorithm; ///< Pointer to the Gaudi algorithm for logging
 };
 
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-inline const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-inline void DDCaloHitCreator::Reset() { m_calorimeterHitVector.clear(); }
-
-#endif // #ifndef CALO_HIT_CREATOR_H
+#endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H

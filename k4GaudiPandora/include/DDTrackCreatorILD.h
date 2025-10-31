@@ -30,6 +30,10 @@
 
 #include "DDTrackCreatorBase.h"
 
+#include <GaudiKernel/SmartIF.h>
+
+class IGeoSvc;
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -43,19 +47,15 @@ public:
    *  @param  settings the creator settings
    *  @param  pPandora address of the relevant pandora instance
    */
-  DDTrackCreatorILD(const Settings& settings, const pandora::Pandora* const pPandora);
-
-  /**
-   *  @brief  Destructor
-   */
-  virtual ~DDTrackCreatorILD();
+  DDTrackCreatorILD(const Settings& settings, pandora::Pandora& pPandora, const Gaudi::Algorithm* algorithm,
+                    SmartIF<IGeoSvc> geoSvc);
 
   /**
    *  @brief  Create tracks implementation, insert user code here. Detector specific
    *
    *  @param  pLCEvent the lcio event
    */
-  pandora::StatusCode CreateTracks(EVENT::LCEvent* pLCEvent);
+  pandora::StatusCode CreateTracks(const std::vector<edm4hep::Track>& tracks) override;
 
 protected:
   // Detector-specific configuration variables
@@ -75,6 +75,8 @@ protected:
   float m_minEtdZPosition; ///< Min etd z position
   float m_minSetRadius;    ///< Min set radius
 
+  SmartIF<IGeoSvc> m_geoSvc; ///< Geometry service interface
+
   /**
    *  @brief  Whether track passes the quality cuts required in order to be used to form a pfo. Detector specific
    *
@@ -84,8 +86,8 @@ protected:
    *  @return boolean
    */
 
-  virtual bool PassesQualityCuts(const EVENT::Track* const pTrack,
-                                 const PandoraApi::Track::Parameters& trackParameters) const;
+  bool PassesQualityCuts(const edm4hep::Track& pTrack,
+                         const PandoraApi::Track::Parameters& trackParameters) const override;
   /**
    *  @brief  Get number of hits in TPC of a track
    *
@@ -93,7 +95,7 @@ protected:
    *
    *  @return number of hits in TPC of a track
    */
-  int GetNTpcHits(const EVENT::Track* const pTrack) const;
+  int GetNTpcHits(const edm4hep::Track& pTrack) const;
 
   /**
    *  @brief  Get number of hits in FTD of a track
@@ -102,7 +104,7 @@ protected:
    *
    *  @return number of hits in FTDof a track
    */
-  int GetNFtdHits(const EVENT::Track* const pTrack) const;
+  int GetNFtdHits(const edm4hep::Track& pTrack) const;
 
   /**
    *  @brief  Decide whether track reaches the ecal surface. Detector specific
@@ -110,7 +112,8 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void TrackReachesECAL(const EVENT::Track* const pTrack, PandoraApi::Track::Parameters& trackParameters) const;
+
+  void TrackReachesECAL(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
 
   /**
    *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -121,8 +124,7 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void DefineTrackPfoUsage(const EVENT::Track* const pTrack,
-                                   PandoraApi::Track::Parameters& trackParameters) const;
+  void DefineTrackPfoUsage(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
 };
 
 #endif // #ifndef DDTRACK_CREATOR_ILD_H
