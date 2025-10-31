@@ -254,7 +254,7 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                             m_pfoCreator->CreateParticleFlowObjects(
                                 pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection))
-    // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(m_pPandora))
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(m_pPandora))
     // Reset();
 
     return std::make_tuple(std::move(pClusterCollection), std::move(pReconstructedParticleCollection),
