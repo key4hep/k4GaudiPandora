@@ -17,14 +17,6 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/include/DDPandoraPFANewAlgorithm.h
- *
- *  @brief  Header file for the pandora pfa new algorithm class.
- *
- *  $Log: $
- */
-
 #ifndef DDPANDORAPFANEWALGORITHM_H
 #define DDPANDORAPFANEWALGORITHM_H 1
 
@@ -143,15 +135,6 @@ public:
              const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections) const override;
 
   const pandora::Pandora* GetPandora() const;
-
-  /**
-   *  @brief  Get address of the current lcio event
-   *
-   *  @param  pPandora address of the relevant pandora instance
-   *
-   *  @return address of the current lcio event
-   */
-  // static const EVENT::LCEvent* GetCurrentEvent(const pandora::Pandora* const pPandora);
 
 private:
   /**
@@ -389,27 +372,27 @@ private:
       "Normal vector for the muon barrel sensitive layers in local coordinates"};
 
   // Reuse the software compensation parameters default values
-  lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
+  lc_content::LCSoftwareCompensationParameters defaultSoftwareCompensationParameters;
   Gaudi::Property<std::vector<float>> m_softCompParameters{
-      this, "SoftwareCompensationWeights", softwareCompensationParameters.m_softCompParameters,
+      this, "SoftwareCompensationWeights", defaultSoftwareCompensationParameters.m_softCompParameters,
       "The 9 software compensation weights for Pandora energy correction"};
   Gaudi::Property<std::vector<float>> m_softCompEnergyDensityBins{
-      this, "SoftwareCompensationEnergyDensityBins", softwareCompensationParameters.m_softCompEnergyDensityBins,
+      this, "SoftwareCompensationEnergyDensityBins", defaultSoftwareCompensationParameters.m_softCompEnergyDensityBins,
       "The 10 software compensation density bins for Pandora energy correction"};
   Gaudi::Property<float> m_energyDensityFinalBin{
-      this, "FinalEnergyDensityBin", softwareCompensationParameters.m_energyDensityFinalBin,
+      this, "FinalEnergyDensityBin", defaultSoftwareCompensationParameters.m_energyDensityFinalBin,
       "The software compensation final energy density bin for Pandora energy correction"};
   Gaudi::Property<float> m_maxClusterEnergyToApplySoftComp{
-      this, "MaxClusterEnergyToApplySoftComp", softwareCompensationParameters.m_maxClusterEnergyToApplySoftComp,
+      this, "MaxClusterEnergyToApplySoftComp", defaultSoftwareCompensationParameters.m_maxClusterEnergyToApplySoftComp,
       "The maximum hadronic energy to apply software compensation in Pandora energy correction"};
   Gaudi::Property<float> m_minCleanHitEnergy{
-      this, "MinCleanHitEnergy", softwareCompensationParameters.m_minCleanHitEnergy,
+      this, "MinCleanHitEnergy", defaultSoftwareCompensationParameters.m_minCleanHitEnergy,
       "The minimum hit energy to apply ECAL correction in Pandora energy correction"};
   Gaudi::Property<float> m_minCleanHitEnergyFraction{
-      this, "MinCleanHitEnergyFraction", softwareCompensationParameters.m_minCleanHitEnergyFraction,
+      this, "MinCleanHitEnergyFraction", defaultSoftwareCompensationParameters.m_minCleanHitEnergyFraction,
       "The minimum hit energy fraction to apply ECAL correction in Pandora energy correction"};
   Gaudi::Property<float> m_minCleanCorrectedHitEnergy{
-      this, "MinCleanCorrectedHitEnergy", softwareCompensationParameters.m_minCleanCorrectedHitEnergy,
+      this, "MinCleanCorrectedHitEnergy", defaultSoftwareCompensationParameters.m_minCleanCorrectedHitEnergy,
       "The minimum correction to an ECAL hit in Pandora energy correction"};
 };
 

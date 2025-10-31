@@ -178,7 +178,7 @@ DDPandoraPFANewAlgorithm::operator()(
                             m_pDDMCParticleCreator->CreateMCParticles(mcParticlesVector))
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, v0Collections))
+                            m_pTrackCreator->CreateTrackAssociations(kinkCollections, prongCollections, splitCollections, v0Collections))
 
     std::vector<edm4hep::Track> tracksVector;
     for (const auto& trackCollection : trackCollections) {

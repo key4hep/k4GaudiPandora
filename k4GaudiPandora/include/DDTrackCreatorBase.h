@@ -142,6 +142,7 @@ public:
 
   pandora::StatusCode CreateTrackAssociations(const std::vector<const edm4hep::VertexCollection*>& kinkCollection,
                                               const std::vector<const edm4hep::VertexCollection*>& prongsCollection,
+                                              const std::vector<const edm4hep::VertexCollection*>& splitCollection,
                                               const std::vector<const edm4hep::VertexCollection*>& v0Collection);
 
   /**
@@ -231,7 +232,8 @@ protected:
    *
    *  @param  prongsCollection the collection of reconstructed particles
    */
-  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections);
+  pandora::StatusCode ExtractProngsAndSplits(const std::vector<const edm4hep::VertexCollection*>& prongsCollections,
+                                             const std::vector<const edm4hep::VertexCollection*>& splitCollections);
 
   /**
    *  @brief  Extract v0 information from specified collections
