@@ -434,6 +434,10 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
             energyi = ecalEnergyDigi(energyi, cellID, event_correl_miscalib_ecal, randomEngine);
 
             if (energyi > m_thresholdEcal) { // now would be the correct time to do threshold comparison
+              // smear simhit time with a gaussian
+              if (m_smearHitsTime) {
+                timei += CLHEP::RandGauss::shoot(&randomEngine, 0., m_ecalTimeResolution);
+              }
 
               if (m_ecalCorrectTimesForPropagation)
                 timei -= dt;
@@ -648,6 +652,10 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
               energyi = hcalEnergyDigi(energyi, cellID, event_correl_miscalib_hcal, randomEngine);
 
               if (energyi > m_thresholdHcal[0]) { // now would be the correct time to do threshold comparison
+                // smear simhit time with a gaussian
+                if (m_smearHitsTime) {
+                  timei += CLHEP::RandGauss::shoot(&randomEngine, 0., m_hcalTimeResolution);
+                }
 
                 if (m_hcalCorrectTimesForPropagation)
                   timei -= dt;

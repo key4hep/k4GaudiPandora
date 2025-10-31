@@ -62,8 +62,6 @@ and then run the examples like this:
 k4run ../k4ProjectTemplate/options/createHelloWorld.py
 k4run ../k4ProjectTemplate/options/createExampleEventData.py
 ```
-
-
 ## References:
 These could perhaps be usefule for newcomers.
 1. [lhcb-98-064 COMP](https://cds.cern.ch/record/691746/files/lhcb-98-064.pdf)
