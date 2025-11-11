@@ -151,8 +151,8 @@ pandora::StatusCode DDTrackCreatorCLIC::CreateTracks(const std::vector<edm4hep::
 
     // Take the first track state for the parameters
     if (pTrack.getTrackStates().empty()) {
-      continue;
-      // throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
+      m_algorithm.error() << "Track has no track states " << endmsg;
+      throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
     }
     const auto& trackState = pTrack.getTrackStates()[0];
 
