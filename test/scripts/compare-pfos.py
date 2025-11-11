@@ -34,7 +34,8 @@ parser.add_argument(
     "--gaudi-vertices-collections",
     default=[
         "GaudiPandoraStartVertices",
-    ], nargs="+",
+    ],
+    nargs="+",
     help="Gaudi vertices collection",
 )
 
@@ -42,14 +43,17 @@ parser.add_argument(
     "--marlin-vertices-collections",
     default=[
         "PandoraStartVertices",
-    ], nargs="+", help="Marlin vertices collection"
+    ],
+    nargs="+",
+    help="Marlin vertices collection",
 )
 
 parser.add_argument(
     "--gaudi-cluster-collections",
     default=[
         "GaudiPandoraClusters",
-    ], nargs="+",
+    ],
+    nargs="+",
     help="Gaudi cluster collection",
 )
 
@@ -57,14 +61,17 @@ parser.add_argument(
     "--marlin-cluster-collections",
     default=[
         "PandoraClusters",
-    ], nargs="+", help="Marlin cluster collection"
+    ],
+    nargs="+",
+    help="Marlin cluster collection",
 )
 
 parser.add_argument(
     "--gaudi-recoparticle-collections",
     default=[
         "GaudiPandoraPFOs",
-    ], nargs="+",
+    ],
+    nargs="+",
     help="Gaudi reconstructed particle collection",
 )
 
@@ -72,7 +79,9 @@ parser.add_argument(
     "--marlin-recoparticle-collections",
     default=[
         "PandoraPFOs",
-    ], nargs="+", help="Marlin reconstructed particle collection"
+    ],
+    nargs="+",
+    help="Marlin reconstructed particle collection",
 )
 
 args = parser.parse_args()
@@ -85,15 +94,21 @@ events_marlin = reader_marlin.get("events")
 
 for i, frame_gaudi in enumerate(events_gaudi):
     frame_marlin = events_marlin[i]
-    for collection_marlin, collection_gaudi in zip(args.marlin_vertices_collections, args.gaudi_vertices_collections):
-        print(f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)')
+    for collection_marlin, collection_gaudi in zip(
+        args.marlin_vertices_collections, args.gaudi_vertices_collections
+    ):
+        print(
+            f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)'
+        )
         vertices_gaudi = frame_gaudi.get(collection_gaudi)
         vertices_marlin = frame_marlin.get(collection_marlin)
         print(f"Checking event {i} with {len(vertices_gaudi)} vertices")
         assert len(vertices_gaudi) == len(
             vertices_marlin
         ), f"Number of vertices differ: {len(vertices_gaudi)} vs {len(vertices_marlin)}"
-        for j, (vertex_gaudi, vertex_marlin) in enumerate(zip(vertices_gaudi, vertices_marlin)):
+        for j, (vertex_gaudi, vertex_marlin) in enumerate(
+            zip(vertices_gaudi, vertices_marlin)
+        ):
             print(f"Checking vertex {j}")
             for attr in [
                 "Type",
@@ -104,34 +119,43 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "AlgorithmType",
             ]:
                 assert (
-                    getattr(vertex_gaudi, f"get{attr}")() == getattr(vertex_marlin, f"get{attr}")()
+                    getattr(vertex_gaudi, f"get{attr}")()
+                    == getattr(vertex_marlin, f"get{attr}")()
                 ), f"{attr} differ for vertex {j}: {getattr(vertex_gaudi, f'get{attr}')()} vs {getattr(vertex_marlin, f'get{attr}')()}"
 
             for vmember in [
                 "Parameters",
             ]:
-                assert (
-                    list(getattr(vertex_gaudi, f"get{vmember}")()) == list(getattr(vertex_marlin, f"get{vmember}")())
+                assert list(getattr(vertex_gaudi, f"get{vmember}")()) == list(
+                    getattr(vertex_marlin, f"get{vmember}")()
                 ), f"{vmember} differ for vertex {j}: {getattr(vertex_gaudi, f'get{vmember}')()} vs {getattr(vertex_marlin, f'get{vmember}')()}"
 
             for one_to_many_relation in [
                 "Parameters",
             ]:
-                assert (
-                    [elem.id().index for elem in getattr(vertex_gaudi, f"get{one_to_many_relation}")()] ==
-                    [elem.id().index for elem in getattr(vertex_marlin, f"get{one_to_many_relation}")()]
-                ), f"{one_to_many_relation} differ for vertex {j}: {getattr(vertex_gaudi, f'get{one_to_many_relation}')()} vs {getattr(vertex_marlin, f'get{one_to_many_relation}')()}"
+                assert [
+                    elem.id().index
+                    for elem in getattr(vertex_gaudi, f"get{one_to_many_relation}")()
+                ] == [
+                    elem.id().index
+                    for elem in getattr(vertex_marlin, f"get{one_to_many_relation}")()
+                ], f"{one_to_many_relation} differ for vertex {j}: {getattr(vertex_gaudi, f'get{one_to_many_relation}')()} vs {getattr(vertex_marlin, f'get{one_to_many_relation}')()}"
 
-
-    for collection_marlin, collection_gaudi in zip(args.marlin_cluster_collections, args.gaudi_cluster_collections):
-        print(f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)')
+    for collection_marlin, collection_gaudi in zip(
+        args.marlin_cluster_collections, args.gaudi_cluster_collections
+    ):
+        print(
+            f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)'
+        )
         clusters_gaudi = frame_gaudi.get(collection_gaudi)
         clusters_marlin = frame_marlin.get(collection_marlin)
         print(f"Checking event {i} with {len(clusters_gaudi)} clusters")
         assert len(clusters_gaudi) == len(
             clusters_marlin
         ), f"Number of clusters differ: {len(clusters_gaudi)} vs {len(clusters_marlin)}"
-        for j, (cluster_gaudi, cluster_marlin) in enumerate(zip(clusters_gaudi, clusters_marlin)):
+        for j, (cluster_gaudi, cluster_marlin) in enumerate(
+            zip(clusters_gaudi, clusters_marlin)
+        ):
             print(f"Checking cluster {j}")
             for attr in [
                 "Type",
@@ -140,35 +164,44 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "Position",
                 "PositionError",
                 "ITheta",
+                # Known to be slightly different depending on the build type because
+                # optimizations can change decimals for float values after many decimals
                 "Phi",
                 "DirectionError",
             ]:
                 if attr == "ITheta" or attr == "Phi" and j == 7:
                     continue
                 assert (
-                    getattr(cluster_gaudi, f"get{attr}")() == getattr(cluster_marlin, f"get{attr}")()
+                    getattr(cluster_gaudi, f"get{attr}")()
+                    == getattr(cluster_marlin, f"get{attr}")()
                 ), f"{attr} differ for cluster {j}: {getattr(cluster_gaudi, f'get{attr}')()} vs {getattr(cluster_marlin, f'get{attr}')()}"
 
             for vmember in [
                 "ShapeParameters",
                 "SubdetectorEnergies",
             ]:
-                assert (
-                    list(getattr(cluster_gaudi, f"get{vmember}")()) == list(getattr(cluster_marlin, f"get{vmember}")())
+                assert list(getattr(cluster_gaudi, f"get{vmember}")()) == list(
+                    getattr(cluster_marlin, f"get{vmember}")()
                 ), f"{vmember} differ for cluster {j}: {getattr(cluster_gaudi, f'get{vmember}')()} vs {getattr(cluster_marlin, f'get{vmember}')()}"
 
             for relation in [
                 "Clusters",
                 "Hits",
             ]:
-                assert (
-                    [elem.id().index for elem in getattr(cluster_gaudi, f"get{relation}")()] ==
-                    [elem.id().index for elem in getattr(cluster_marlin, f"get{relation}")()]
-                ), f"{relation} differ for cluster {j}: {getattr(cluster_gaudi, f'get{relation}')()} vs {getattr(cluster_marlin, f'get{relation}')()}"
+                assert [
+                    elem.id().index
+                    for elem in getattr(cluster_gaudi, f"get{relation}")()
+                ] == [
+                    elem.id().index
+                    for elem in getattr(cluster_marlin, f"get{relation}")()
+                ], f"{relation} differ for cluster {j}: {getattr(cluster_gaudi, f'get{relation}')()} vs {getattr(cluster_marlin, f'get{relation}')()}"
 
-
-    for collection_marlin, collection_gaudi in zip(args.marlin_recoparticle_collections, args.gaudi_recoparticle_collections):
-        print(f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)')
+    for collection_marlin, collection_gaudi in zip(
+        args.marlin_recoparticle_collections, args.gaudi_recoparticle_collections
+    ):
+        print(
+            f'Checking collection "{collection_marlin}" (Marlin) and "{collection_gaudi}" (Gaudi)'
+        )
         recos_gaudi = frame_gaudi.get(collection_gaudi)
         recos_marlin = frame_marlin.get(collection_marlin)
         print(f"Checking event {i} with {len(recos_gaudi)} reconstructed particles")
@@ -188,14 +221,16 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "CovMatrix",
             ]:
                 assert (
-                    getattr(reco_gaudi, f"get{attr}")() == getattr(reco_marlin, f"get{attr}")()
+                    getattr(reco_gaudi, f"get{attr}")()
+                    == getattr(reco_marlin, f"get{attr}")()
                 ), f"{attr} differ for reco {j}: {getattr(reco_gaudi, f'get{attr}')()} vs {getattr(reco_marlin, f'get{attr}')()}"
 
             for relation in [
                 "DecayVertex",
             ]:
                 assert (
-                    getattr(reco_gaudi, f"get{relation}")().id().index == getattr(reco_marlin, f"get{relation}")().id().index
+                    getattr(reco_gaudi, f"get{relation}")().id().index
+                    == getattr(reco_marlin, f"get{relation}")().id().index
                 ), f"{relation} differ for cluster {j}: {getattr(reco_gaudi, f'get{relation}')()} vs {getattr(reco_marlin, f'get{relation}')()}"
 
             for relation in [
@@ -203,7 +238,8 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "Tracks",
                 "Particles",
             ]:
-                assert (
-                    [elem.id().index for elem in getattr(reco_gaudi, f"get{relation}")()] ==
-                    [elem.id().index for elem in getattr(reco_marlin, f"get{relation}")()]
-                ), f"{relation} differ for reco {j}: {getattr(reco_gaudi, f'get{relation}')()} vs {getattr(reco_marlin, f'get{relation}')()}"
+                assert [
+                    elem.id().index for elem in getattr(reco_gaudi, f"get{relation}")()
+                ] == [
+                    elem.id().index for elem in getattr(reco_marlin, f"get{relation}")()
+                ], f"{relation} differ for reco {j}: {getattr(reco_gaudi, f'get{relation}')()} vs {getattr(reco_marlin, f'get{relation}')()}"
