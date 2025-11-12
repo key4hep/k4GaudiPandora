@@ -17,36 +17,19 @@
  * limitations under the License.
  */
 
-/**
- *  @file   DDMarlinPandora/include/DDGeometryCreator.h
- *
- *  @brief  Header file for the geometry creator class.
- *
- *  $Log: $
- */
-
 #ifndef DDGEOMETRY_CREATOR_H
 #define DDGEOMETRY_CREATOR_H 1
 
-#include "Api/PandoraApi.h"
+#include <Api/PandoraApi.h>
 
-#include "DDRec/DetectorData.h"
+#include <DDRec/DetectorData.h>
 
-//------------------------------------------------------------------------------------------------------------------------------------------
+#include <Gaudi/Algorithm.h>
 
-/**
- *  @brief  DDGeometryCreator class
- */
 class DDGeometryCreator {
 public:
-  /**
-   *  @brief  Settings class
-   */
   class Settings {
   public:
-    /**
-     *  @brief  Default constructor
-     */
     Settings();
     // NN: Material properties obtained from geometry; relevant variables removed
     /// NN: Extra geometry variables removed since all accessible from DDRec
@@ -59,24 +42,15 @@ public:
    *  @brief  Constructor
    *
    *  @param  settings the creator settings
-   *  @param  pPandora address of the relevant pandora instance
+   *  @param  pandora reference to the relevant pandora instance
    */
-  DDGeometryCreator(const Settings& settings, const pandora::Pandora* const pPandora);
+  DDGeometryCreator(const Settings& settings, pandora::Pandora& pandora, Gaudi::Algorithm* algorithm);
 
-  /**
-   *  @brief  Destructor
-   */
-  ~DDGeometryCreator();
-
-  /**
-   *  @brief  Create geometry
-   */
   pandora::StatusCode CreateGeometry() const;
 
-private:
+protected:
   typedef std::map<pandora::SubDetectorType, PandoraApi::Geometry::SubDetector::Parameters> SubDetectorTypeMap;
   typedef std::map<std::string, PandoraApi::Geometry::SubDetector::Parameters> SubDetectorNameMap;
-
   /**
    *  @brief  Set mandatory sub detector parameters
    *
@@ -151,8 +125,9 @@ private:
                                            pandora::CartesianVector vertexOffset = pandora::CartesianVector(0, 0,
                                                                                                             0)) const;
 
-  const Settings m_settings;          ///< The geometry creator settings
-  const pandora::Pandora& m_pPandora; ///< Address of the pandora object to create the geometry
+  const Settings m_settings;    ///< The geometry creator settings
+  pandora::Pandora& m_pPandora; ///< Reference to the pandora object to create the geometry
+  Gaudi::Algorithm& m_algorithm;
 };
 
 #endif // #ifndef GEOMETRY_CREATOR_H

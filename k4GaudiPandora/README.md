@@ -22,10 +22,12 @@ DDCaloDigi has been ported. The following changes have been done:
   `m_layerTypes` is being used instead.
 - The functions `digitalEcalCalibCoeff` and `analogueEcalCalibCoeff` have been
   merged into `ecalCalibCoeff` since they were the same function.
-
 - Time smearing: By default in `DDCaloDigi.cc` the simhits time is taken "as is"
   when computing the rechits time. There is now the possibility to change this
   behaviour and get more realistic rechits using the `enableHitsTimeSmearing`
   flag. If set to `True`, it applies a Gaussian smearing to the simhits time.
   The `sigma` of the Gaussian is configurable as well with the
   `{E/H}CALTimeResolution` flag (in `ns`).
+
+DDMarlinPandora has been ported
+- DDPfoCreator: `SetRecoParticleReferencePoint` has been removed

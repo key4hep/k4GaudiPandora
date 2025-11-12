@@ -35,11 +35,50 @@ add_test(NAME "run_ddsim"
   )
 set_test_env("run_ddsim")
 
+add_test(NAME "run_ddsim_ttbar"
+  COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml --numberOfEvents 3 --outputFile sim_ttbar.edm4hep.root --inputFile CLDConfig/test/yyxyev_000.stdhep"
+  )
+set_test_env("run_ddsim_ttbar")
+set_tests_properties("run_ddsim_ttbar" PROPERTIES DEPENDS "clone_CLDConfig")
+
 add_test(NAME "run_marlin_wrapper"
   COMMAND k4run CLDReconstruction.py --inputFiles sim.edm4hep.root
 )
 set_test_env("run_marlin_wrapper")
 set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim")
+
+add_test(NAME "run_marlin_wrapper_ttbar"
+  COMMAND k4run CLDReconstruction.py --inputFiles sim_ttbar.edm4hep.root --outputBasename output_ttbar
+)
+set_test_env("run_marlin_wrapper_ttbar")
+set_tests_properties("run_marlin_wrapper_ttbar" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim_ttbar")
+
+
+add_test(NAME "run_Pandora"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py
+)
+set_test_env("run_Pandora")
+set_tests_properties("run_Pandora" PROPERTIES DEPENDS "run_marlin_wrapper")
+
+add_test(NAME "run_Pandora_ttbar"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Input output_ttbar_REC.edm4hep.root --IOSvc.Output output_pandora_ttbar.root
+)
+set_test_env("run_Pandora_ttbar")
+set_tests_properties("run_Pandora_ttbar" PROPERTIES DEPENDS "run_marlin_wrapper_ttbar")
+
+add_test(NAME "compare_Pandora"
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-pfos.py"
+)
+set_test_env("compare_Pandora")
+set_tests_properties("compare_Pandora" PROPERTIES DEPENDS "run_Pandora")
+
+add_test(NAME "compare_Pandora_ttbar"
+  COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/compare-pfos.py" --gaudi-file output_pandora_ttbar.root --marlin-file output_ttbar_REC.edm4hep.root
+)
+set_test_env("compare_Pandora_ttbar")
+set_tests_properties("compare_Pandora_ttbar" PROPERTIES DEPENDS "run_Pandora_ttbar")
+
+
 
 add_test(NAME "run_DDCaloDigi"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runDDCaloDigi.py
