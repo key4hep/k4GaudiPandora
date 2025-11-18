@@ -148,7 +148,7 @@ params = {
 }
 
 
-pandora = DDPandoraPFANewAlgorithm("PandoraPFANewProcessor", **params)
+pandora = DDPandoraPFANewAlgorithm("PandoraPFANewAlgorithm", **params)
 
 ApplicationMgr(
     TopAlg=[pandora],
