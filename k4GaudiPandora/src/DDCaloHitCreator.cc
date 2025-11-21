@@ -327,7 +327,10 @@ DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>&
                               PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
 
     } catch (const std::exception& e) {
-      m_algorithm.error() << "Exception processing MUON hit: " << e.what() << endmsg;
+      m_algorithm.error() << "Exception processing muon hit: " << e.what() << endmsg;
+    } catch (...) {
+      m_algorithm.error() << "Unknown exception processing muon hit. These can come from algorithms in LC Content."
+                          << endmsg;
     }
   }
 
