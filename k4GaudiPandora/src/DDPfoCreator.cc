@@ -28,6 +28,7 @@
 #include <edm4hep/CalorimeterHitCollection.h>
 #include <edm4hep/Cluster.h>
 #include <edm4hep/ClusterCollection.h>
+#include <edm4hep/EDM4hepVersion.h>
 #include <edm4hep/MutableCluster.h>
 #include <edm4hep/ReconstructedParticle.h>
 #include <edm4hep/ReconstructedParticleCollection.h>
@@ -214,7 +215,11 @@ void DDPfoCreator::setClusterPositionAndError(const std::size_t nHitsInCluster, 
   ClusterShapes clusterShape(nHitsInCluster, hitE.data(), hitX.data(), hitY.data(), hitZ.data());
 
   try {
+#if EDM4HEP_BUILD_VERSION < EDM4HEP_VERSION(1, 0, 0)
     cluster.setPhi(std::atan2(clusterShape.getEigenVecInertia()[1], clusterShape.getEigenVecInertia()[0]));
+#else
+    cluster.setIPhi(std::atan2(clusterShape.getEigenVecInertia()[1], clusterShape.getEigenVecInertia()[0]));
+#endif
     cluster.setITheta(std::acos(clusterShape.getEigenVecInertia()[2]));
     cluster.setPosition(clusterShape.getCentreOfGravity());
     // TODO: Enable these that are not originally in DDMarlinPandora
