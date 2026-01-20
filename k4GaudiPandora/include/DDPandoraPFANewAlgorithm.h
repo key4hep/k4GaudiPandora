@@ -46,6 +46,9 @@ namespace pandora {
 class Pandora;
 }
 
+class IDataProviderSvc;
+class ExternalEventParameter;
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 struct DDPandoraPFANewAlgorithm final
@@ -165,6 +168,8 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
+  SmartIF<IDataProviderSvc> m_dataSvc;                         ///< DataProviderSvc for external clustering
+  std::unique_ptr<ExternalEventParameter> m_extEvtParam;       ///< external event parameter
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings

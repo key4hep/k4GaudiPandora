@@ -79,6 +79,9 @@ private:
 
   std::vector<std::string> m_externalClusterCollectionNames = {}; // list of external cluster collection names
   bool m_flagClustersAsPhotons = true;              ///< Whether to automatically flag new clusters as fixed photons
+
+  IDataProviderSvc* m_pEventService = nullptr; // persistent pointer to Gaudi event service
+                                               // (owned by the DDPandoraPFANewAlgorithm)
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
