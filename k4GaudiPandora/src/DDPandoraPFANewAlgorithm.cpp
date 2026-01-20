@@ -33,6 +33,7 @@
 
 #include "DDTrackCreatorCLIC.h"
 #include "DDTrackCreatorILD.h"
+#include "DDExternalClusteringAlgorithm.h"
 
 #include <Api/PandoraApi.h>
 #include <LCContent.h>
@@ -182,7 +183,6 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
       const DDPandoraPFANewAlgorithm* self;
       ~ResetGuard() { self->reset(); }
     } resetGuard{this};
-
     std::vector<edm4hep::MCParticle> mcParticlesVector;
     for (const auto& mcParticleCollection : MCParticleCollections) {
       mcParticlesVector.insert(mcParticlesVector.end(), mcParticleCollection->begin(), mcParticleCollection->end());
@@ -254,6 +254,14 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
     //                             caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector(), eCalCollections,
     //                             hCalCollections, mCalCollections, lCalCollections, lhCalCollections))
 
+    // Set external parameters for DDExternalClusteringAlgorithm
+    // This allows Pandora algorithms to access the Gaudi event service
+    ExternalEventParameter externalEventParameter;
+    externalEventParameter.m_pEventService = Gaudi::Algorithm::eventSvc().get();
+
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                            PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", &externalEventParameter))
+
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::ProcessEvent(m_pPandora))
 
     edm4hep::ClusterCollection pClusterCollection;
@@ -289,6 +297,11 @@ const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
 pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(m_pPandora))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(m_pPandora))
+
+  // Register DDExternalClusteringAlgorithm
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                           PandoraApi::RegisterAlgorithmFactory(m_pPandora, "DDExternalClustering",
+                                                                new DDExternalClusteringAlgorithm::Factory))
 
   if (m_settings.m_useDD4hepField) {
     dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
