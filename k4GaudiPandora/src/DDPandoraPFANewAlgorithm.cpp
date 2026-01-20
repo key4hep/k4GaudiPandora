@@ -31,9 +31,9 @@
 
 #include "DDBFieldPlugin.h"
 
+#include "DDExternalClusteringAlgorithm.h"
 #include "DDTrackCreatorCLIC.h"
 #include "DDTrackCreatorILD.h"
-#include "DDExternalClusteringAlgorithm.h"
 
 #include <Api/PandoraApi.h>
 #include <LCContent.h>
