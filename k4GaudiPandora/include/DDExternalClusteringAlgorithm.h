@@ -28,9 +28,9 @@
 #define DDEXTERNALCLUSTERINGALGORITHM_H 1
 
 // Pandora
-#include "Pandora/ExternallyConfiguredAlgorithm.h"
 #include "Helpers/XmlHelper.h"
 #include "Objects/CaloHit.h"
+#include "Pandora/ExternallyConfiguredAlgorithm.h"
 
 // c++
 #include <map>
@@ -78,7 +78,7 @@ private:
   typedef std::map<uint64_t, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
   std::vector<std::string> m_externalClusterCollectionNames = {}; // list of external cluster collection names
-  bool m_flagClustersAsPhotons = true;              ///< Whether to automatically flag new clusters as fixed photons
+  bool m_flagClustersAsPhotons = true; ///< Whether to automatically flag new clusters as fixed photons
 
   IDataProviderSvc* m_pEventService = nullptr; // persistent pointer to Gaudi event service
                                                // (owned by the DDPandoraPFANewAlgorithm)

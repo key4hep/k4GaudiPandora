@@ -32,8 +32,8 @@
 
 #include "DDExternalClusteringAlgorithm.h"
 #include "Gaudi/Algorithm.h"
-#include "GaudiKernel/IDataProviderSvc.h"
 #include "GaudiKernel/AnyDataWrapper.h"
+#include "GaudiKernel/IDataProviderSvc.h"
 
 DDExternalClusteringAlgorithm::DDExternalClusteringAlgorithm() : m_flagClustersAsPhotons(false) {}
 
@@ -76,7 +76,8 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
       StatusCode sc = m_pEventService->retrieveObject("/Event/" + colName, rawObj);
 
       if (sc.isFailure() || rawObj == nullptr) {
-        throw std::runtime_error("DDExternalClusteringAlgorithm: Cannot retrieve the external cluster collection " + colName);
+        throw std::runtime_error("DDExternalClusteringAlgorithm: Cannot retrieve the external cluster collection " +
+                                 colName);
       }
 
       auto anyWrapper = dynamic_cast<AnyDataWrapper<std::unique_ptr<podio::CollectionBase>>*>(rawObj);
@@ -153,10 +154,9 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle) {
-  PANDORA_RETURN_RESULT_IF(
-      pandora::STATUS_CODE_SUCCESS, !=,
-      pandora::XmlHelper::ReadVectorOfValues(xmlHandle, "ExternalClusterCollectionNames",
-                                             m_externalClusterCollectionNames));
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                           pandora::XmlHelper::ReadVectorOfValues(xmlHandle, "ExternalClusterCollectionNames",
+                                                                  m_externalClusterCollectionNames));
 
   PANDORA_RETURN_RESULT_IF_AND_IF(
       pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=,
