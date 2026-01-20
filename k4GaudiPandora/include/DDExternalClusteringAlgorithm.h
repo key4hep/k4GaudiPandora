@@ -27,9 +27,15 @@
 #ifndef DDEXTERNALCLUSTERINGALGORITHM_H
 #define DDEXTERNALCLUSTERINGALGORITHM_H 1
 
-#include "Pandora/Algorithm.h"
+// Pandora
+#include "Pandora/ExternallyConfiguredAlgorithm.h"
+#include "Helpers/XmlHelper.h"
+#include "Objects/CaloHit.h"
 
+// c++
 #include <map>
+
+class IDataProviderSvc;
 
 namespace pandora {
 class CaloHit;
@@ -38,9 +44,19 @@ class CaloHit;
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
+ *  @brief  ExternalEventParameter class - holds Gaudi event service for external clustering
+ */
+class ExternalEventParameter : public pandora::ExternalParameters {
+public:
+  IDataProviderSvc* m_pEventService; ///< Pointer to Gaudi event service
+};
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
  *  @brief  DDExternalClusteringAlgorithm class
  */
-class DDExternalClusteringAlgorithm : public pandora::Algorithm {
+class DDExternalClusteringAlgorithm : public pandora::ExternallyConfiguredAlgorithm {
 public:
   /**
    *  @brief  Factory class for instantiating algorithm
@@ -59,9 +75,9 @@ private:
   pandora::StatusCode Run();
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
-  typedef std::map<const void*, const pandora::CaloHit*> ParentAddressToCaloHitMap;
+  typedef std::map<uint64_t, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
-  std::string m_externalClusterCollectionName = ""; ///< The collection name for the external clusters
+  std::vector<std::string> m_externalClusterCollectionNames = {}; // list of external cluster collection names
   bool m_flagClustersAsPhotons = true;              ///< Whether to automatically flag new clusters as fixed photons
 };
 

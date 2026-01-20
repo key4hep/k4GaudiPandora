@@ -28,101 +28,150 @@
 #include "edm4hep/Cluster.h"
 #include "edm4hep/ClusterCollection.h"
 
-#include "DDExternalClusteringAlgorithm.h"
-#include "DDPandoraPFANewProcessor.h"
-
 #include "Pandora/AlgorithmHeaders.h"
-#include "XmlHelper.h"
 
-using namespace pandora;
+#include "DDExternalClusteringAlgorithm.h"
+#include "Gaudi/Algorithm.h"
+#include "GaudiKernel/IDataProviderSvc.h"
+#include "GaudiKernel/AnyDataWrapper.h"
 
-DDExternalClusteringAlgorithm::DDExternalClusteringAlgorithm() : m_flagClustersAsPhotons(true) {}
+DDExternalClusteringAlgorithm::DDExternalClusteringAlgorithm() : m_flagClustersAsPhotons(false) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode DDExternalClusteringAlgorithm::Run() {
+pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
   try {
-    const CaloHitList* pCaloHitList = NULL;
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pCaloHitList));
+    // Get Pandora calo hit list
+    const pandora::CaloHitList* pCaloHitList = NULL;
+    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pCaloHitList));
 
     if (pCaloHitList->empty())
-      return STATUS_CODE_SUCCESS;
-
-    // Get external photon cluster collection
-    const edm4hep::EventHeader* const pEventHeader = DDPandoraPFANewProcessor::GetCurrentEvent(&(this->GetPandora()));
-    const edm4hep::ClusterCollection* pExternalClusterCollection =
-        pEventHeader->getCollection(m_externalClusterCollectionName);
-    const unsigned int nExternalClusters(pExternalClusterCollection->size());
-
-    if (0 == nExternalClusters)
-      return STATUS_CODE_SUCCESS;
+      return pandora::STATUS_CODE_SUCCESS;
 
     // Populate pandora parent address to calo hit map
-    ParentAddressToCaloHitMap parentAddressToCaloHitMap;
+    ExternalToPandoraCaloHitMap caloHitMap;
 
-    for (CaloHitList::const_iterator hitIter = pCaloHitList->begin(), hitIterEnd = pCaloHitList->end();
+    for (pandora::CaloHitList::const_iterator hitIter = pCaloHitList->begin(), hitIterEnd = pCaloHitList->end();
          hitIter != hitIterEnd; ++hitIter) {
       const pandora::CaloHit* const pCaloHit = *hitIter;
-      parentAddressToCaloHitMap.insert(ParentAddressToCaloHitMap::value_type(pCaloHit->GetParentAddress(), pCaloHit));
+      const edm4hep::CalorimeterHit* edmCaloHit =
+          static_cast<const edm4hep::CalorimeterHit*>(pCaloHit->GetParentAddress());
+
+      caloHitMap.emplace(edmCaloHit->getCellID(), pCaloHit);
     }
+
+    // Get current Gaudi event to retrieve external clusters
+    // Retrieve the Gaudi event service from external parameters set by the parent algorithm
+    const ExternalEventParameter* pExternalEventParameter =
+        dynamic_cast<const ExternalEventParameter*>(this->GetExternalParameters());
+
+    if (!pExternalEventParameter || !pExternalEventParameter->m_pEventService) {
+      throw std::runtime_error("DDExternalClusteringAlgorithm: External event parameter not set");
+    }
+
+    auto* gaudiEvent = pExternalEventParameter->m_pEventService;
 
     // Recreate external clusters within the pandora framework
-    for (unsigned int iCluster = 0; iCluster < nExternalClusters; ++iCluster) {
-      const edm4hep::Cluster* const pExternalCluster = &pExternalClusterCollection->at(iCluster);
+    const pandora::ClusterList* pClusterList = nullptr;
 
-      if (nullptr == pExternalCluster)
-        throw std::runtime_error("Collection type mismatch");
+    std::string clusterListNameTmp = "ExternalClustersTmp";
+    std::string clusterListNameFinal = "ExternalClusters";
 
-      const std::vector<edm4hep::ConstCalorimeterHit> calorimeterHitVec = pExternalCluster->getHits();
+    PANDORA_RETURN_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        PandoraContentApi::CreateTemporaryListAndSetCurrent(*this, pClusterList, clusterListNameTmp));
 
-      const pandora::Cluster* pPandoraCluster = NULL;
+    // loop over external cluster collections
+    for (const auto& colName : m_externalClusterCollectionNames) {
+      DataObject* rawObj = nullptr;
+      StatusCode sc = gaudiEvent->retrieveObject("/Event/" + colName, rawObj);
 
-      for (auto iter = calorimeterHitVec.begin(), iterEnd = calorimeterHitVec.end(); iter != iterEnd; ++iter) {
-        ParentAddressToCaloHitMap::const_iterator pandoraCaloHitIter = parentAddressToCaloHitMap.find(iter->id());
-
-        if (parentAddressToCaloHitMap.end() == pandoraCaloHitIter) {
-          continue;
-        }
-
-        const pandora::CaloHit* const pPandoraCaloHit = pandoraCaloHitIter->second;
-
-        if (NULL == pPandoraCluster) {
-          PandoraContentApi::Cluster::Parameters parameters;
-          parameters.m_caloHitList.push_back(pPandoraCaloHit);
-          PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=,
-                                   PandoraContentApi::Cluster::Create(*this, parameters, pPandoraCluster));
-
-          if (m_flagClustersAsPhotons) {
-            PandoraContentApi::Cluster::Metadata metadata;
-            metadata.m_particleId = PHOTON;
-            PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=,
-                                     PandoraContentApi::Cluster::AlterMetadata(*this, pPandoraCluster, metadata));
-          }
-        } else {
-          PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=,
-                                   PandoraContentApi::AddToCluster(*this, pPandoraCluster, pPandoraCaloHit));
-        }
+      if (sc.isFailure() || rawObj == nullptr) {
+        throw std::runtime_error("DDExternalClusteringAlgorithm: Cannot retrieve the external cluster collection " + colName);
       }
+
+      auto anyWrapper = dynamic_cast<AnyDataWrapper<std::unique_ptr<podio::CollectionBase>>*>(rawObj);
+
+      if (!anyWrapper) {
+        throw std::runtime_error("DDExternalClusteringAlgorithm: Failed to cast to AnyDataWrapper");
+      }
+
+      // get the underlying cluster collection
+      auto collBasePtr = anyWrapper->getData().get();
+      auto pExternalClusterCollection = dynamic_cast<edm4hep::ClusterCollection*>(collBasePtr);
+
+      if (!pExternalClusterCollection) {
+        throw std::runtime_error("DDExternalClusteringAlgorithm: Failed to cast CollectionBase to ClusterCollection");
+      }
+
+      // no cluster in this event
+      if (0 == pExternalClusterCollection->size())
+        continue;
+
+      // loop over external clusters
+      for (const edm4hep::Cluster& externalCluster : *pExternalClusterCollection) {
+        const auto& calorimeterHitVec = externalCluster.getHits();
+        pandora::CaloHitList pandoraHitList;
+
+        // find corresponding pandora hits
+        // and fill pandora calo hit list
+        for (const auto& edmHit : calorimeterHitVec) {
+          auto itr = caloHitMap.find(edmHit.getCellID());
+
+          if (itr == caloHitMap.end())
+            continue;
+
+          pandoraHitList.push_back(itr->second);
+        }
+
+        if (pandoraHitList.empty())
+          continue;
+
+        object_creation::ClusterParameters clusterParameters;
+        clusterParameters.m_caloHitList = pandoraHitList;
+
+        // create a pandora cluster
+        const pandora::Cluster* pPandoraCluster = nullptr;
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                PandoraContentApi::Cluster::Create(*this, clusterParameters, pPandoraCluster));
+
+        if (m_flagClustersAsPhotons) {
+          PandoraContentApi::Cluster::Metadata metadata;
+          metadata.m_particleId = pandora::PHOTON;
+          PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                   PandoraContentApi::Cluster::AlterMetadata(*this, pPandoraCluster, metadata));
+        }
+      } // loop over external clusters
+    } // loop over external cluster collections
+
+    // need these to store the pandora cluster list
+    if (!pClusterList->empty()) {
+      PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                               PandoraContentApi::SaveList<pandora::Cluster>(*this, clusterListNameFinal));
+      PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                               PandoraContentApi::ReplaceCurrentList<pandora::Cluster>(*this, clusterListNameFinal));
     }
-  } catch (StatusCodeException& statusCodeException) {
+  } catch (pandora::StatusCodeException& statusCodeException) {
     return statusCodeException.GetStatusCode();
   } catch (std::exception& exception) {
-    std::cout << "DDExternalClusteringAlgorithm failure: " << exception.what() << std::endl;
-    return STATUS_CODE_FAILURE;
+    std::cerr << "DDExternalClusteringAlgorithm failure: " << exception.what() << std::endl;
+    return pandora::STATUS_CODE_FAILURE;
   }
 
-  return STATUS_CODE_SUCCESS;
+  return pandora::STATUS_CODE_SUCCESS;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-StatusCode DDExternalClusteringAlgorithm::ReadSettings(const TiXmlHandle xmlHandle) {
+pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle) {
   PANDORA_RETURN_RESULT_IF(
-      STATUS_CODE_SUCCESS, !=,
-      XmlHelper::ReadValue(xmlHandle, "ExternalClusterCollectionName", m_externalClusterCollectionName));
+      pandora::STATUS_CODE_SUCCESS, !=,
+      pandora::XmlHelper::ReadVectorOfValues(xmlHandle, "ExternalClusterCollectionNames",
+                                             m_externalClusterCollectionNames));
 
-  PANDORA_RETURN_RESULT_IF_AND_IF(STATUS_CODE_SUCCESS, STATUS_CODE_NOT_FOUND, !=,
-                                  XmlHelper::ReadValue(xmlHandle, "FlagClustersAsPhotons", m_flagClustersAsPhotons));
+  PANDORA_RETURN_RESULT_IF_AND_IF(
+      pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=,
+      pandora::XmlHelper::ReadValue(xmlHandle, "FlagClustersAsPhotons", m_flagClustersAsPhotons));
 
-  return STATUS_CODE_SUCCESS;
+  return pandora::STATUS_CODE_SUCCESS;
 }
