@@ -152,6 +152,20 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora, this);
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, registerUserComponents())
+
+  // Register DDExternalClusteringAlgorithm
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                          PandoraApi::RegisterAlgorithmFactory(m_pPandora, "DDExternalClustering",
+                                                               new DDExternalClusteringAlgorithm::Factory))
+
+  // Set external parameters for DDExternalClusteringAlgorithm
+  // This allows Pandora algorithms to access the Gaudi event service
+  m_extEvtParam = std::make_unique<ExternalEventParameter>();
+  m_extEvtParam->m_pEventService = m_dataSvc.get();
+
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                          PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", m_extEvtParam.get()))
+
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                           PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
@@ -281,19 +295,6 @@ const pandora::Pandora* DDPandoraPFANewAlgorithm::GetPandora() const {
 pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterAlgorithms(m_pPandora))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, LCContent::RegisterBasicPlugins(m_pPandora))
-
-  // Register DDExternalClusteringAlgorithm
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                           PandoraApi::RegisterAlgorithmFactory(m_pPandora, "DDExternalClustering",
-                                                                new DDExternalClusteringAlgorithm::Factory))
-
-  // Set external parameters for DDExternalClusteringAlgorithm
-  // This allows Pandora algorithms to access the Gaudi event service
-  m_extEvtParam = std::make_unique<ExternalEventParameter>();
-  m_extEvtParam->m_pEventService = m_dataSvc.get();
-
-  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                          PandoraApi::SetExternalParameters(m_pandora, "DDExternalClustering", m_extEvtParam.get()))
 
   if (m_settings.m_useDD4hepField) {
     dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
