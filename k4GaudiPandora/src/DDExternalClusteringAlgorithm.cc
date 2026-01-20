@@ -60,17 +60,6 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
       caloHitMap.emplace(edmCaloHit->getCellID(), pCaloHit);
     }
 
-    // Get current Gaudi event to retrieve external clusters
-    // Retrieve the Gaudi event service from external parameters set by the parent algorithm
-    const ExternalEventParameter* pExternalEventParameter =
-        dynamic_cast<const ExternalEventParameter*>(this->GetExternalParameters());
-
-    if (!pExternalEventParameter || !pExternalEventParameter->m_pEventService) {
-      throw std::runtime_error("DDExternalClusteringAlgorithm: External event parameter not set");
-    }
-
-    auto* gaudiEvent = pExternalEventParameter->m_pEventService;
-
     // Recreate external clusters within the pandora framework
     const pandora::ClusterList* pClusterList = nullptr;
 
@@ -84,7 +73,7 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
     // loop over external cluster collections
     for (const auto& colName : m_externalClusterCollectionNames) {
       DataObject* rawObj = nullptr;
-      StatusCode sc = gaudiEvent->retrieveObject("/Event/" + colName, rawObj);
+      StatusCode sc = m_pEventService->retrieveObject("/Event/" + colName, rawObj);
 
       if (sc.isFailure() || rawObj == nullptr) {
         throw std::runtime_error("DDExternalClusteringAlgorithm: Cannot retrieve the external cluster collection " + colName);
@@ -172,6 +161,19 @@ pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::T
   PANDORA_RETURN_RESULT_IF_AND_IF(
       pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=,
       pandora::XmlHelper::ReadValue(xmlHandle, "FlagClustersAsPhotons", m_flagClustersAsPhotons));
+
+  // Get current Gaudi event to retrieve external clusters
+  // Retrieve the Gaudi event service from external parameters set by the parent algorithm
+  // Sanghyun: this is a hacky way that I do this in ReadSettings
+  // but GetExternalParameters doesn't allow me to access it more that once
+  const ExternalEventParameter* pExternalEventParameter =
+      dynamic_cast<const ExternalEventParameter*>(this->GetExternalParameters());
+
+  if (!pExternalEventParameter || !pExternalEventParameter->m_pEventService) {
+    throw std::runtime_error("DDExternalClusteringAlgorithm: External event parameter not set");
+  }
+
+  m_pEventService = pExternalEventParameter->m_pEventService;
 
   return pandora::STATUS_CODE_SUCCESS;
 }
