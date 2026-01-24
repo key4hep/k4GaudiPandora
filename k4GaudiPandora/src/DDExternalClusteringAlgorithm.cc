@@ -57,7 +57,7 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
       const edm4hep::CalorimeterHit* edmCaloHit =
           static_cast<const edm4hep::CalorimeterHit*>(pCaloHit->GetParentAddress());
 
-      caloHitMap.emplace(edmCaloHit->getCellID(), pCaloHit);
+      caloHitMap.emplace(edmCaloHit->id(), pCaloHit);
     }
 
     // Recreate external clusters within the pandora framework
@@ -106,7 +106,7 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
         // find corresponding pandora hits
         // and fill pandora calo hit list
         for (const auto& edmHit : calorimeterHitVec) {
-          auto itr = caloHitMap.find(edmHit.getCellID());
+          auto itr = caloHitMap.find(edmHit.id());
 
           if (itr == caloHitMap.end())
             continue;

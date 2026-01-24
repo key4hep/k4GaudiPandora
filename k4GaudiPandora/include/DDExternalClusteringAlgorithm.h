@@ -32,6 +32,9 @@
 #include "Objects/CaloHit.h"
 #include "Pandora/ExternallyConfiguredAlgorithm.h"
 
+// Podio
+#include "podio/ObjectID.h"
+
 // c++
 #include <map>
 
@@ -75,7 +78,7 @@ private:
   pandora::StatusCode Run();
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
-  typedef std::map<uint64_t, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
+  typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
   std::vector<std::string> m_externalClusterCollectionNames = {}; // list of external cluster collection names
   bool m_flagClustersAsPhotons = true; ///< Whether to automatically flag new clusters as fixed photons
