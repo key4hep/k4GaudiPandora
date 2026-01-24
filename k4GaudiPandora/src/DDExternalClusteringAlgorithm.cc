@@ -88,7 +88,7 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
 
       // get the underlying cluster collection
       auto collBasePtr = anyWrapper->getData().get();
-      auto pExternalClusterCollection = dynamic_cast<edm4hep::ClusterCollection*>(collBasePtr);
+      auto pExternalClusterCollection = dynamic_cast<const edm4hep::ClusterCollection*>(collBasePtr);
 
       if (!pExternalClusterCollection) {
         throw std::runtime_error("DDExternalClusteringAlgorithm: Failed to cast CollectionBase to ClusterCollection");
