@@ -128,6 +128,9 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     return StatusCode::FAILURE;
   }
 
+  // data service for the external clustering algorithm
+  m_dataSvc = Gaudi::Algorithm::eventSvc();
+
   finaliseSteeringParameters();
 
   if (m_settings.m_detectorName == "ALLEGRO") {
