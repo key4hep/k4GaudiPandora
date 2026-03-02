@@ -95,35 +95,6 @@
  *  @version $Id$ <br>
  */
 
-#include "GAUDI_VERSION.h"
-
-#if GAUDI_MAJOR_VERSION < 39
-namespace Gaudi::Accumulators {
-template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double>
-using StaticHistogram = Gaudi::Accumulators::HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::histogramString,
-                                                                     HistogramingAccumulator>;
-
-/// helper class to create a tuple of N identical types
-template <typename T, unsigned int ND, typename = std::make_integer_sequence<unsigned int, ND>>
-struct make_tuple;
-template <typename T, unsigned int ND, unsigned int... S>
-struct make_tuple<T, ND, std::integer_sequence<unsigned int, S...>> {
-  template <unsigned int>
-  using typeMap = T;
-  using type = std::tuple<typeMap<S>...>;
-};
-template <typename T, unsigned int ND>
-using make_tuple_t = typename make_tuple<T, ND>::type;
-
-template <unsigned int ND, atomicity Atomicity = atomicity::full, typename Arithmetic = double,
-          typename AxisTupleType = make_tuple_t<Axis<Arithmetic>, ND>>
-using StaticWeightedHistogram = HistogramingCounterBase<ND, Atomicity, Arithmetic, naming::weightedHistogramString,
-                                                        WeightedHistogramingAccumulator>;
-
-} // namespace Gaudi::Accumulators
-
-#endif
-
 const int MAX_LAYERS = 200;
 const int MAX_STAVES = 16;
 
