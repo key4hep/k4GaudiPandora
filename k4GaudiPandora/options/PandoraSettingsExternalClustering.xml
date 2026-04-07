@@ -24,6 +24,5 @@
 
     <algorithm type = "DDExternalClustering">
         <FlagClustersAsPhotons>false</FlagClustersAsPhotons>
-        <ExternalClusterCollectionNames>PandoraClusters</ExternalClusterCollectionNames>
     </algorithm>
 </pandora>

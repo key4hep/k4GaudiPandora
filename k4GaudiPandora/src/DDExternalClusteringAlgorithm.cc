@@ -35,6 +35,15 @@
 #include "GaudiKernel/AnyDataWrapper.h"
 #include "GaudiKernel/IDataProviderSvc.h"
 
+// setters and getters for the external cluster holder
+void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters) {
+  m_externalClusters = externalClusters;
+}
+
+const std::vector<std::vector<edm4hep::Cluster>> ExternalClusterHolder::getExternalClusters() const {
+  return *m_externalClusters;
+}
+
 DDExternalClusteringAlgorithm::DDExternalClusteringAlgorithm() : m_flagClustersAsPhotons(false) {}
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -69,35 +78,12 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
         PandoraContentApi::CreateTemporaryListAndSetCurrent(*this, pClusterList, clusterListNameTmp));
 
     // loop over external cluster collections
-    for (const auto& colName : m_externalClusterCollectionNames) {
-      DataObject* rawObj = nullptr;
-      StatusCode sc = m_pEventService->retrieveObject("/Event/" + colName, rawObj);
-
-      if (sc.isFailure() || rawObj == nullptr) {
-        throw std::runtime_error("DDExternalClusteringAlgorithm: Cannot retrieve the external cluster collection " +
-                                 colName);
-      }
-
-      auto anyWrapper = dynamic_cast<AnyDataWrapper<std::unique_ptr<podio::CollectionBase>>*>(rawObj);
-
-      if (!anyWrapper) {
-        throw std::runtime_error("DDExternalClusteringAlgorithm: Failed to cast to AnyDataWrapper");
-      }
-
-      // get the underlying cluster collection
-      auto collBasePtr = anyWrapper->getData().get();
-      auto pExternalClusterCollection = dynamic_cast<const edm4hep::ClusterCollection*>(collBasePtr);
-
-      if (!pExternalClusterCollection) {
-        throw std::runtime_error("DDExternalClusteringAlgorithm: Failed to cast CollectionBase to ClusterCollection");
-      }
-
+    for (const auto& clusterColl : m_externalClusterHolder->getExternalClusters()) {
       // no cluster in this event
-      if (0 == pExternalClusterCollection->size())
+      if (clusterColl.empty())
         continue;
 
-      // loop over external clusters
-      for (const edm4hep::Cluster& externalCluster : *pExternalClusterCollection) {
+      for (const auto& externalCluster : clusterColl) {
         const auto& calorimeterHitVec = externalCluster.getHits();
         pandora::CaloHitList pandoraHitList;
 
@@ -152,26 +138,21 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::TiXmlHandle xmlHandle) {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                           pandora::XmlHelper::ReadVectorOfValues(xmlHandle, "ExternalClusterCollectionNames",
-                                                                  m_externalClusterCollectionNames));
-
   PANDORA_RETURN_RESULT_IF_AND_IF(
       pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=,
       pandora::XmlHelper::ReadValue(xmlHandle, "FlagClustersAsPhotons", m_flagClustersAsPhotons));
 
-  // Get current Gaudi event to retrieve external clusters
-  // Retrieve the Gaudi event service from external parameters set by the parent algorithm
+  // Get the pointer to the external cluster holder
   // Sanghyun: this is a hacky way that I do this in ReadSettings
   // but GetExternalParameters doesn't allow me to access it more that once
   const ExternalEventParameter* pExternalEventParameter =
       dynamic_cast<const ExternalEventParameter*>(this->GetExternalParameters());
 
-  if (!pExternalEventParameter || !pExternalEventParameter->m_pEventService) {
-    throw std::runtime_error("DDExternalClusteringAlgorithm: External event parameter not set");
+  if (!pExternalEventParameter || !pExternalEventParameter->m_externalClusterHolder) {
+    throw std::runtime_error("DDExternalClusteringAlgorithm: External cluster holder not set");
   }
 
-  m_pEventService = pExternalEventParameter->m_pEventService;
+  m_externalClusterHolder = pExternalEventParameter->m_externalClusterHolder;
 
   return pandora::STATUS_CODE_SUCCESS;
 }
