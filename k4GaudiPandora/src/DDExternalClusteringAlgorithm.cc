@@ -40,7 +40,7 @@ void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep:
   m_externalClusters = externalClusters;
 }
 
-const std::vector<std::vector<edm4hep::Cluster>> ExternalClusterHolder::getExternalClusters() const {
+const std::vector<std::vector<edm4hep::Cluster>>& ExternalClusterHolder::getExternalClusters() const {
   return *m_externalClusters;
 }
 
