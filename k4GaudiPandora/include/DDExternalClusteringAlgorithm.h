@@ -54,7 +54,7 @@ public:
   ~ExternalClusterHolder() = default;
 
   void setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters);
-  const std::vector<std::vector<edm4hep::Cluster>> getExternalClusters() const;
+  const std::vector<std::vector<edm4hep::Cluster>>& getExternalClusters() const;
 
   std::vector<std::vector<edm4hep::Cluster>>* m_externalClusters; ///< The external clusters
 };
