@@ -40,6 +40,7 @@ from runPandora import params
 # dummy Pandora settings file containing only external clustering algo
 params["PandoraSettingsXmlFile"] = current_dir+"/PandoraSettingsExternalClustering.xml"
 # rename output collection names to avoid conflicts
+params["ClusterCollections"] = ["PandoraClusters"]
 params["ClusterCollectionName"] = ["GaudiExternalClusters"]
 params["PFOCollectionName"] = ["GaudiExternalClusteringPandoraPFOs"]
 params["StartVertexCollectionName"] = ["GaudiExternalClusteringPandoraStartVertices"]

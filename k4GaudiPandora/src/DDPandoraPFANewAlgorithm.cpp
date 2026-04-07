@@ -115,6 +115,7 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvc
                            KeyValues("LCalCaloHitCollections", {}),
                            KeyValues("LHCalCaloHitCollections", {}),
                            KeyValues("RelCaloHitCollections", {}),
+                           KeyValues("ClusterCollections", {}),
                        },
                        {KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
                         KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}),
@@ -127,9 +128,6 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
     error() << "Unable to retrieve the GeoSvc" << endmsg;
     return StatusCode::FAILURE;
   }
-
-  // data service for the external clustering algorithm
-  m_dataSvc = Gaudi::Algorithm::eventSvc();
 
   finaliseSteeringParameters();
 
@@ -162,9 +160,10 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
                                                                new DDExternalClusteringAlgorithm::Factory))
 
   // Set external parameters for DDExternalClusteringAlgorithm
-  // This allows Pandora algorithms to access the Gaudi event service
+  // everything is owned by this algorithm
   m_extEvtParam = std::make_unique<ExternalEventParameter>();
-  m_extEvtParam->m_pEventService = m_dataSvc.get();
+  m_extClusterHolder = std::make_unique<ExternalClusterHolder>();
+  m_extEvtParam->m_externalClusterHolder = m_extClusterHolder.get();
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                           PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", m_extEvtParam.get()))
@@ -189,7 +188,8 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-                                     const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&) const {
+                                     const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&,
+                                     const std::vector<const edm4hep::ClusterCollection*>& clusterCollections) const {
   try {
     std::vector<edm4hep::MCParticle> mcParticlesVector;
     for (const auto& mcParticleCollection : MCParticleCollections) {
@@ -256,6 +256,25 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                             m_caloHitCreator->createCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
                                                              mCalHitCollectionsVector, lCalHitCollectionsVector,
                                                              lhCalHitCollectionsVector))
+
+    // host edm4hep clusters for the external clustering algorithm
+    std::unique_ptr<std::vector<std::vector<edm4hep::Cluster>>> externalClustersPtr =
+        std::make_unique<std::vector<std::vector<edm4hep::Cluster>>>();
+    externalClustersPtr->reserve(clusterCollections.size());
+
+    // loop over the input cluster collections and fill the external clusters vector
+    for (const auto* clusterCollection : clusterCollections) {
+      std::vector<edm4hep::Cluster> clusterValues;
+      clusterValues.reserve(clusterCollection->size());
+
+      for (const auto& cluster : *clusterCollection) {
+        clusterValues.push_back(cluster);
+      }
+
+      externalClustersPtr->push_back(std::move(clusterValues));
+    }
+
+    m_extClusterHolder->setExternalClusters(externalClustersPtr.get());
 
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
     //                         m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(

@@ -44,6 +44,21 @@ namespace pandora {
 class CaloHit;
 }
 
+/**
+ *  @brief  ExternalClusterHolder class - holds pointers to the external clusters and the calo hits
+ */
+
+class ExternalClusterHolder {
+public:
+  ExternalClusterHolder() = default;
+  ~ExternalClusterHolder() = default;
+
+  void setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters);
+  const std::vector<std::vector<edm4hep::Cluster>> getExternalClusters() const;
+
+  std::vector<std::vector<edm4hep::Cluster>>* m_externalClusters; ///< The external clusters
+};
+
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -51,7 +66,7 @@ class CaloHit;
  */
 class ExternalEventParameter : public pandora::ExternalParameters {
 public:
-  IDataProviderSvc* m_pEventService; ///< Pointer to Gaudi event service
+  ExternalClusterHolder* m_externalClusterHolder; ///< Pointer to external cluster holder
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -80,11 +95,9 @@ private:
 
   typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
-  std::vector<std::string> m_externalClusterCollectionNames = {}; // list of external cluster collection names
   bool m_flagClustersAsPhotons = true; ///< Whether to automatically flag new clusters as fixed photons
 
-  IDataProviderSvc* m_pEventService = nullptr; // persistent pointer to Gaudi event service
-                                               // (owned by the DDPandoraPFANewAlgorithm)
+  ExternalClusterHolder* m_externalClusterHolder = nullptr; ///< Pointer to external cluster holder
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
