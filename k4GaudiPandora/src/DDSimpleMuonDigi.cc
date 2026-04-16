@@ -24,7 +24,6 @@
 
 #include <edm4hep/CaloHitSimCaloHitLinkCollection.h>
 #include <edm4hep/CalorimeterHitCollection.h>
-#include <edm4hep/Constants.h>
 #include <edm4hep/EventHeaderCollection.h>
 #include <edm4hep/SimCalorimeterHitCollection.h>
 
@@ -95,8 +94,7 @@ StatusCode DDSimpleMuonDigi::initialize() {
   }
 
   const auto collName = inputLocations("MUONCollection")[0];
-  const auto encodingString =
-      k4FWCore::getParameter<std::string>(collName + "__" + edm4hep::labels::CellIDEncoding, this);
+  const auto encodingString = k4FWCore::getCellIDEncoding(collName, this);
   if (!encodingString) {
     throw std::runtime_error("Encoding string not found for collection: " + collName);
   }

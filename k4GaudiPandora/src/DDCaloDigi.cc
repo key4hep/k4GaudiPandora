@@ -269,7 +269,7 @@ retType DDCaloDigi::operator()(const edm4hep::SimCalorimeterHitCollection& simCa
 
   const CHT::Layout caloLayout = layoutFromString(colName);
 
-  const auto maybeParam = k4FWCore::getParameter<std::string>(colName + "__CellIDEncoding");
+  const auto maybeParam = k4FWCore::getCellIDEncoding(colName, this);
   const auto initString = maybeParam.value();
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString); // check if decoder contains "layer"
 
