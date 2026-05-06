@@ -50,7 +50,7 @@ public:
   /**
    *  @brief  Create geometry
    */
-  pandora::StatusCode CreateGeometry() const;
+  pandora::StatusCode CreateGeometry() const override;
 
 private:
   /**
@@ -58,7 +58,7 @@ private:
    *
    *  @param  subDetectorTypeMap the sub detector type map
    */
-  void SetMandatorySubDetectorParameters(SubDetectorTypeMap& subDetectorTypeMap) const;
+  void SetMandatorySubDetectorParameters(SubDetectorTypeMap& subDetectorTypeMap) const override;
 };
 
 #endif // #ifndef GEOMETRY_CREATOR_H

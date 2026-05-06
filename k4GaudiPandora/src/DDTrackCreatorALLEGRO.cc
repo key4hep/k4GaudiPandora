@@ -303,7 +303,7 @@ void DDTrackCreatorALLEGRO::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
 
 void DDTrackCreatorALLEGRO::TrackReachesECAL(const edm4hep::Track& pTrack,
                                              PandoraApi::Track::Parameters& trackParameters) const {
-  // FIXME! AD: since currently we have do not have track hits -> check the radius of the trackState AtCalo.
+  // FIXME! AD: since currently we do not have track hits -> check the radius of the trackState AtCalo.
   // currently check is done only for ECAL barrel but should check if track reaches the Endcap!
   pandora::CartesianVector posAtCalo(trackParameters.m_trackStateAtCalorimeter.Get().GetPosition());
   double radiusAtCalo = std::sqrt(posAtCalo.GetX() * posAtCalo.GetX() + posAtCalo.GetY() * posAtCalo.GetY());

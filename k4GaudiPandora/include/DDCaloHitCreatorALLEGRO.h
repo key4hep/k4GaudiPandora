@@ -51,12 +51,11 @@ public:
    *
    *  @param  pLCEvent the lcio event
    */
-  virtual pandora::StatusCode
-  createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
-                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const override;
+  virtual pandora::StatusCode createCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits,
+                                             const std::vector<CollectionDescriptor>& hCalCaloHits,
+                                             const std::vector<CollectionDescriptor>& muonCaloHits,
+                                             const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
+                                             const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const override;
 
 private:
   /**
@@ -66,6 +65,41 @@ private:
    *  @param  caloHitParameters the calo hit parameters to populate
    */
   void getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
-                                  PandoraApi::CaloHit::Parameters& caloHitParameters) const;
+                                  PandoraApi::CaloHit::Parameters& caloHitParameters) const override;
+
+  /**
+   *  @brief  Get end cap specific calo hit properties: cell size, absorber radiation and interaction lengths, normal
+   * vector
+   *
+   *  @param  pCaloHit the lcio calorimeter hit
+   *  @param  layers the vector of layers from DDRec extensions
+   *  @param  caloHitParameters the calo hit parameters to populate
+   *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
+   */
+  virtual void getEndCapCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+                                          const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
+                                          PandoraApi::CaloHit::Parameters& caloHitParameters,
+                                          float& absorberCorrection) const override;
+
+  /**
+   *  @brief  Get barrel specific calo hit properties: cell size, absorber radiation and interaction lengths, normal
+   * vector
+   *
+   *  @param  pCaloHit the lcio calorimeter hit
+   *  @param  layers the vector of layers from DDRec extensions
+   *  @param  barrelSymmetryOrder the barrel order of symmetry
+   *  @param  caloHitParameters the calo hit parameters to populate
+   *  @param  normalVector is the normalVector to the sensitive layers in local coordinates
+   *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
+   */
+  virtual void getBarrelCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+                                          const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
+                                          unsigned int barrelSymmetryOrder,
+                                          PandoraApi::CaloHit::Parameters& caloHitParameters,
+                                          const std::vector<float>& normalVector,
+                                          float& absorberCorrection) const override;
+
+  std::shared_ptr<dd4hep::DDSegmentation::Segmentation> m_hcalBarrelSegmentation = {};
+  std::shared_ptr<dd4hep::DDSegmentation::Segmentation> m_hcalEndcapSegmentation = {};
 };
 #endif
