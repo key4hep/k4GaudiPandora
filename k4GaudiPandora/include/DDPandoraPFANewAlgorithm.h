@@ -46,6 +46,10 @@ namespace pandora {
 class Pandora;
 }
 
+// forward declarations for the external clustering algorithm
+class ExternalEventParameter;
+class ExternalClusterHolder;
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 struct DDPandoraPFANewAlgorithm final
@@ -61,7 +65,8 @@ struct DDPandoraPFANewAlgorithm final
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&)> {
+          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&,
+          const std::vector<const edm4hep::ClusterCollection*>&)> {
 public:
   class Settings {
   public:
@@ -137,7 +142,8 @@ public:
              const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections) const override;
+             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections,
+             const std::vector<const edm4hep::ClusterCollection*>& clusterCollections) const override;
 
   const pandora::Pandora* GetPandora() const;
 
@@ -165,6 +171,8 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
+  std::unique_ptr<ExternalEventParameter> m_extEvtParam;       ///< external event parameter
+  std::unique_ptr<ExternalClusterHolder> m_extClusterHolder;   ///< Pointer to external cluster holder
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings

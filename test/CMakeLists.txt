@@ -105,3 +105,9 @@ add_test(NAME "compare_DDSimpleMuonDigi"
 set_test_env("compare_DDSimpleMuonDigi")
 set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimpleMuonDigi")
 
+add_test(NAME "run_Pandora_externalClustering"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runExternalClustering.py --IOSvc.Input output_pandora_ttbar.root --IOSvc.Output output_pandora_externalClustering.root
+)
+set_test_env("run_Pandora_externalClustering")
+set_tests_properties("run_Pandora_externalClustering" PROPERTIES DEPENDS "run_Pandora_ttbar")
+
