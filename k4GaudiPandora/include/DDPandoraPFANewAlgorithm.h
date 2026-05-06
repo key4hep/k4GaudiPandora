@@ -360,6 +360,7 @@ private:
       "The name of the DD4hep constant that contains the Encoding string for the Calo detectors"};
   /// EXTRA parameter that would initialize everything for ALLEGRO detector if m_detectorName=="ALLEGRO"
   Gaudi::Property<std::string> m_detectorName{this, "DetectorName", "", "The name of the detector"};
+
   Gaudi::Property<std::vector<float>> m_eCalBarrelNormalVector{
       this,
       "ECalBarrelNormalVector",

@@ -37,6 +37,12 @@
 typedef std::vector<edm4hep::CalorimeterHit> CalorimeterHitVector;
 typedef std::vector<const edm4hep::CalorimeterHitCollection*> HitCollectionVector;
 
+struct CollectionDescriptor {
+  std::string collectionName;
+  std::string cellIDEncoding;
+  const std::vector<edm4hep::CalorimeterHit>* collection;
+};
+
 /**
  *  @brief  DDCaloHitCreator class
  */
@@ -114,9 +120,11 @@ public:
     float m_hCalBarrelOuterR;               ///< HCal barrel outer radius
     float m_hCalBarrelOuterPhi0;            ///< HCal barrel outer phi0 coordinate
     unsigned int m_hCalBarrelOuterSymmetry; ///< HCal barrel outer symmetry order
+    std::string m_detectorName;             ///< to handle detector-specific settings
     bool m_useSystemId;                     ///< flag whether to use systemId or not to identify origin of the CaloHit
     int m_ecalBarrelSystemId;               ///< systemId of ECal Barrel
     int m_hcalBarrelSystemId;               ///< systemId of HCal Barrel
+    int m_hcalEndcapSystemId;               ///< systemId of HCal Endcap
 
   public:
     FloatVector m_eCalBarrelNormalVector;
@@ -134,10 +142,9 @@ public:
   DDCaloHitCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm);
   virtual ~DDCaloHitCreator();
 
-  pandora::StatusCode
-  createECalCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const;
-  pandora::StatusCode createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const;
-  pandora::StatusCode createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const;
+  pandora::StatusCode createECalCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits) const;
+  pandora::StatusCode createHCalCaloHits(const std::vector<CollectionDescriptor>& hCalCaloHits) const;
+  pandora::StatusCode createMuonCaloHits(const std::vector<CollectionDescriptor>& muonCaloHits) const;
   pandora::StatusCode createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits) const;
   pandora::StatusCode createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& LHCalCaloHits) const;
 
@@ -147,12 +154,11 @@ public:
    *  @param  inputHits
    *  @param  outputHits
    */
-  virtual pandora::StatusCode
-  createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
-                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
+  virtual pandora::StatusCode createCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits,
+                                             const std::vector<CollectionDescriptor>& hCalCaloHits,
+                                             const std::vector<CollectionDescriptor>& muonCaloHits,
+                                             const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
+                                             const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const;
 
   /**
    *  @brief  Get the calorimeter hit vector
@@ -173,8 +179,8 @@ protected:
    *  @param  pCaloHit the lcio calorimeter hit
    *  @param  caloHitParameters the calo hit parameters to populate
    */
-  void getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
-                                  PandoraApi::CaloHit::Parameters& caloHitParameters) const;
+  virtual void getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+                                          PandoraApi::CaloHit::Parameters& caloHitParameters) const;
 
   /**
    *  @brief  Get end cap specific calo hit properties: cell size, absorber radiation and interaction lengths, normal
@@ -185,9 +191,10 @@ protected:
    *  @param  caloHitParameters the calo hit parameters to populate
    *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
    */
-  void getEndCapCaloHitProperties(const edm4hep::CalorimeterHit& hit,
-                                  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
-                                  PandoraApi::CaloHit::Parameters& caloHitParameters, float& absorberCorrection) const;
+  virtual void getEndCapCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+                                          const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
+                                          PandoraApi::CaloHit::Parameters& caloHitParameters,
+                                          float& absorberCorrection) const;
 
   /**
    *  @brief  Get barrel specific calo hit properties: cell size, absorber radiation and interaction lengths, normal
@@ -200,10 +207,11 @@ protected:
    *  @param  normalVector is the normalVector to the sensitive layers in local coordinates
    *  @param  absorberCorrection to receive the absorber thickness correction for the mip equivalent energy
    */
-  void getBarrelCaloHitProperties(const edm4hep::CalorimeterHit& hit,
-                                  const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
-                                  unsigned int barrelSymmetryOrder, PandoraApi::CaloHit::Parameters& caloHitParameters,
-                                  const std::vector<float>& normalVector, float& absorberCorrection) const;
+  virtual void getBarrelCaloHitProperties(const edm4hep::CalorimeterHit& hit,
+                                          const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
+                                          unsigned int barrelSymmetryOrder,
+                                          PandoraApi::CaloHit::Parameters& caloHitParameters,
+                                          const std::vector<float>& normalVector, float& absorberCorrection) const;
 
   /**
    *  @brief  Get number of active layers from position of a calo hit to the edge of the detector

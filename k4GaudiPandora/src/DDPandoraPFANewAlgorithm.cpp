@@ -43,6 +43,7 @@
 #include <DD4hep/Detector.h>
 #include <DD4hep/DetectorSelector.h>
 #include <DDRec/DetectorData.h>
+#include <k4FWCore/MetadataUtils.h>
 
 #include <cstdlib>
 #include <sstream>
@@ -195,6 +196,7 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
     //                         m_pDDMCParticleCreator->CreateTrackToMCParticleRelationships(
     //                             trackerHitLinkCollections, m_pTrackCreator->GetTrackVector(), trackCollections))
 
+    std::vector<CollectionDescriptor> eCalHitCollections;
     std::map<std::string, std::vector<edm4hep::CalorimeterHit>> eCalHitCollectionsMap;
     const auto eCalHitCollectionsNames = inputLocations("ECalCaloHitCollections");
     for (size_t i = 0; i < eCalHitCollectionsNames.size(); ++i) {
@@ -202,18 +204,46 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
       eCalHitCollectionsMap[eCalHitCollectionsNames[i]].reserve(eCalCollection->size());
       eCalHitCollectionsMap[eCalHitCollectionsNames[i]].insert(eCalHitCollectionsMap[eCalHitCollectionsNames[i]].end(),
                                                                eCalCollection->begin(), eCalCollection->end());
+      auto hitsEncoding = k4FWCore::getCellIDEncoding(std::string(eCalHitCollectionsNames[i]), this);
+      eCalHitCollections.emplace_back(
+          CollectionDescriptor{.collectionName = eCalHitCollectionsNames[i],
+                               .cellIDEncoding = (hitsEncoding.has_value()) ? hitsEncoding.value() : "",
+                               .collection = &eCalHitCollectionsMap[eCalHitCollectionsNames[i]]});
     }
-    std::vector<edm4hep::CalorimeterHit> hCalHitCollectionsVector;
-    std::vector<edm4hep::CalorimeterHit> mCalHitCollectionsVector;
+
+    std::vector<CollectionDescriptor> hCalHitCollections;
+    std::map<std::string, std::vector<edm4hep::CalorimeterHit>> hCalHitCollectionsMap;
+    const auto hCalHitCollectionsNames = inputLocations("HCalCaloHitCollections");
+    for (size_t i = 0; i < hCalHitCollectionsNames.size(); ++i) {
+      const auto& hCalCollection = hCalCollections[i];
+      hCalHitCollectionsMap[hCalHitCollectionsNames[i]].reserve(hCalCollection->size());
+      hCalHitCollectionsMap[hCalHitCollectionsNames[i]].insert(hCalHitCollectionsMap[hCalHitCollectionsNames[i]].end(),
+                                                               hCalCollection->begin(), hCalCollection->end());
+      auto hitsEncoding = k4FWCore::getCellIDEncoding(std::string(hCalHitCollectionsNames[i]), this);
+      hCalHitCollections.emplace_back(
+          CollectionDescriptor{.collectionName = hCalHitCollectionsNames[i],
+                               .cellIDEncoding = (hitsEncoding.has_value()) ? hitsEncoding.value() : "",
+                               .collection = &hCalHitCollectionsMap[hCalHitCollectionsNames[i]]});
+    }
+
+    std::vector<CollectionDescriptor> mCalHitCollections;
+    std::map<std::string, std::vector<edm4hep::CalorimeterHit>> mCalHitCollectionsMap;
+    const auto mCalHitCollectionsNames = inputLocations("MuonCaloHitCollections");
+    for (size_t i = 0; i < mCalHitCollectionsNames.size(); ++i) {
+      const auto& mCalCollection = mCalCollections[i];
+      mCalHitCollectionsMap[mCalHitCollectionsNames[i]].reserve(mCalCollection->size());
+      mCalHitCollectionsMap[mCalHitCollectionsNames[i]].insert(mCalHitCollectionsMap[mCalHitCollectionsNames[i]].end(),
+                                                               mCalCollection->begin(), mCalCollection->end());
+      auto hitsEncoding = k4FWCore::getCellIDEncoding(std::string(mCalHitCollectionsNames[i]), this);
+      mCalHitCollections.emplace_back(
+          CollectionDescriptor{.collectionName = mCalHitCollectionsNames[i],
+                               .cellIDEncoding = (hitsEncoding.has_value()) ? hitsEncoding.value() : "",
+                               .collection = &mCalHitCollectionsMap[mCalHitCollectionsNames[i]]});
+    }
+
     std::vector<edm4hep::CalorimeterHit> lCalHitCollectionsVector;
     std::vector<edm4hep::CalorimeterHit> lhCalHitCollectionsVector;
 
-    hCalHitCollectionsVector.reserve(
-        std::accumulate(hCalCollections.begin(), hCalCollections.end(), size_t(0),
-                        [](size_t sum, const edm4hep::CalorimeterHitCollection* col) { return sum + col->size(); }));
-    mCalHitCollectionsVector.reserve(
-        std::accumulate(mCalCollections.begin(), mCalCollections.end(), size_t(0),
-                        [](size_t sum, const edm4hep::CalorimeterHitCollection* col) { return sum + col->size(); }));
     lCalHitCollectionsVector.reserve(
         std::accumulate(lCalCollections.begin(), lCalCollections.end(), size_t(0),
                         [](size_t sum, const edm4hep::CalorimeterHitCollection* col) { return sum + col->size(); }));
@@ -221,12 +251,6 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
         std::accumulate(lhCalCollections.begin(), lhCalCollections.end(), size_t(0),
                         [](size_t sum, const edm4hep::CalorimeterHitCollection* col) { return sum + col->size(); }));
 
-    for (const auto& hCalCollection : hCalCollections) {
-      hCalHitCollectionsVector.insert(hCalHitCollectionsVector.end(), hCalCollection->begin(), hCalCollection->end());
-    }
-    for (const auto& mCalCollection : mCalCollections) {
-      mCalHitCollectionsVector.insert(mCalHitCollectionsVector.end(), mCalCollection->begin(), mCalCollection->end());
-    }
     for (const auto& lCalCollection : lCalCollections) {
       lCalHitCollectionsVector.insert(lCalHitCollectionsVector.end(), lCalCollection->begin(), lCalCollection->end());
     }
@@ -236,9 +260,8 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
     }
 
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                            m_caloHitCreator->createCaloHits(eCalHitCollectionsMap, hCalHitCollectionsVector,
-                                                             mCalHitCollectionsVector, lCalHitCollectionsVector,
-                                                             lhCalHitCollectionsVector))
+                            m_caloHitCreator->createCaloHits(eCalHitCollections, hCalHitCollections, mCalHitCollections,
+                                                             lCalHitCollectionsVector, lhCalHitCollectionsVector))
 
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
     //                         m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(
@@ -440,8 +463,22 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   //  const dd4hep::rec::LayeredCalorimeterData * muonEndcapExtension= getExtension( ( dd4hep::DetType::CALORIMETER |
   //  dd4hep::DetType::MUON | dd4hep::DetType::ENDCAP),  log, ( dd4hep::DetType::AUXILIARY ) );
 
-  // Get COIL extension
-  const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL));
+  if (m_settings.m_detectorName != "ALLEGRO") {
+    // Get COIL extension
+    const dd4hep::rec::LayeredCalorimeterData* coilExtension = getExtension((dd4hep::DetType::COIL));
+    m_caloHitCreatorSettings.m_coilOuterR = coilExtension->extent[1] / dd4hep::mm;
+  } else {
+    // ALLEGRO does not have a coil extension (no COIL volume simulated yet)
+    // so the solenoid outer radius is set here to be equal as the inner radius
+    // of the HCAL barrel (the solenoid is in the ECAL cryostat, between ECAL and HCAL)
+    m_caloHitCreatorSettings.m_coilOuterR = hCalBarrelExtension->extent[0] / dd4hep::mm;
+    // More ALLEGRO-specific settings
+    m_caloHitCreatorSettings.m_useSystemId = true;
+    m_caloHitCreatorSettings.m_ecalBarrelSystemId = 4;
+    m_caloHitCreatorSettings.m_hcalBarrelSystemId = 8;
+    m_caloHitCreatorSettings.m_hcalEndcapSystemId = 9;
+    m_caloHitCreatorSettings.m_detectorName = m_settings.m_detectorName;
+  }
 
   m_trackCreatorSettings.m_eCalBarrelInnerSymmetry = eCalBarrelExtension->inner_symmetry;
   m_trackCreatorSettings.m_eCalBarrelInnerPhi0 = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
@@ -451,7 +488,6 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_caloHitCreatorSettings.m_eCalBarrelOuterZ = eCalBarrelExtension->extent[3] / dd4hep::mm;
   m_caloHitCreatorSettings.m_hCalBarrelOuterZ = hCalBarrelExtension->extent[3] / dd4hep::mm;
   m_caloHitCreatorSettings.m_muonBarrelOuterZ = muonBarrelExtension->extent[3] / dd4hep::mm;
-  m_caloHitCreatorSettings.m_coilOuterR = coilExtension->extent[1] / dd4hep::mm;
   m_caloHitCreatorSettings.m_eCalBarrelInnerPhi0 = eCalBarrelExtension->inner_phi0 / dd4hep::rad;
   m_caloHitCreatorSettings.m_eCalBarrelInnerSymmetry = eCalBarrelExtension->inner_symmetry;
   m_caloHitCreatorSettings.m_hCalBarrelInnerPhi0 = hCalBarrelExtension->inner_phi0 / dd4hep::rad;
