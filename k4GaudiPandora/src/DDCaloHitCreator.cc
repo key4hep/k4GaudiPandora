@@ -76,13 +76,12 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& p
 
 DDCaloHitCreator::~DDCaloHitCreator() = default;
 
-pandora::StatusCode
-DDCaloHitCreator::createCaloHits(const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& eCaloHitsMap,
-                                 const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& muonCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
-                                 const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const {
-  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createECalCaloHits(eCaloHitsMap))
+pandora::StatusCode DDCaloHitCreator::createCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits,
+                                                     const std::vector<CollectionDescriptor>& hCalCaloHits,
+                                                     const std::vector<CollectionDescriptor>& muonCaloHits,
+                                                     const std::vector<edm4hep::CalorimeterHit>& lCalCaloHits,
+                                                     const std::vector<edm4hep::CalorimeterHit>& lhCalCaloHits) const {
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createECalCaloHits(eCalCaloHits))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createHCalCaloHits(hCalCaloHits))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createMuonCaloHits(muonCaloHits))
   PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, createLCalCaloHits(lCalCaloHits))
@@ -92,16 +91,27 @@ DDCaloHitCreator::createCaloHits(const std::map<std::string, std::vector<edm4hep
 }
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
-    const std::map<std::string, std::vector<edm4hep::CalorimeterHit>>& inputECalCaloHits) const {
+pandora::StatusCode DDCaloHitCreator::createECalCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits) const {
+  if (eCalCaloHits.empty())
+    return pandora::STATUS_CODE_SUCCESS;
 
   std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
 
-  for (const auto& [originalCollectionName, hits] : inputECalCaloHits) {
-    if (hits.empty()) {
+  for (const auto& hits : eCalCaloHits) {
+    if (hits.collection->empty()) {
       continue;
     }
+    // AD: for ALLEGRO detector the above hardcoded cellID encoding does not work, so we need to extract it from the
+    // input collection
+    if (m_settings.m_detectorName == "ALLEGRO") {
+      initString = hits.cellIDEncoding;
+      if (initString.empty())
+        m_algorithm.error() << "Cannot get cellIDEncoding string for " << hits.collectionName << endmsg;
+      m_algorithm.debug() << "Extracted cellIDEncoding string for " << hits.collectionName << " : " << initString
+                          << endmsg;
+    }
+    dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
+
     const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
         getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::ELECTROMAGNETIC | dd4hep::DetType::BARREL),
                      (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
@@ -111,12 +121,14 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
                      (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
             ->layers;
 
-    if (barrelLayers.empty() || endcapLayers.empty()) {
+    // FIXME: AD: currently in ALLEGRO we do not have endcap layers, so this check is disabled for ALLEGRO
+    if (m_settings.m_detectorName != "ALLEGRO" && (barrelLayers.empty() || endcapLayers.empty())) {
       m_algorithm.error() << "Layer information missing for ECAL!" << endmsg;
       return pandora::STATUS_CODE_FAILURE;
     }
 
-    for (const auto& hit : hits) {
+    std::string originalCollectionName = hits.collectionName;
+    for (const auto& hit : *hits.collection) {
       try {
 
         float absorberCorrection = 1.0;
@@ -196,9 +208,7 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode
-DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>& hCalCaloHits) const {
-
+pandora::StatusCode DDCaloHitCreator::createHCalCaloHits(const std::vector<CollectionDescriptor>& hCalCaloHits) const {
   if (hCalCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
 
@@ -218,40 +228,63 @@ DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
   }
 
   std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
 
-  for (const auto& hit : hCalCaloHits) {
-    try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
-      caloHitParameters.m_hitType = pandora::HCAL;
-      caloHitParameters.m_isDigital = false;
-      caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
-      caloHitParameters.m_isInOuterSamplingLayer = (this->getNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
-      this->getCommonCaloHitProperties(hit, caloHitParameters);
+  for (const auto& hits : hCalCaloHits) {
+    if (hits.collection->empty()) {
+      continue;
+    }
+    // AD: for ALLEGRO detector the above hardcoded cellID encoding does not work, so we need to extract it from the
+    // input collection
+    if (m_settings.m_detectorName == "ALLEGRO") {
+      initString = hits.cellIDEncoding;
+      if (initString.empty())
+        m_algorithm.error() << "Cannot get cellIDEncoding string for " << hits.collectionName << endmsg;
+      m_algorithm.debug() << "Extracted cellIDEncoding string for " << hits.collectionName << " : " << initString
+                          << endmsg;
+    }
+    dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
 
-      float absorberCorrection = 1.0;
+    for (const auto& hit : *hits.collection) {
+      try {
+        PandoraApi::CaloHit::Parameters caloHitParameters;
+        caloHitParameters.m_hitType = pandora::HCAL;
+        caloHitParameters.m_isDigital = false;
+        caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
+        if (m_settings.m_detectorName == "ALLEGRO" &&
+            bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_hcalEndcapSystemId) {
+          caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "pseudoLayer");
+        }
 
-      if (std::fabs(hit.getPosition()[2]) < m_settings.m_hCalBarrelOuterZ) {
-        this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_hCalBarrelInnerSymmetry, caloHitParameters,
-                                         m_settings.m_hCalBarrelNormalVector, absorberCorrection);
-      } else {
-        this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+        caloHitParameters.m_isInOuterSamplingLayer =
+            (this->getNLayersFromEdge(hit) <= m_settings.m_nOuterSamplingLayers);
+        this->getCommonCaloHitProperties(hit, caloHitParameters);
+
+        float absorberCorrection = 1.0;
+
+        if ((!m_settings.m_useSystemId && std::fabs(hit.getPosition()[2]) < m_settings.m_hCalBarrelOuterZ) ||
+            (m_settings.m_useSystemId &&
+             bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_hcalBarrelSystemId)) {
+          this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_hCalBarrelInnerSymmetry, caloHitParameters,
+                                           m_settings.m_hCalBarrelNormalVector, absorberCorrection);
+        } else {
+          this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+        }
+
+        caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_hCalToMip * absorberCorrection;
+
+        if (caloHitParameters.m_mipEquivalentEnergy.Get() < m_settings.m_hCalMipThreshold)
+          continue;
+
+        caloHitParameters.m_hadronicEnergy =
+            std::min(m_settings.m_hCalToHadGeV * hit.getEnergy(), m_settings.m_maxHCalHitHadronicEnergy);
+        caloHitParameters.m_electromagneticEnergy = m_settings.m_hCalToEMGeV * hit.getEnergy();
+
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+
+      } catch (const std::exception& e) {
+        m_algorithm.error() << "Exception processing HCAL hit: " << e.what() << endmsg;
       }
-
-      caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_hCalToMip * absorberCorrection;
-
-      if (caloHitParameters.m_mipEquivalentEnergy.Get() < m_settings.m_hCalMipThreshold)
-        continue;
-
-      caloHitParameters.m_hadronicEnergy =
-          std::min(m_settings.m_hCalToHadGeV * hit.getEnergy(), m_settings.m_maxHCalHitHadronicEnergy);
-      caloHitParameters.m_electromagneticEnergy = m_settings.m_hCalToEMGeV * hit.getEnergy();
-
-      PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
-
-    } catch (const std::exception& e) {
-      m_algorithm.error() << "Exception processing HCAL hit: " << e.what() << endmsg;
     }
   }
 
@@ -260,15 +293,13 @@ DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-pandora::StatusCode
-DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>& muonCaloHits) const {
+pandora::StatusCode DDCaloHitCreator::createMuonCaloHits(const std::vector<CollectionDescriptor>& muonCaloHits) const {
 
   if (muonCaloHits.empty())
     return pandora::STATUS_CODE_SUCCESS;
 
   // Initialize BitFieldCoder with proper encoding string
   std::string initString = "system:5,side:2,module:8,stave:4,layer:9,submodule:4,x:32:-16,y:-16";
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
 
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::MUON | dd4hep::DetType::BARREL),
@@ -284,53 +315,70 @@ DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>&
     return pandora::STATUS_CODE_FAILURE;
   }
 
-  for (const auto& hit : muonCaloHits) {
-    try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
-      caloHitParameters.m_hitType = pandora::MUON;
-      caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
-      caloHitParameters.m_isInOuterSamplingLayer = true;
-      this->getCommonCaloHitProperties(hit, caloHitParameters);
-
-      const float radius =
-          std::sqrt(hit.getPosition()[0] * hit.getPosition()[0] + hit.getPosition()[1] * hit.getPosition()[1]);
-
-      const bool isWithinCoil = (radius < m_settings.m_coilOuterR);
-      const bool isInBarrelRegion = (std::fabs(hit.getPosition()[2]) < m_settings.m_muonBarrelOuterZ);
-
-      float absorberCorrection = 1.0;
-
-      if (isInBarrelRegion && isWithinCoil) {
-        m_algorithm.warning() << "BIG WARNING: CANNOT HANDLE PLUG HITS (no plug in CLIC model), DO NOTHING!" << endmsg;
-      } else if (isInBarrelRegion) {
-        this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_muonBarrelInnerSymmetry, caloHitParameters,
-                                         m_settings.m_muonBarrelNormalVector, absorberCorrection);
-      } else {
-        this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
-      }
-
-      if (m_settings.m_muonDigitalHits > 0) {
-        caloHitParameters.m_isDigital = true;
-        caloHitParameters.m_inputEnergy = m_settings.m_muonHitEnergy;
-        caloHitParameters.m_hadronicEnergy = m_settings.m_muonHitEnergy;
-        caloHitParameters.m_electromagneticEnergy = m_settings.m_muonHitEnergy;
-        caloHitParameters.m_mipEquivalentEnergy = 1.0f;
-      } else {
-        caloHitParameters.m_isDigital = false;
-        caloHitParameters.m_inputEnergy = hit.getEnergy();
-        caloHitParameters.m_hadronicEnergy = hit.getEnergy();
-        caloHitParameters.m_electromagneticEnergy = hit.getEnergy();
-        caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_muonToMip;
-      }
-
-      PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
-
-    } catch (const std::exception& e) {
-      m_algorithm.error() << "Exception processing muon hit: " << e.what() << endmsg;
-    } catch (...) {
-      m_algorithm.error() << "Unknown exception processing muon hit. These can come from algorithms in LC Content."
+  for (const auto& hits : muonCaloHits) {
+    if (hits.collection->empty()) {
+      continue;
+    }
+    // AD: for ALLEGRO detector the above hardcoded cellID encoding does not work, so we need to extract it from the
+    // input collection
+    if (m_settings.m_detectorName == "ALLEGRO") {
+      initString = hits.cellIDEncoding;
+      if (initString.empty())
+        m_algorithm.error() << "Cannot get cellIDEncoding string for " << hits.collectionName << endmsg;
+      m_algorithm.debug() << "Extracted cellIDEncoding string for " << hits.collectionName << " : " << initString
                           << endmsg;
+    }
+    dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString);
+
+    for (const auto& hit : *hits.collection) {
+      try {
+        PandoraApi::CaloHit::Parameters caloHitParameters;
+        caloHitParameters.m_hitType = pandora::MUON;
+        caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
+        caloHitParameters.m_isInOuterSamplingLayer = true;
+        this->getCommonCaloHitProperties(hit, caloHitParameters);
+
+        const float radius =
+            std::sqrt(hit.getPosition()[0] * hit.getPosition()[0] + hit.getPosition()[1] * hit.getPosition()[1]);
+
+        const bool isWithinCoil = (radius < m_settings.m_coilOuterR);
+        const bool isInBarrelRegion = (std::fabs(hit.getPosition()[2]) < m_settings.m_muonBarrelOuterZ);
+
+        float absorberCorrection = 1.0;
+
+        if (isInBarrelRegion && isWithinCoil) {
+          m_algorithm.warning() << "BIG WARNING: CANNOT HANDLE PLUG HITS (no plug in CLIC model), DO NOTHING!"
+                                << endmsg;
+        } else if (isInBarrelRegion) {
+          this->getBarrelCaloHitProperties(hit, barrelLayers, m_settings.m_muonBarrelInnerSymmetry, caloHitParameters,
+                                           m_settings.m_muonBarrelNormalVector, absorberCorrection);
+        } else {
+          this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
+        }
+
+        if (m_settings.m_muonDigitalHits > 0) {
+          caloHitParameters.m_isDigital = true;
+          caloHitParameters.m_inputEnergy = m_settings.m_muonHitEnergy;
+          caloHitParameters.m_hadronicEnergy = m_settings.m_muonHitEnergy;
+          caloHitParameters.m_electromagneticEnergy = m_settings.m_muonHitEnergy;
+          caloHitParameters.m_mipEquivalentEnergy = 1.0f;
+        } else {
+          caloHitParameters.m_isDigital = false;
+          caloHitParameters.m_inputEnergy = hit.getEnergy();
+          caloHitParameters.m_hadronicEnergy = hit.getEnergy();
+          caloHitParameters.m_electromagneticEnergy = hit.getEnergy();
+          caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_muonToMip;
+        }
+
+        PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                                PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+
+      } catch (const std::exception& e) {
+        m_algorithm.error() << "Exception processing muon hit: " << e.what() << endmsg;
+      } catch (...) {
+        m_algorithm.error() << "Unknown exception processing muon hit. These can come from algorithms in LC Content."
+                            << endmsg;
+      }
     }
   }
 
