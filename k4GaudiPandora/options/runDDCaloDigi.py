@@ -165,7 +165,7 @@ merger = CollectionMerger(
         "GaudiLinkCaloHitHCALEndcap",
         "GaudiLinkCaloHitHCALRing",
     ],
-    OutputCollection=["GaudiRelationCaloHit"],
+    OutputCollection="GaudiRelationCaloHit",
 )
 
 hps = RootHistSvc("HistogramPersistencySvc")

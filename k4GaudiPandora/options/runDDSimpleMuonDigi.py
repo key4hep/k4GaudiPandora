@@ -67,11 +67,11 @@ for alg, inputcol, outputcol, outrel in zip(
 # the single one that is obtained by original Marlin processor
 merger = CollectionMerger("MuonYokeMerger")
 merger.InputCollections = output_collections
-merger.OutputCollection = ["GaudiMUON"]
+merger.OutputCollection = "GaudiMUON"
 
 relation_merger = CollectionMerger("MuonRelationMerger")
 relation_merger.InputCollections = output_relation
-relation_merger.OutputCollection = ["GaudiRelationMUON"]
+relation_merger.OutputCollection = "GaudiRelationMUON"
 
 ApplicationMgr(
     TopAlg=digi + [merger, relation_merger],
