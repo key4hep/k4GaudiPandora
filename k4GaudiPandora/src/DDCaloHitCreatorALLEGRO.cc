@@ -85,6 +85,7 @@ DDCaloHitCreatorALLEGRO::DDCaloHitCreatorALLEGRO(const Settings& settings, pando
   }
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------
 pandora::StatusCode DDCaloHitCreatorALLEGRO::createCaloHits(const std::vector<CollectionDescriptor>& eCalCaloHits,
                                                             const std::vector<CollectionDescriptor>& hCalCaloHits,
                                                             const std::vector<CollectionDescriptor>& muonCaloHits,
@@ -97,6 +98,7 @@ pandora::StatusCode DDCaloHitCreatorALLEGRO::createCaloHits(const std::vector<Co
   return pandora::STATUS_CODE_SUCCESS;
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------
 void DDCaloHitCreatorALLEGRO::getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                                          PandoraApi::CaloHit::Parameters& caloHitParameters) const {
   const auto position = hit.getPosition();
@@ -106,6 +108,7 @@ void DDCaloHitCreatorALLEGRO::getCommonCaloHitProperties(const edm4hep::Calorime
   if (caloHitParameters.m_hitType.Get() == pandora::HCAL)
     caloHitParameters.m_cellGeometry = pandora::RECTANGULAR;
   else
+    // NOTE: pandora::POINTING assumes a DeltaEta segmentation
     caloHitParameters.m_cellGeometry = pandora::POINTING;
 
   caloHitParameters.m_positionVector = positionVector;
@@ -115,6 +118,7 @@ void DDCaloHitCreatorALLEGRO::getCommonCaloHitProperties(const edm4hep::Calorime
   caloHitParameters.m_time = hit.getTime();
 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------
 void DDCaloHitCreatorALLEGRO::getEndCapCaloHitProperties(
     const edm4hep::CalorimeterHit& hit, const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& layers,
     PandoraApi::CaloHit::Parameters& caloHitParameters, float&) const {
@@ -134,8 +138,14 @@ void DDCaloHitCreatorALLEGRO::getEndCapCaloHitProperties(
     caloHitParameters.m_cellSize0 = cellSize[0] / dd4hep::mm;
     caloHitParameters.m_cellSize1 = cellSize[1] / dd4hep::mm;
   } else {
-    caloHitParameters.m_cellSize0 = layers[physicalLayer].cellSize0;
-    caloHitParameters.m_cellSize1 = layers[physicalLayer].cellSize1;
+    edm4hep::Vector3f position = hit.getPosition();
+    double deltaTheta = layers[physicalLayer].cellSize0;
+    double r = std::sqrt(position.x * position.x + position.y * position.y + position.z * position.z);
+    double theta = std::acos(position.z / r);
+    caloHitParameters.m_cellSize0 = this->convertDeltaThetaToDeltaEta(deltaTheta, theta);
+    // NOTE: need to multiply the cellSize1 by sin(theta) because of known issue in the PandoraSDK implementation of POINTING cells:
+    // https://github.com/PandoraPFA/PandoraSDK/issues/22
+    caloHitParameters.m_cellSize1 = layers[physicalLayer].cellSize1 * std::sin(theta);
   }
 
   m_algorithm.debug() << "  Hit cellSize0: " << caloHitParameters.m_cellSize0.Get() << endmsg;
@@ -196,8 +206,14 @@ void DDCaloHitCreatorALLEGRO::getBarrelCaloHitProperties(
     caloHitParameters.m_cellSize0 = cellSize[0] / dd4hep::mm;
     caloHitParameters.m_cellSize1 = cellSize[1] / dd4hep::mm;
   } else {
-    caloHitParameters.m_cellSize0 = layers[physicalLayer].cellSize0;
-    caloHitParameters.m_cellSize1 = layers[physicalLayer].cellSize1;
+    edm4hep::Vector3f position = hit.getPosition();
+    double deltaTheta = layers[physicalLayer].cellSize0;
+    double r = std::sqrt(position.x * position.x + position.y * position.y + position.z * position.z);
+    double theta = std::acos(position.z / r);
+    caloHitParameters.m_cellSize0 = this->convertDeltaThetaToDeltaEta(deltaTheta, theta);
+    // NOTE: need to multiply the cellSize1 by sin(theta) because of known issue in the PandoraSDK implementation of POINTING cells:
+    // https://github.com/PandoraPFA/PandoraSDK/issues/22
+    caloHitParameters.m_cellSize1 = layers[physicalLayer].cellSize1 * std::sin(theta);
   }
 
   m_algorithm.debug() << "  Hit cellSize0: " << caloHitParameters.m_cellSize0.Get() << endmsg;
@@ -238,4 +254,14 @@ void DDCaloHitCreatorALLEGRO::getBarrelCaloHitProperties(
                       << " nX0: " << caloHitParameters.m_nCellRadiationLengths.Get()
                       << " nLambdaI: " << caloHitParameters.m_nCellInteractionLengths.Get()
                       << " thickness: " << caloHitParameters.m_cellThickness.Get() << endmsg;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+double DDCaloHitCreatorALLEGRO::convertDeltaThetaToDeltaEta(double deltaTheta, double theta) const {
+  double thetaLow = theta - deltaTheta / 2.0;
+  double thetaHigh = theta + deltaTheta / 2.0;
+  double etaLow = -std::log(std::tan(thetaLow / 2.0));
+  double etaHigh = -std::log(std::tan(thetaHigh / 2.0));
+
+  return std::abs(etaHigh - etaLow);
 }

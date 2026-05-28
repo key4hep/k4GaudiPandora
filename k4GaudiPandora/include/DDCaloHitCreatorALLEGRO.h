@@ -99,6 +99,16 @@ private:
                                           const std::vector<float>& normalVector,
                                           float& absorberCorrection) const override;
 
+  /**
+   *  @brief  Convert delta theta to delta eta. This conversion is needed because PandoraSDK
+   *  provides POINTING cell geometry assuming a DeltaEta segmentation, while in ALLEGRO we have the DeltaTheta segmentation.
+   *
+   *  @param  deltaTheta the delta theta in radians
+   *  @param  position the hit position to calculate the theta angle
+   *  @return the delta eta
+   */
+  double convertDeltaThetaToDeltaEta(double deltaTheta, double theta) const;
+
   std::shared_ptr<dd4hep::DDSegmentation::Segmentation> m_hcalBarrelSegmentation = {};
   std::shared_ptr<dd4hep::DDSegmentation::Segmentation> m_hcalEndcapSegmentation = {};
 };
