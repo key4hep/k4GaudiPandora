@@ -42,8 +42,6 @@
 #include <vector>
 #include <unordered_map>
 
-class IDataProviderSvc;
-
 namespace pandora {
 class CaloHit;
 }
