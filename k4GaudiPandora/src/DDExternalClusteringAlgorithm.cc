@@ -33,7 +33,6 @@
 #include "DDExternalClusteringAlgorithm.h"
 #include "Gaudi/Algorithm.h"
 #include "GaudiKernel/AnyDataWrapper.h"
-#include "GaudiKernel/IDataProviderSvc.h"
 
 // setters and getters for the external cluster holder
 void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters) {
