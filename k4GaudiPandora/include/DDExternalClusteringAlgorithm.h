@@ -37,6 +37,8 @@
 
 // c++
 #include <map>
+#include <vector>
+#include <unordered_map>
 
 class IDataProviderSvc;
 
