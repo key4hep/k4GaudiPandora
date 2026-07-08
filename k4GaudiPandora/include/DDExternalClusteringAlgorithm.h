@@ -35,6 +35,8 @@
 // Podio
 #include "podio/ObjectID.h"
 
+#include "edm4hep/Cluster.h"
+
 // c++
 #include <map>
 #include <vector>
