@@ -267,7 +267,7 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                                                              lhCalHitCollectionsVector))
 
     // host edm4hep clusters for the external clustering algorithm
-    std::unique_ptr<std::vector<std::vector<edm4hep::Cluster>>> externalClustersPtr =
+    auto externalClustersPtr =
         std::make_unique<std::vector<std::vector<edm4hep::Cluster>>>();
     externalClustersPtr->reserve(clusterCollections.size());
 
