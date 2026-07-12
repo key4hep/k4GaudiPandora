@@ -97,7 +97,7 @@ private:
 
   typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
-  bool m_flagClustersAsPhotons = true; ///< Whether to automatically flag new clusters as fixed photons
+  bool m_flagClustersAsPhotons = false; ///< Whether to automatically flag new clusters as fixed photons
 
   ExternalClusterHolder* m_externalClusterHolder = nullptr; ///< Pointer to external cluster holder
 };
