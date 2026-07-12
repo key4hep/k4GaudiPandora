@@ -160,13 +160,16 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
                                                                new DDExternalClusteringAlgorithm::Factory))
 
   // Set external parameters for DDExternalClusteringAlgorithm
-  // everything is owned by this algorithm
-  m_extEvtParam = std::make_unique<ExternalEventParameter>();
-  m_extClusterHolder = std::make_unique<ExternalClusterHolder>();
-  m_extEvtParam->m_externalClusterHolder = m_extClusterHolder.get();
+  // ExternalClusterHolder is owned by this algorithm
+  // ExternalEventParameter is created by this algo and deleted by Pandora
+  if (!inputLocations("ClusterCollections").empty()) {
+    m_extEvtParam = new ExternalEventParameter();
+    m_extClusterHolder = std::make_unique<ExternalClusterHolder>();
+    m_extEvtParam->m_externalClusterHolder = m_extClusterHolder.get();
 
-  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                          PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", m_extEvtParam.get()))
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                            PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", m_extEvtParam))
+  }
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
@@ -270,19 +273,21 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
     auto externalClustersPtr = std::make_unique<std::vector<std::vector<edm4hep::Cluster>>>();
     externalClustersPtr->reserve(clusterCollections.size());
 
-    // loop over the input cluster collections and fill the external clusters vector
-    for (const auto* clusterCollection : clusterCollections) {
-      std::vector<edm4hep::Cluster> clusterValues;
-      clusterValues.reserve(clusterCollection->size());
+    if (!clusterCollections.empty()) {
+      // loop over the input cluster collections and fill the external clusters vector
+      for (const auto* clusterCollection : clusterCollections) {
+        std::vector<edm4hep::Cluster> clusterValues;
+        clusterValues.reserve(clusterCollection->size());
 
-      for (const auto& cluster : *clusterCollection) {
-        clusterValues.push_back(cluster);
+        for (const auto& cluster : *clusterCollection) {
+          clusterValues.push_back(cluster);
+        }
+
+        externalClustersPtr->push_back(std::move(clusterValues));
       }
 
-      externalClustersPtr->push_back(std::move(clusterValues));
+      m_extClusterHolder->setExternalClusters(externalClustersPtr.get());
     }
-
-    m_extClusterHolder->setExternalClusters(externalClustersPtr.get());
 
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
     //                         m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(

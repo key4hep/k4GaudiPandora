@@ -171,8 +171,9 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
-  std::unique_ptr<ExternalEventParameter> m_extEvtParam;       ///< external event parameter
-  std::unique_ptr<ExternalClusterHolder> m_extClusterHolder;   ///< Pointer to external cluster holder
+  ExternalEventParameter* m_extEvtParam;                     ///< external event parameter (pandora::ExternalParameters)
+                                                             ///< created by this algo but deleted by Pandora
+  std::unique_ptr<ExternalClusterHolder> m_extClusterHolder; ///< Pointer to external cluster holder
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings
