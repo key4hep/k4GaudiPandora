@@ -68,12 +68,9 @@ option(K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS
 if(NOT K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS AND NOT TARGET k4Reco::GaudiTrkUtils)
   message(FATAL_ERROR
     "k4Reco::GaudiTrkUtils was not found. It is provided by k4Reco built with "
-    "BUILD_TRACKING=ON (spack: k4reco+conformal_tracking) and pulls in LCIO, KalTest "
-    "and DDKalTest.\n"
+    "BUILD_TRACKING=ON.\n"
     "To build against a stack without LCIO, configure with "
-    "-DK4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS=ON. The track state at the calorimeter "
-    "is then read directly from the input EDM, which requires the tracks to have been "
-    "produced by k4ActsTracking's CKFTrackingAlg with ExtrapolateToCalo=True.")
+    "-DK4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS=ON.")
 endif()
 
 message(STATUS "K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS: ${K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS}")
