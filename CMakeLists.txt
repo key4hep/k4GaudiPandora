@@ -43,37 +43,34 @@ find_package(k4Reco)
 
 #---------------------------------------------------------------
 
-# The track state at the calorimeter face can come from two places:
+# Whether to extrapolate to the calorimeter internally, using DDKalTest through
+# k4Reco::GaudiTrkUtils:
 #
-#  - OFF (default): the legacy pipeline. k4Reco::GaudiTrkUtils re-propagates the
-#    track with DDKalTest to the ECal endcap face and an alternative track state
-#    is appended, so that Pandora can try both it and the one already stored in
-#    the EDM. This exists because GaudiTrkUtils::createTrackStateAtCaloFace does
-#    not navigate to the calorimeter: it propagates to the ECal barrel and to
-#    the ECal endcap and then keeps whichever intersection is closest to the
-#    last tracker hit, which picks the wrong face in the barrel/endcap
-#    transition region. It pulls in LCIO, KalTest and DDKalTest.
+#  - ON (default): for tracks whose track state at the calorimeter is in the
+#    barrel, the track is re-propagated to the ECal endcap face and the result is
+#    appended as an additional track state, so that pandora can try both. This is
+#    the legacy DDMarlinPandora behaviour, and it pulls in LCIO, KalTest and
+#    DDKalTest.
 #
-#  - ON: the track state stored in the EDM is used as is. k4ActsTracking's
-#    CKFTrackingAlg (ExtrapolateToCalo=True) obtains it by propagating with an
-#    Acts::Navigator over the calorimeter face surfaces, so the face is resolved
-#    by navigation rather than guessed and the alternative state is redundant.
-#
-# Note that this does not add a build dependency on k4ActsTracking; it is a
-# statement about the input data, not about what we link against.
-option(K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS
-       "Take the track state at the calorimeter from the input EDM instead of re-propagating it with DDKalTest. Requires input tracks produced by k4ActsTracking's CKFTrackingAlg with ExtrapolateToCalo=True, and drops the dependency on k4Reco::GaudiTrkUtils (and hence on LCIO, KalTest and DDKalTest)."
-       OFF)
+#  - OFF: only the track states already present in the input EDM are used, and
+#    k4Reco::GaudiTrkUtils is not needed. Whether that is enough depends on what
+#    produced the tracks: it requires the extrapolation to the calorimeter to have
+#    been done upstream, as k4ActsTracking's CKFTrackingAlg does with
+#    ExtrapolateToCalo=True.
+option(K4GAUDIPANDORA_USE_DDKALTEST
+       "Extrapolate tracks to the calorimeter face internally with DDKalTest, adding a track state at the ECal endcap on top of the ones present in the input EDM. Requires k4Reco::GaudiTrkUtils, and hence LCIO, KalTest and DDKalTest."
+       ON)
 
-if(NOT K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS AND NOT TARGET k4Reco::GaudiTrkUtils)
+if(K4GAUDIPANDORA_USE_DDKALTEST AND NOT TARGET k4Reco::GaudiTrkUtils)
   message(FATAL_ERROR
     "k4Reco::GaudiTrkUtils was not found. It is provided by k4Reco built with "
     "BUILD_TRACKING=ON.\n"
     "To build against a stack without LCIO, configure with "
-    "-DK4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS=ON.")
+    "-DK4GAUDIPANDORA_USE_DDKALTEST=OFF. The track states are then taken from the "
+    "input EDM as they are.")
 endif()
 
-message(STATUS "K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS: ${K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS}")
+message(STATUS "K4GAUDIPANDORA_USE_DDKALTEST: ${K4GAUDIPANDORA_USE_DDKALTEST}")
 
 #---------------------------------------------------------------
 

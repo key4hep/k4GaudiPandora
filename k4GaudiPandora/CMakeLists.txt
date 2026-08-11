@@ -52,9 +52,8 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       ${PandoraSDK_LIBRARIES}
                       ${LCContent_LIBRARIES}
                     )
-if(K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS)
-  target_compile_definitions(k4GaudiPandoraPlugins PRIVATE K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS)
-else()
+if(K4GAUDIPANDORA_USE_DDKALTEST)
+  target_compile_definitions(k4GaudiPandoraPlugins PRIVATE K4GAUDIPANDORA_USE_DDKALTEST)
   target_link_libraries(k4GaudiPandoraPlugins PRIVATE k4Reco::GaudiTrkUtils)
 endif()
 
