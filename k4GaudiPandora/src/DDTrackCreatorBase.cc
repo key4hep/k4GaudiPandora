@@ -51,12 +51,14 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandor
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
+#ifndef K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS
   // wrap in shared_ptr with a dummy destructor
   m_trackingSystem = std::make_shared<GaudiDDKalTest>(&m_algorithm);
   m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("subdet:5,side:-2,layer:9,module:8,sensor:8");
   m_trackingSystem->setEncoder(m_encoder);
+#endif
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -365,6 +367,12 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
+#ifndef K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS
+  // The track state stored in the EDM is the one DDKalTest picked between the ECal barrel and the
+  // ECal endcap intersections by keeping whichever was closest to the last tracker hit, which is
+  // not a first-intersection criterion and gets the face wrong in the barrel/endcap transition
+  // region. Re-propagate to the endcap face and pass that as an alternative, so that pandora can
+  // try both. Tracks from k4ActsTracking resolve the face by navigation and do not need this.
   GaudiDDKalTestTrack trk(&m_algorithm, m_trackingSystem.get());
   const auto& trkHits = track.getTrackerHits();
   std::vector<edm4hep::TrackerHit> trkHitsVec(trkHits.begin(), trkHits.end());
@@ -438,6 +446,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     this->CopyTrackState(trackStateAtCaloEndcap, pandoraAtEndcap);
     trackParameters.m_trackStates.push_back(pandoraAtEndcap);
   }
+#endif
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------

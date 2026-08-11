@@ -43,6 +43,43 @@ find_package(k4Reco)
 
 #---------------------------------------------------------------
 
+# The track state at the calorimeter face can come from two places:
+#
+#  - OFF (default): the legacy pipeline. k4Reco::GaudiTrkUtils re-propagates the
+#    track with DDKalTest to the ECal endcap face and an alternative track state
+#    is appended, so that Pandora can try both it and the one already stored in
+#    the EDM. This exists because GaudiTrkUtils::createTrackStateAtCaloFace does
+#    not navigate to the calorimeter: it propagates to the ECal barrel and to
+#    the ECal endcap and then keeps whichever intersection is closest to the
+#    last tracker hit, which picks the wrong face in the barrel/endcap
+#    transition region. It pulls in LCIO, KalTest and DDKalTest.
+#
+#  - ON: the track state stored in the EDM is used as is. k4ActsTracking's
+#    CKFTrackingAlg (ExtrapolateToCalo=True) obtains it by propagating with an
+#    Acts::Navigator over the calorimeter face surfaces, so the face is resolved
+#    by navigation rather than guessed and the alternative state is redundant.
+#
+# Note that this does not add a build dependency on k4ActsTracking; it is a
+# statement about the input data, not about what we link against.
+option(K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS
+       "Take the track state at the calorimeter from the input EDM instead of re-propagating it with DDKalTest. Requires input tracks produced by k4ActsTracking's CKFTrackingAlg with ExtrapolateToCalo=True, and drops the dependency on k4Reco::GaudiTrkUtils (and hence on LCIO, KalTest and DDKalTest)."
+       OFF)
+
+if(NOT K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS AND NOT TARGET k4Reco::GaudiTrkUtils)
+  message(FATAL_ERROR
+    "k4Reco::GaudiTrkUtils was not found. It is provided by k4Reco built with "
+    "BUILD_TRACKING=ON (spack: k4reco+conformal_tracking) and pulls in LCIO, KalTest "
+    "and DDKalTest.\n"
+    "To build against a stack without LCIO, configure with "
+    "-DK4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS=ON. The track state at the calorimeter "
+    "is then read directly from the input EDM, which requires the tracks to have been "
+    "produced by k4ActsTracking's CKFTrackingAlg with ExtrapolateToCalo=True.")
+endif()
+
+message(STATUS "K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS: ${K4GAUDIPANDORA_USE_K4ACTSTRACKING_TRACKS}")
+
+#---------------------------------------------------------------
+
 include(cmake/Key4hepConfig.cmake)
 
 include(GNUInstallDirs)
