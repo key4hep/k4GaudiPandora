@@ -160,9 +160,9 @@ public:
   const TrackVector& GetTrackVector() const;
 
   /**
-   *  @brief  Pass the track state at the calorimeter stored in the EDM to pandora, and, if
-   *          K4GAUDIPANDORA_USE_DDKALTEST was defined at build time, calculate a possible
-   *          second track state at the ECal Endcap
+   *  @brief  Pass the track state at the calorimeter of the input track to pandora, and, when
+   *          built with K4GAUDIPANDORA_USE_DDKALTEST, recompute a possible second track state
+   *          at the ECal Endcap
    *
    *  @param track lcio track
    *  @param trackParameters pandora LCTrackParameters

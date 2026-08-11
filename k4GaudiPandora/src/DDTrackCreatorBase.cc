@@ -368,10 +368,10 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
   }
 
 #ifdef K4GAUDIPANDORA_USE_DDKALTEST
-  // The track state at the calorimeter stored in the EDM is the first face the track reaches, but
+  // The track state at the calorimeter on the input track is the first face the track reaches, but
   // a particle entering through the barrel can still shower in the endcap, and which face is the
-  // relevant one is not known until the cluster is. Re-propagate to the endcap face and pass that
-  // as an additional track state, leaving it to pandora to decide between them.
+  // relevant one is not known until the cluster is. Recompute the extrapolation to the endcap face
+  // with DDKalTest and pass it on as an additional track state, leaving the choice to pandora.
   GaudiDDKalTestTrack trk(&m_algorithm, m_trackingSystem.get());
   const auto& trkHits = track.getTrackerHits();
   std::vector<edm4hep::TrackerHit> trkHitsVec(trkHits.begin(), trkHits.end());

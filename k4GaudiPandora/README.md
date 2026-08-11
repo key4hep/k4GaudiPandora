@@ -20,24 +20,23 @@ limitations under the License.
 
 ### `K4GAUDIPANDORA_USE_DDKALTEST` (default `ON`)
 
-Controls whether tracks are extrapolated to the calorimeter face internally, with DDKalTest through
-`k4Reco::GaudiTrkUtils`.
+Selects where the track states at the calorimeter faces that pandora needs are computed.
 
-With the default `ON`, the legacy DDMarlinPandora behaviour is built: for tracks whose
+With the default `ON`, they are **recomputed here with DDKalTest**. For tracks whose
 `edm4hep::TrackState::AtCalorimeter` state is in the barrel,
-`DDTrackCreatorBase::GetTrackStatesAtCalo` re-propagates the track to the ECal endcap face and
-passes the result to pandora as an *additional* track state. LCContent's
-`TrackClusterAssociationAlgorithm` then tries both. This matters because a particle entering
-through the barrel can still shower in the endcap, so which face is the relevant one is not known
-until the cluster is (see
-[iLCSoft/DDMarlinPandora#12](https://github.com/iLCSoft/DDMarlinPandora/pull/12)). It requires
+`DDTrackCreatorBase::GetTrackStatesAtCalo` recomputes the extrapolation to the ECal endcap face and
+passes it to pandora as an *additional* track state, so that LCContent's
+`TrackClusterAssociationAlgorithm` can consider both. A particle entering through the barrel can
+still shower in the endcap, so which of the two faces is the relevant one is not known until the
+cluster is (see
+[iLCSoft/DDMarlinPandora#12](https://github.com/iLCSoft/DDMarlinPandora/pull/12)). This uses
 `k4Reco::GaudiTrkUtils`, and therefore LCIO, KalTest and DDKalTest.
 
-With `OFF`, only the track states already present in the input EDM are passed on, and
-`k4Reco::GaudiTrkUtils` — and with it LCIO — is no longer needed. This requires the extrapolation to
-the calorimeter to have been done upstream: `k4ActsTracking`'s `CKFTrackingAlg` does it with
-`ExtrapolateToCalo=True`. Note that only the states present on the track are used, so if the
-upstream extrapolation stores a single one, only that face is offered to pandora.
+With `OFF`, they are expected to have been **computed upstream**, as `k4ActsTracking`'s
+`CKFTrackingAlg` does with `ExtrapolateToCalo=True`. Nothing is recomputed here: the track states at
+the calorimeter found on the input tracks are forwarded as they are, so the number of faces offered
+to pandora is whatever the upstream extrapolation stored. `k4Reco::GaudiTrkUtils` — and with it
+LCIO — is not needed.
 
 Note that `OFF` does not make k4GaudiPandora depend on k4ActsTracking; nothing is linked or included
 from it.
