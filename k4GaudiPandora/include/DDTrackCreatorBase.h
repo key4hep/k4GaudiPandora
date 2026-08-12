@@ -26,8 +26,10 @@
 #include <edm4hep/Track.h>
 #include <edm4hep/VertexCollection.h>
 
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
 #include <k4Reco/GaudiDDKalTest.h>
 #include <k4Reco/GaudiDDKalTestTrack.h>
+#endif
 
 #include <memory>
 
@@ -158,7 +160,9 @@ public:
   const TrackVector& GetTrackVector() const;
 
   /**
-   *  @brief  Calculate possible second track state at the ECal Endcap
+   *  @brief  Pass the track state(s) at the calorimeter of the input track to pandora. When built
+   *          with K4GAUDIPANDORA_USE_DDKALTEST only the first one is used, and a possible second
+   *          track state at the ECal Endcap is recomputed; otherwise all of them are passed on
    *
    *  @param track lcio track
    *  @param trackParameters pandora LCTrackParameters
@@ -182,7 +186,9 @@ protected:
   TrackList m_daughterTrackList;          ///< The list of daughter tracks
   TrackToPidMap m_trackToPidMap;          ///< The map from track addresses to particle ids, where set by kinks/V0s
   float m_minimalTrackStateRadiusSquared; ///< minimal track state radius, derived value
-  std::shared_ptr<GaudiDDKalTest> m_trackingSystem = {};             ///< Tracking system used for track states
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
+  std::shared_ptr<GaudiDDKalTest> m_trackingSystem = {}; ///< Tracking system used for track states
+#endif
   dd4hep::DDSegmentation::BitFieldCoder m_encoder = {};              ///< cell ID encoder
   std::shared_ptr<lc_content::LCTrackFactory> m_lcTrackFactory = {}; ///< LCTrackFactor for creating LCTracks
 

@@ -42,6 +42,21 @@ find_package(Gaudi)
 find_package(k4Reco)
 
 #---------------------------------------------------------------
+option(K4GAUDIPANDORA_USE_DDKALTEST
+       "Recompute the extrapolation to the ECal endcap face with DDKalTest, to give pandora an additional track state at the calorimeter. Requires k4Reco::GaudiTrkUtils, and hence LCIO, KalTest and DDKalTest. When OFF, the track states at the calorimeter are expected to be already present on the input tracks, and all of them are passed on."
+       ON)
+
+if(K4GAUDIPANDORA_USE_DDKALTEST AND NOT TARGET k4Reco::GaudiTrkUtils)
+  message(FATAL_ERROR
+    "k4Reco::GaudiTrkUtils was not found. It is provided by k4Reco built with "
+    "BUILD_TRACKING=ON.\n"
+    "To build against a stack without LCIO, configure with "
+    "-DK4GAUDIPANDORA_USE_DDKALTEST=OFF.")
+endif()
+
+message(STATUS "K4GAUDIPANDORA_USE_DDKALTEST: ${K4GAUDIPANDORA_USE_DDKALTEST}")
+
+#---------------------------------------------------------------
 
 include(cmake/Key4hepConfig.cmake)
 

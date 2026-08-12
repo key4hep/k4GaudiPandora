@@ -51,12 +51,14 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandor
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
   // wrap in shared_ptr with a dummy destructor
   m_trackingSystem = std::make_shared<GaudiDDKalTest>(&m_algorithm);
   m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("subdet:5,side:-2,layer:9,module:8,sensor:8");
   m_trackingSystem->setEncoder(m_encoder);
+#endif
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -334,21 +336,30 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
-  size_t i = static_cast<size_t>(-1);
-  for (size_t j = 0; j < track.getTrackStates().size(); ++j) {
-    if (track.getTrackStates()[j].location == edm4hep::TrackState::AtCalorimeter) {
-      i = j;
-      break;
+  std::vector<edm4hep::TrackState> statesAtCalo;
+  for (const auto& ts : track.getTrackStates()) {
+    if (ts.location == edm4hep::TrackState::AtCalorimeter) {
+      statesAtCalo.push_back(ts);
     }
   }
 
-  if (i == static_cast<size_t>(-1)) {
+  if (statesAtCalo.empty()) {
     m_algorithm.verbose() << "Track does not have a trackState at calorimeter" << endmsg;
     // streamlog_out(DEBUG3) << toString(track) << endmsg;
     return;
   }
 
-  const auto& trackAtCalo = track.getTrackStates(i);
+#ifndef K4GAUDIPANDORA_USE_DDKALTEST
+  // The extrapolations were done upstream, so every track state at the calorimeter that the input
+  // track carries is passed on and pandora is left to choose between them.
+  m_algorithm.verbose() << "Passing on " << statesAtCalo.size() << " track state(s) at the calorimeter" << endmsg;
+  for (const auto& stateAtCalo : statesAtCalo) {
+    pandora::InputTrackState pandoraTrackState;
+    this->CopyTrackState(stateAtCalo, pandoraTrackState);
+    trackParameters.m_trackStates.push_back(pandoraTrackState);
+  }
+#else
+  const auto& trackAtCalo = statesAtCalo.front();
 
   const auto& tsPosition = trackAtCalo.referencePoint;
 
@@ -365,6 +376,10 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
+  // The track state at the calorimeter on the input track is the first face the track reaches, but
+  // a particle entering through the barrel can still shower in the endcap, and which face is the
+  // relevant one is not known until the cluster is. Recompute the extrapolation to the endcap face
+  // with DDKalTest and pass it on as an additional track state, leaving the choice to pandora.
   GaudiDDKalTestTrack trk(&m_algorithm, m_trackingSystem.get());
   const auto& trkHits = track.getTrackerHits();
   std::vector<edm4hep::TrackerHit> trkHitsVec(trkHits.begin(), trkHits.end());
@@ -438,6 +453,7 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     this->CopyTrackState(trackStateAtCaloEndcap, pandoraAtEndcap);
     trackParameters.m_trackStates.push_back(pandoraAtEndcap);
   }
+#endif
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
