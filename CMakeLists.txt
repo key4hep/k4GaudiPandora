@@ -42,20 +42,6 @@ find_package(Gaudi)
 find_package(k4Reco)
 
 #---------------------------------------------------------------
-
-# Selects where the track states at the calorimeter faces that pandora needs are
-# computed:
-#
-#  - ON (default): here, with DDKalTest. For tracks whose track state at the
-#    calorimeter is in the barrel, the extrapolation to the ECal endcap face is
-#    recomputed and passed on as an additional track state, so that pandora can
-#    consider both. This uses k4Reco::GaudiTrkUtils, and hence LCIO, KalTest and
-#    DDKalTest.
-#
-#  - OFF: upstream. The input tracks already carry the track states at the
-#    calorimeter, as those from k4ActsTracking's CKFTrackingAlg with
-#    ExtrapolateToCalo=True do, so nothing is recomputed here: all of them are
-#    passed on and k4Reco::GaudiTrkUtils is not needed.
 option(K4GAUDIPANDORA_USE_DDKALTEST
        "Recompute the extrapolation to the ECal endcap face with DDKalTest, to give pandora an additional track state at the calorimeter. Requires k4Reco::GaudiTrkUtils, and hence LCIO, KalTest and DDKalTest. When OFF, the track states at the calorimeter are expected to be already present on the input tracks, and all of them are passed on."
        ON)
@@ -65,8 +51,7 @@ if(K4GAUDIPANDORA_USE_DDKALTEST AND NOT TARGET k4Reco::GaudiTrkUtils)
     "k4Reco::GaudiTrkUtils was not found. It is provided by k4Reco built with "
     "BUILD_TRACKING=ON.\n"
     "To build against a stack without LCIO, configure with "
-    "-DK4GAUDIPANDORA_USE_DDKALTEST=OFF. Nothing is then recomputed here, and the track "
-    "states at the calorimeter must already be present on the input tracks.")
+    "-DK4GAUDIPANDORA_USE_DDKALTEST=OFF.")
 endif()
 
 message(STATUS "K4GAUDIPANDORA_USE_DDKALTEST: ${K4GAUDIPANDORA_USE_DDKALTEST}")

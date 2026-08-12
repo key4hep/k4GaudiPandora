@@ -160,7 +160,7 @@ public:
   const TrackVector& GetTrackVector() const;
 
   /**
-   *  @brief  Pass the track states at the calorimeter of the input track to pandora. When built
+   *  @brief  Pass the track state(s) at the calorimeter of the input track to pandora. When built
    *          with K4GAUDIPANDORA_USE_DDKALTEST only the first one is used, and a possible second
    *          track state at the ECal Endcap is recomputed; otherwise all of them are passed on
    *
