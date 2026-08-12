@@ -336,21 +336,30 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
-  size_t i = static_cast<size_t>(-1);
-  for (size_t j = 0; j < track.getTrackStates().size(); ++j) {
-    if (track.getTrackStates()[j].location == edm4hep::TrackState::AtCalorimeter) {
-      i = j;
-      break;
+  std::vector<edm4hep::TrackState> statesAtCalo;
+  for (const auto& ts : track.getTrackStates()) {
+    if (ts.location == edm4hep::TrackState::AtCalorimeter) {
+      statesAtCalo.push_back(ts);
     }
   }
 
-  if (i == static_cast<size_t>(-1)) {
+  if (statesAtCalo.empty()) {
     m_algorithm.verbose() << "Track does not have a trackState at calorimeter" << endmsg;
     // streamlog_out(DEBUG3) << toString(track) << endmsg;
     return;
   }
 
-  const auto& trackAtCalo = track.getTrackStates(i);
+#ifndef K4GAUDIPANDORA_USE_DDKALTEST
+  // The extrapolations were done upstream, so every track state at the calorimeter that the input
+  // track carries is passed on and pandora is left to choose between them.
+  m_algorithm.verbose() << "Passing on " << statesAtCalo.size() << " track state(s) at the calorimeter" << endmsg;
+  for (const auto& stateAtCalo : statesAtCalo) {
+    pandora::InputTrackState pandoraTrackState;
+    this->CopyTrackState(stateAtCalo, pandoraTrackState);
+    trackParameters.m_trackStates.push_back(pandoraTrackState);
+  }
+#else
+  const auto& trackAtCalo = statesAtCalo.front();
 
   const auto& tsPosition = trackAtCalo.referencePoint;
 
@@ -367,7 +376,6 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
-#ifdef K4GAUDIPANDORA_USE_DDKALTEST
   // The track state at the calorimeter on the input track is the first face the track reaches, but
   // a particle entering through the barrel can still shower in the endcap, and which face is the
   // relevant one is not known until the cluster is. Recompute the extrapolation to the endcap face

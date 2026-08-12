@@ -33,10 +33,10 @@ cluster is (see
 `k4Reco::GaudiTrkUtils`, and therefore LCIO, KalTest and DDKalTest.
 
 With `OFF`, they are expected to have been **computed upstream**, as `k4ActsTracking`'s
-`CKFTrackingAlg` does with `ExtrapolateToCalo=True`. Nothing is recomputed here: the track states at
-the calorimeter found on the input tracks are forwarded as they are, so the number of faces offered
-to pandora is whatever the upstream extrapolation stored. `k4Reco::GaudiTrkUtils` — and with it
-LCIO — is not needed.
+`CKFTrackingAlg` does with `ExtrapolateToCalo=True`. Nothing is recomputed here: *all*
+`AtCalorimeter` track states found on the input track are forwarded to pandora, so the number of
+faces it can choose between is whatever the upstream extrapolation stored.
+`k4Reco::GaudiTrkUtils` — and with it LCIO — is not needed.
 
 Note that `OFF` does not make k4GaudiPandora depend on k4ActsTracking; nothing is linked or included
 from it.
