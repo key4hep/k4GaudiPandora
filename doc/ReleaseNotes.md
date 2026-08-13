@@ -1,3 +1,17 @@
+# v0.3.0
+
+* 2026-08-12 Federico Meloni ([PR#31](https://github.com/key4hep/k4GaudiPandora/pull/31))
+  - Added the flag `K4GAUDIPANDORA_USE_DDKALTEST` to compile with the DDKalTest-based recomputation of the track states at the calorimeter faces, instead of using a direct unpacking of what is provided from upstream. **The default is `ON`, so that the legacy behaviour is preserved.**
+
+* 2026-04-30 Juan Miguel Carceller ([PR#29](https://github.com/key4hep/k4GaudiPandora/pull/29))
+  - Use a single output in the CollectionMerger since this is going be changed in k4FWCore in https://github.com/key4hep/k4FWCore/pull/408
+
+* 2026-04-16 Thomas Madlener ([PR#28](https://github.com/key4hep/k4GaudiPandora/pull/28))
+  - Use the newly added `k4FWCore::getCellIDEncoding` utility for retrieving the cell id encoding.
+
+* 2026-02-24 Mateusz Jakub Fila ([PR#27](https://github.com/key4hep/k4GaudiPandora/pull/27))
+  - Remove histogram interface compatibility with Gaudi versions older that v39
+
 # v00.02.00
 
 * 2026-01-19 Thomas Madlener ([PR#25](https://github.com/key4hep/k4GaudiPandora/pull/25))
