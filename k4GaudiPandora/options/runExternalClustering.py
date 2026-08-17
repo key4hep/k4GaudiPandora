@@ -21,11 +21,22 @@ from k4FWCore import ApplicationMgr, IOSvc
 from Configurables import EventDataSvc
 from Configurables import DDPandoraPFANewAlgorithm
 
+from Configurables import GeoSvc
+
 import os
 
 iosvc = IOSvc()
 iosvc.Input = "output_pandora_ttbar.root"
 iosvc.Output = "output_externalClustering.root"
+
+# GeoSvc used to be configured as a side effect of importing runPandora.py; now that only the
+# parameters are imported it has to be set up explicitly here.
+geoservice = GeoSvc("GeoSvc")
+geoservice.detectors = [
+    os.environ["K4GEO"] + "/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"
+]
+geoservice.OutputLevel = INFO
+geoservice.EnableGeant4Geo = False
 
 import sys
 
