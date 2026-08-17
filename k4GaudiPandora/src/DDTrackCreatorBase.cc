@@ -299,7 +299,8 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track& pTrack,
 
   const auto& pTrackState = getEDM4hepTrackState(pTrack, edm4hep::TrackState::AtIP);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState.omega));
+  const double bField(this->GetBFieldForTrackState(pTrackState.referencePoint));
+  const double pt(bField * 2.99792e-4 / std::fabs(pTrackState.omega));
   trackParameters.m_momentumAtDca =
       pandora::CartesianVector(std::cos(pTrackState.phi), std::sin(pTrackState.phi), pTrackState.tanLambda) * pt;
 
