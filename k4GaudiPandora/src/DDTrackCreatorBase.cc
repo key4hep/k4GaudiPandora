@@ -546,7 +546,7 @@ float DDTrackCreatorBase::GetBFieldForTrackState(const edm4hep::Vector3f& positi
   // which case DD4hep returns zero and pT below would come out as zero.
   if (std::fabs(localBField) < std::numeric_limits<float>::epsilon()) {
     m_algorithm.verbose() << "No DD4hep field at track state reference point (" << position[0] << ", " << position[1]
-                        << ", " << position[2] << ") mm; cannot convert omega to a momentum." << endmsg;
+                          << ", " << position[2] << ") mm; cannot convert omega to a momentum." << endmsg;
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
 
@@ -568,5 +568,5 @@ DDTrackCreatorBase::Settings::Settings()
       m_curvatureToMomentumFactor(0.3f / 2000.f), m_minTrackECalDistanceFromIp(100.f), m_maxTrackSigmaPOverP(0.15f),
       m_minMomentumForTrackHitChecks(1.f), m_maxBarrelTrackerInnerRDistance(50.f),
       m_minBarrelTrackerHitFractionOfExpected(0.2f), m_minFtdHitsForBarrelTrackerHitFraction(2),
-      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_useDD4hepField(false), m_eCalBarrelInnerSymmetry(0),
-      m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}
+      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_useDD4hepField(false),
+      m_eCalBarrelInnerSymmetry(0), m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}

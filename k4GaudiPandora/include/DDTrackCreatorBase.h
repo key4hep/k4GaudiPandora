@@ -118,9 +118,9 @@ public:
 
     /// Nikiforos: Moved from main class
 
-    float m_bField;          ///< The bfield, taken at the origin, used as the global curvature reference
-    bool m_useDD4hepField;   ///< Whether to convert omega to pT with the DD4hep field at each track
-                             ///< state's reference point instead of the global m_bField
+    float m_bField;                ///< The bfield, taken at the origin, used as the global curvature reference
+    bool m_useDD4hepField;         ///< Whether to convert omega to pT with the DD4hep field at each track
+                                   ///< state's reference point instead of the global m_bField
     int m_eCalBarrelInnerSymmetry; ///< ECal barrel inner symmetry order
     float m_eCalBarrelInnerPhi0;   ///< ECal barrel inner phi 0
     float m_eCalBarrelInnerR;      ///< ECal barrel inner radius
