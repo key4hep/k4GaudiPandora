@@ -546,7 +546,7 @@ float DDTrackCreatorBase::GetBFieldForTrackState(const edm4hep::Vector3f& positi
   // A track state can sit outside the region the field is described over, in
   // which case DD4hep returns zero and pT below would come out as zero.
   if (std::fabs(localBField) < std::numeric_limits<float>::epsilon()) {
-    m_algorithm.verbose() << "No DD4hep field at track state reference point (" << position[0] << ", " << position[1]
+    m_algorithm.error() << "No DD4hep field at track state reference point (" << position[0] << ", " << position[1]
                           << ", " << position[2] << ") mm; cannot convert omega to a momentum." << endmsg;
     throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
