@@ -221,7 +221,7 @@ private:
                                             "The bfield in the muon barrel, units Tesla"};
   Gaudi::Property<float> m_muonEndCapBField{this, "MuonEndCapBField", 0.01f,
                                             "The bfield in the muon endcap, units Tesla"};
-  Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false, "Whether to use the BField map from DD4hep"};
+  Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false, "Use local magnetic field value from dd4hep. It allows to use consistent values to unpack the track states produced upstream."};
   // Track relationship parameters
   Gaudi::Property<int> m_shouldFormTrackRelationships{
       this, "ShouldFormTrackRelationships", 1, "Whether to form pandora track relationships using v0 and kink info"};
