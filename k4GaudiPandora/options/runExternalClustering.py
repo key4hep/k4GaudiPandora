@@ -34,8 +34,12 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-# now import pandora params
-from runPandora import params
+# import the parameters only -- importing runPandora.py itself would re-execute its IOSvc and
+# GeoSvc configuration and silently override the input/output files set above
+import pandoraParams
+
+# copy, so that the overrides below do not mutate the shared module-level dictionary
+params = dict(pandoraParams.params)
 
 # dummy Pandora settings file containing only external clustering algo
 params["PandoraSettingsXmlFile"] = current_dir+"/PandoraSettingsExternalClustering.xml"
