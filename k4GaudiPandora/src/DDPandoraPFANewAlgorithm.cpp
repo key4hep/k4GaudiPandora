@@ -422,6 +422,7 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_settings.m_minCleanCorrectedHitEnergy = m_minCleanCorrectedHitEnergy;
 
   m_trackCreatorSettings.m_bField = getFieldFromCompact();
+  m_trackCreatorSettings.m_useDD4hepField = m_useDD4hepField;
 
   // Get ECal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalBarrelExtension =
