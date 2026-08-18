@@ -460,7 +460,8 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track& track) const {
 
-  auto const& ts = track.getTrackStates(edm4hep::TrackState::AtIP);
+  // Look the state up by location, as everywhere else in this class.
+  auto const ts = getEDM4hepTrackState(track, edm4hep::TrackState::AtIP);
   const pandora::Helix helix(ts.phi, ts.D0, ts.Z0, ts.omega, ts.tanLambda, m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
 
