@@ -30,7 +30,6 @@ set(PACKAGE_VERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}.${PACKAGE
 
 list(APPEND CMAKE_MODULE_PATH $ENV{PANDORAPFA}/cmakemodules)
 
-# dependencies are declared like this
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(DD4hep)
 find_package(GSL REQUIRED)
