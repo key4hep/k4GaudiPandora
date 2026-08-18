@@ -47,7 +47,7 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandor
                                        const Gaudi::Algorithm* pAlgorithm)
     : m_settings(settings), m_pandora(pandora), m_algorithm(*pAlgorithm), m_trackVector(0), m_v0TrackList(TrackList()),
       m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()), m_trackToPidMap(TrackToPidMap()),
-      m_minimalTrackStateRadiusSquared(0.f) {
+      m_minimalTrackStateRadiusSquared(0.f), m_dd4hepField(dd4hep::Detector::getInstance().field()) {
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
@@ -299,7 +299,8 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track& pTrack,
 
   const auto& pTrackState = getEDM4hepTrackState(pTrack, edm4hep::TrackState::AtIP);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState.omega));
+  const double bField(this->GetBFieldForTrackState(pTrackState.referencePoint));
+  const double pt(bField * 2.99792e-4 / std::fabs(pTrackState.omega));
   trackParameters.m_momentumAtDca =
       pandora::CartesianVector(std::cos(pTrackState.phi), std::sin(pTrackState.phi), pTrackState.tanLambda) * pt;
 
@@ -517,7 +518,8 @@ void DDTrackCreatorBase::CopyTrackState(edm4hep::TrackState const& pTrackState,
   // if (!pTrackState)
   //   throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState.omega));
+  const double bField(this->GetBFieldForTrackState(pTrackState.referencePoint));
+  const double pt(bField * 2.99792e-4 / std::fabs(pTrackState.omega));
 
   const double px(pt * std::cos(pTrackState.phi));
   const double py(pt * std::sin(pTrackState.phi));
@@ -528,6 +530,28 @@ void DDTrackCreatorBase::CopyTrackState(edm4hep::TrackState const& pTrackState,
   const double zs(pTrackState.referencePoint[2]);
 
   inputTrackState = pandora::TrackState(xs, ys, zs, px, py, pz);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+float DDTrackCreatorBase::GetBFieldForTrackState(const edm4hep::Vector3f& position) const {
+  if (!m_settings.m_useDD4hepField) {
+    return m_settings.m_bField;
+  }
+
+  double bfield[3] = {0., 0., 0.};
+  m_dd4hepField.magneticField({position[0] * dd4hep::mm, position[1] * dd4hep::mm, position[2] * dd4hep::mm}, bfield);
+  const float localBField(bfield[2] / dd4hep::tesla);
+
+  // A track state can sit outside the region the field is described over, in
+  // which case DD4hep returns zero and pT below would come out as zero.
+  if (std::fabs(localBField) < std::numeric_limits<float>::epsilon()) {
+    m_algorithm.error() << "No DD4hep field at track state reference point (" << position[0] << ", " << position[1]
+                        << ", " << position[2] << ") mm; cannot convert omega to a momentum." << endmsg;
+    throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
+  }
+
+  return localBField;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -545,5 +569,5 @@ DDTrackCreatorBase::Settings::Settings()
       m_curvatureToMomentumFactor(0.3f / 2000.f), m_minTrackECalDistanceFromIp(100.f), m_maxTrackSigmaPOverP(0.15f),
       m_minMomentumForTrackHitChecks(1.f), m_maxBarrelTrackerInnerRDistance(50.f),
       m_minBarrelTrackerHitFractionOfExpected(0.2f), m_minFtdHitsForBarrelTrackerHitFraction(2),
-      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_eCalBarrelInnerSymmetry(0),
-      m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}
+      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_useDD4hepField(false),
+      m_eCalBarrelInnerSymmetry(0), m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}
