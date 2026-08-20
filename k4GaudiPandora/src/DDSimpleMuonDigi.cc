@@ -93,13 +93,6 @@ StatusCode DDSimpleMuonDigi::initialize() {
     }
   }
 
-  const auto collName = inputLocations("MUONCollection")[0];
-  const auto encodingString = k4FWCore::getCellIDEncoding(collName, this);
-  if (!encodingString) {
-    throw std::runtime_error("Encoding string not found for collection: " + collName);
-  }
-  m_encodingString = encodingString.value();
-
   return StatusCode::SUCCESS;
 }
 std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>
@@ -112,9 +105,21 @@ DDSimpleMuonDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCalo
   auto muonRelcol = edm4hep::CaloHitSimCaloHitLinkCollection();
 
   const auto colName = inputLocations(0)[0];
+  debug() << "looking for collection: " << colName << std::endl;
+
+  if (colName.find("dummy") != std::string::npos) {
+    debug() << "Ignoring input collection name (looks like dummy name)" << colName << endmsg;
+  }
+
   CHT::Layout caloLayout = layoutFromString(colName);
 
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(m_encodingString);
+  const auto maybeParam = k4FWCore::getCellIDEncoding(colName, this);
+  if (!maybeParam) {
+     throw std::runtime_error("Encoding string not found for collection: " + colName);
+  }
+
+  const auto initString = maybeParam.value();
+  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString); // check if decoder contains "layer"
 
   for (const auto& hit : SimCaloHits) {
     const auto cellID = hit.getCellID();

@@ -66,8 +66,6 @@ private:
   Gaudi::Property<std::string> m_detectorNameEndcap{this, "detectornameE", "YokeEndcap",
                                                     "Name of the second subdetector"};
 
-  std::string m_collName{};
-  std::string m_encodingString{};
   std::vector<bool> m_useLayersBarrelVec{}, m_useLayersEndcapVec{};
   SmartIF<IGeoSvc> m_geoSvc;
 
