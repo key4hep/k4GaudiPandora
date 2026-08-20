@@ -113,12 +113,13 @@ DDSimpleMuonDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCalo
 
   CHT::Layout caloLayout = layoutFromString(colName);
 
-  const auto maybeParam = k4FWCore::getCellIDEncoding(colName, this);
-  if (!maybeParam) {
+  std::string initString;
+  initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+  /*if (!maybeParam) {
      throw std::runtime_error("Encoding string not found for collection: " + colName);
   }
 
-  const auto initString = maybeParam.value();
+  const auto initString = maybeParam.value();*/
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString); // check if decoder contains "layer"
 
   for (const auto& hit : SimCaloHits) {

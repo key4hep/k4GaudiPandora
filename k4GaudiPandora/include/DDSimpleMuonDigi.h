@@ -56,6 +56,12 @@ private:
   // Gaudi::Property<std::vector<bool>> useLayersBarrelVec{this, "useBarrelLayerVector", false, "whether to use the
   // endcap layer vector"}; Gaudi::Property<std::vector<bool>> useLayersEndcapVec{this, "useEndCapLayerVector", false,
   // "whether to use the EndCap layer vector"};
+
+  // code for layer info for cellID decoder
+  Gaudi::Property<std::string> m_encodingStringVariable{
+      this, "EncodingStringParameterName", "GlobalCalorimeterReadoutID",
+      "The name of the DD4hep constant that contains the Encoding string for the yoke detector"};
+
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
   Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025f}, "Threshold for muon"};
