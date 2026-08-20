@@ -60,10 +60,10 @@ private:
   // code for layer info for cellID decoder
   Gaudi::Property<std::string> m_encodingStringVariable{
       this, "EncodingStringParameterName", "GlobalCalorimeterReadoutID",
-      "The name of the DD4hep constant that contains the Encoding string for the yoke detector"};
-
+      "The name of the DD4hep constant that contains the Encoding string for the muon detector"};
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
+
   Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025f}, "Threshold for muon"};
   Gaudi::Property<float> m_timeThresholdMuon{this, "timethresholdMuon", {0.025f}, "time threshold for muons"};
   Gaudi::Property<float> m_calibrCoeffMuon{this, "CalibrMUON", {120000.0}, "Callibration coefficient of muons"};

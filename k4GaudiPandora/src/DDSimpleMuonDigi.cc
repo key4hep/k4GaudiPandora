@@ -107,19 +107,10 @@ DDSimpleMuonDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCalo
   const auto colName = inputLocations(0)[0];
   debug() << "looking for collection: " << colName << std::endl;
 
-  if (colName.find("dummy") != std::string::npos) {
-    debug() << "Ignoring input collection name (looks like dummy name)" << colName << endmsg;
-  }
-
   CHT::Layout caloLayout = layoutFromString(colName);
 
   std::string initString;
   initString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
-  /*if (!maybeParam) {
-     throw std::runtime_error("Encoding string not found for collection: " + colName);
-  }
-
-  const auto initString = maybeParam.value();*/
   dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(initString); // check if decoder contains "layer"
 
   for (const auto& hit : SimCaloHits) {
