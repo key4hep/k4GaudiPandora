@@ -31,17 +31,8 @@
 #include "Pandora/AlgorithmHeaders.h"
 
 #include "DDExternalClusteringAlgorithm.h"
-#include "Gaudi/Algorithm.h"
-#include "GaudiKernel/AnyDataWrapper.h"
 
-// setters and getters for the external cluster holder
-void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters) {
-  m_externalClusters = externalClusters;
-}
-
-const std::vector<std::vector<edm4hep::Cluster>>& ExternalClusterHolder::getExternalClusters() const {
-  return *m_externalClusters;
-}
+std::vector<std::vector<edm4hep::Cluster>>* g_externalClusters = nullptr;
 
 DDExternalClusteringAlgorithm::DDExternalClusteringAlgorithm() : m_flagClustersAsPhotons(false) {}
 
@@ -77,7 +68,10 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
         PandoraContentApi::CreateTemporaryListAndSetCurrent(*this, pClusterList, clusterListNameTmp));
 
     // loop over external cluster collections
-    for (const auto& clusterColl : m_externalClusterHolder->getExternalClusters()) {
+    if (!g_externalClusters)
+      return pandora::STATUS_CODE_SUCCESS;
+
+    for (const auto& clusterColl : *g_externalClusters) {
       // no cluster in this event
       if (clusterColl.empty())
         continue;
@@ -140,18 +134,6 @@ pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::T
   PANDORA_RETURN_RESULT_IF_AND_IF(
       pandora::STATUS_CODE_SUCCESS, pandora::STATUS_CODE_NOT_FOUND, !=,
       pandora::XmlHelper::ReadValue(xmlHandle, "FlagClustersAsPhotons", m_flagClustersAsPhotons));
-
-  // Get the pointer to the external cluster holder
-  // Sanghyun: this is a hacky way that I do this in ReadSettings
-  // but GetExternalParameters doesn't allow me to access it more that once
-  const ExternalEventParameter* pExternalEventParameter =
-      dynamic_cast<const ExternalEventParameter*>(this->GetExternalParameters());
-
-  if (!pExternalEventParameter || !pExternalEventParameter->m_externalClusterHolder) {
-    throw std::runtime_error("DDExternalClusteringAlgorithm: External cluster holder not set");
-  }
-
-  m_externalClusterHolder = pExternalEventParameter->m_externalClusterHolder;
 
   return pandora::STATUS_CODE_SUCCESS;
 }

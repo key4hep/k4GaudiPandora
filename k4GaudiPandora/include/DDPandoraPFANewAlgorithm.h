@@ -46,10 +46,6 @@ namespace pandora {
 class Pandora;
 }
 
-// forward declarations for the external clustering algorithm
-class ExternalEventParameter;
-class ExternalClusterHolder;
-
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 struct DDPandoraPFANewAlgorithm final
@@ -171,9 +167,7 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
-  ExternalEventParameter* m_extEvtParam;                     ///< external event parameter (pandora::ExternalParameters)
-                                                             ///< created by this algo but deleted by Pandora
-  std::unique_ptr<ExternalClusterHolder> m_extClusterHolder; ///< Pointer to external cluster holder
+  mutable std::vector<std::vector<edm4hep::Cluster>> m_externalClusters; ///< External clusters for external clustering algo
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings

@@ -30,7 +30,7 @@
 // Pandora
 #include "Helpers/XmlHelper.h"
 #include "Objects/CaloHit.h"
-#include "Pandora/ExternallyConfiguredAlgorithm.h"
+#include "Pandora/Algorithm.h"
 
 // Podio
 #include "podio/ObjectID.h"
@@ -38,7 +38,6 @@
 #include "edm4hep/Cluster.h"
 
 // c++
-#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -47,36 +46,18 @@ class CaloHit;
 }
 
 /**
- *  @brief  ExternalClusterHolder class - holds pointers to the external clusters and the calo hits
+ *  @brief  Global pointer to external clusters, set by DDPandoraPFANewAlgorithm
+ *          before ProcessEvent and cleared after.  Used instead of Pandora's
+ *          ExternalParameters mechanism to avoid cross-.so static destruction issues.
  */
-
-class ExternalClusterHolder {
-public:
-  ExternalClusterHolder() = default;
-  ~ExternalClusterHolder() = default;
-
-  void setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters);
-  const std::vector<std::vector<edm4hep::Cluster>>& getExternalClusters() const;
-
-  std::vector<std::vector<edm4hep::Cluster>>* m_externalClusters; ///< The external clusters
-};
-
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-/**
- *  @brief  ExternalEventParameter class - holds Gaudi event service for external clustering
- */
-class ExternalEventParameter : public pandora::ExternalParameters {
-public:
-  ExternalClusterHolder* m_externalClusterHolder; ///< Pointer to external cluster holder
-};
+extern std::vector<std::vector<edm4hep::Cluster>>* g_externalClusters;
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
  *  @brief  DDExternalClusteringAlgorithm class
  */
-class DDExternalClusteringAlgorithm : public pandora::ExternallyConfiguredAlgorithm {
+class DDExternalClusteringAlgorithm : public pandora::Algorithm {
 public:
   /**
    *  @brief  Factory class for instantiating algorithm
@@ -98,8 +79,6 @@ private:
   typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
   bool m_flagClustersAsPhotons = false; ///< Whether to automatically flag new clusters as fixed photons
-
-  ExternalClusterHolder* m_externalClusterHolder = nullptr; ///< Pointer to external cluster holder
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
