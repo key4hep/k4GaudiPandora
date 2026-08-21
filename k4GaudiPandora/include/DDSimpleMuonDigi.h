@@ -26,6 +26,8 @@
 #include <edm4hep/EventHeaderCollection.h>
 #include <edm4hep/SimCalorimeterHitCollection.h>
 
+#include <DDSegmentation/BitFieldCoder.h>
+
 #include <Gaudi/Property.h>
 
 #include <k4FWCore/Transformer.h>
@@ -56,8 +58,15 @@ private:
   // Gaudi::Property<std::vector<bool>> useLayersBarrelVec{this, "useBarrelLayerVector", false, "whether to use the
   // endcap layer vector"}; Gaudi::Property<std::vector<bool>> useLayersEndcapVec{this, "useEndCapLayerVector", false,
   // "whether to use the EndCap layer vector"};
+
+  // code for layer info for cellID decoder
+  Gaudi::Property<std::string> m_encodingStringVariable{
+      this, "EncodingStringParameterName", "GlobalCalorimeterReadoutID",
+      "The name of the DD4hep constant that holds the cellID encoding string. Only used as a fallback for input "
+      "collections that do not carry the encoding in their metadata, for example collections created at runtime"};
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
+
   Gaudi::Property<float> m_thresholdMuon{this, "MuonThreshold", {0.025f}, "Threshold for muon"};
   Gaudi::Property<float> m_timeThresholdMuon{this, "timethresholdMuon", {0.025f}, "time threshold for muons"};
   Gaudi::Property<float> m_calibrCoeffMuon{this, "CalibrMUON", {120000.0}, "Callibration coefficient of muons"};
@@ -66,10 +75,9 @@ private:
   Gaudi::Property<std::string> m_detectorNameEndcap{this, "detectornameE", "YokeEndcap",
                                                     "Name of the second subdetector"};
 
-  std::string m_collName{};
-  std::string m_encodingString{};
   std::vector<bool> m_useLayersBarrelVec{}, m_useLayersEndcapVec{};
   SmartIF<IGeoSvc> m_geoSvc;
+  dd4hep::DDSegmentation::BitFieldCoder m_bitFieldCoder{};
 
   bool useLayer(const CHT::Layout caloLayout, const size_t layer) const;
   float computeHitTime(const edm4hep::SimCalorimeterHit& h) const;

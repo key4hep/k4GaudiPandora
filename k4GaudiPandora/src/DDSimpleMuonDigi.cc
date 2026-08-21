@@ -94,11 +94,25 @@ StatusCode DDSimpleMuonDigi::initialize() {
   }
 
   const auto collName = inputLocations("MUONCollection")[0];
-  const auto encodingString = k4FWCore::getCellIDEncoding(collName, this);
-  if (!encodingString) {
-    throw std::runtime_error("Encoding string not found for collection: " + collName);
+  debug() << "Determining the cellID encoding for collection: " << collName << endmsg;
+  std::string encodingString;
+  if (const auto maybeEncoding = k4FWCore::getCellIDEncoding(collName, this)) {
+    encodingString = maybeEncoding.value();
+  } else {
+    // Collections that are only created at runtime, for example when overlaying background, do not
+    // have their cellID encoding available in the metadata, so fall back to the DD4hep constant
+    debug() << "No cellID encoding in the metadata for collection " << collName << ", falling back to the DD4hep "
+            << "constant " << m_encodingStringVariable.value() << endmsg;
+    try {
+      encodingString = m_geoSvc->constantAsString(m_encodingStringVariable.value());
+    } catch (const std::exception& e) {
+      error() << "Unable to determine the cellID encoding for collection " << collName
+              << ": it is neither in the metadata nor available as the DD4hep constant "
+              << m_encodingStringVariable.value() << " (" << e.what() << ")" << endmsg;
+      return StatusCode::FAILURE;
+    }
   }
-  m_encodingString = encodingString.value();
+  m_bitFieldCoder = dd4hep::DDSegmentation::BitFieldCoder(encodingString);
 
   return StatusCode::SUCCESS;
 }
@@ -112,15 +126,13 @@ DDSimpleMuonDigi::operator()(const edm4hep::SimCalorimeterHitCollection& SimCalo
   auto muonRelcol = edm4hep::CaloHitSimCaloHitLinkCollection();
 
   const auto colName = inputLocations(0)[0];
-  CHT::Layout caloLayout = layoutFromString(colName);
-
-  dd4hep::DDSegmentation::BitFieldCoder bitFieldCoder(m_encodingString);
+  const CHT::Layout caloLayout = layoutFromString(colName);
 
   for (const auto& hit : SimCaloHits) {
     const auto cellID = hit.getCellID();
     float energy = hit.getEnergy();
     // Get the layer number
-    const auto layer = static_cast<size_t>(bitFieldCoder.get(cellID, m_cellIDLayerString));
+    const auto layer = static_cast<size_t>(m_bitFieldCoder.get(cellID, m_cellIDLayerString));
     // Check if we want to use this later, else go to the next hit
     if (!useLayer(caloLayout, layer))
       continue;
