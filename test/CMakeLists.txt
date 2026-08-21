@@ -87,9 +87,8 @@ add_test(NAME "compare_DDSimpleMuonDigi"
 )
 set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimpleMuonDigi")
 
-# Set the environment for all tests in this directory at once. This follows the
-# k4-project-template setup so locally built libraries and Gaudi plugins take
-# precedence over components from the active Key4hep stack.
+# Set the environment for all tests in this directory at once
+# This follows the k4-project-template setup
 get_filename_component(CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 set(test_environment "\
