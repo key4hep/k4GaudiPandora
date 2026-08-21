@@ -26,6 +26,8 @@
 #include <edm4hep/EventHeaderCollection.h>
 #include <edm4hep/SimCalorimeterHitCollection.h>
 
+#include <DDSegmentation/BitFieldCoder.h>
+
 #include <Gaudi/Property.h>
 
 #include <k4FWCore/Transformer.h>
@@ -60,7 +62,8 @@ private:
   // code for layer info for cellID decoder
   Gaudi::Property<std::string> m_encodingStringVariable{
       this, "EncodingStringParameterName", "GlobalCalorimeterReadoutID",
-      "The name of the DD4hep constant that contains the Encoding string for the muon detector"};
+      "The name of the DD4hep constant that holds the cellID encoding string. Only used as a fallback for input "
+      "collections that do not carry the encoding in their metadata, for example collections created at runtime"};
   Gaudi::Property<std::string> m_cellIDLayerString{this, "CellIDLayerString", "layer",
                                                    "Name of the part of the cellID that holds the layer"};
 
@@ -74,6 +77,7 @@ private:
 
   std::vector<bool> m_useLayersBarrelVec{}, m_useLayersEndcapVec{};
   SmartIF<IGeoSvc> m_geoSvc;
+  dd4hep::DDSegmentation::BitFieldCoder m_bitFieldCoder{};
 
   bool useLayer(const CHT::Layout caloLayout, const size_t layer) const;
   float computeHitTime(const edm4hep::SimCalorimeterHit& h) const;
