@@ -61,7 +61,8 @@ struct DDPandoraPFANewAlgorithm final
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&)> {
+          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&,
+          const std::vector<const edm4hep::ClusterCollection*>&)> {
 public:
   class Settings {
   public:
@@ -137,7 +138,8 @@ public:
              const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections) const override;
+             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections,
+             const std::vector<const edm4hep::ClusterCollection*>& clusterCollections) const override;
 
   const pandora::Pandora* GetPandora() const;
 
@@ -165,6 +167,7 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
+  mutable std::vector<std::vector<edm4hep::Cluster>> m_externalClusters; ///< External clusters for external clustering algo
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings

@@ -27,13 +27,30 @@
 #ifndef DDEXTERNALCLUSTERINGALGORITHM_H
 #define DDEXTERNALCLUSTERINGALGORITHM_H 1
 
+// Pandora
+#include "Helpers/XmlHelper.h"
+#include "Objects/CaloHit.h"
 #include "Pandora/Algorithm.h"
 
-#include <map>
+// Podio
+#include "podio/ObjectID.h"
+
+#include "edm4hep/Cluster.h"
+
+// c++
+#include <unordered_map>
+#include <vector>
 
 namespace pandora {
 class CaloHit;
 }
+
+/**
+ *  @brief  Global pointer to external clusters, set by DDPandoraPFANewAlgorithm
+ *          before ProcessEvent and cleared after.  Used instead of Pandora's
+ *          ExternalParameters mechanism to avoid cross-.so static destruction issues.
+ */
+extern std::vector<std::vector<edm4hep::Cluster>>* g_externalClusters;
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -59,10 +76,9 @@ private:
   pandora::StatusCode Run();
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
-  typedef std::map<const void*, const pandora::CaloHit*> ParentAddressToCaloHitMap;
+  typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
-  std::string m_externalClusterCollectionName = ""; ///< The collection name for the external clusters
-  bool m_flagClustersAsPhotons = true;              ///< Whether to automatically flag new clusters as fixed photons
+  bool m_flagClustersAsPhotons = false; ///< Whether to automatically flag new clusters as fixed photons
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
