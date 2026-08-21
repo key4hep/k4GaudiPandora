@@ -38,6 +38,30 @@
 #include <LCContent.h>
 #include <LCPlugins/LCSoftwareCompensation.h>
 
+namespace {
+
+bool isStrictlyIncreasing(const std::vector<float>& values) {
+  if (values.size() < 2)
+    return false;
+  for (std::size_t i = 1; i < values.size(); ++i) {
+    if (values[i] <= values[i - 1])
+      return false;
+  }
+  return true;
+}
+
+bool isConsistentThetaEnergyTable(const std::vector<float>& thetaBinEdges,
+                                  const std::vector<float>& energyBinEdges,
+                                  const std::vector<float>& scaleFactors) {
+  if (!isStrictlyIncreasing(thetaBinEdges) || !isStrictlyIncreasing(energyBinEdges))
+    return false;
+  const std::size_t nThetaBins = thetaBinEdges.size() - 1;
+  const std::size_t nEnergyBins = energyBinEdges.size() - 1;
+  return (nThetaBins * nEnergyBins == scaleFactors.size());
+}
+
+} // namespace
+
 #include <DD4hep/DD4hepUnits.h>
 #include <DD4hep/DetType.h>
 #include <DD4hep/Detector.h>
@@ -128,6 +152,9 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   }
 
   finaliseSteeringParameters();
+
+  if (!validateThetaEnergyCorrectionSettings())
+    return StatusCode::FAILURE;
 
   if (m_settings.m_detectorName == "ALLEGRO") {
     m_settings.m_trackCreatorName = "DDTrackCreatorALLEGRO";
@@ -313,6 +340,41 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
                                m_pPandora, "NonLinearity", pandora::HADRONIC, m_settings.m_inputEnergyCorrectionPoints,
                                m_settings.m_outputEnergyCorrectionPoints))
 
+  // Theta-energy (2D) calibration. Both plugin names are registered unconditionally so that a
+  // Pandora settings XML naming them is always valid: without a payload they fall back to the
+  // 1D overload with empty points, which is the identity.
+  if (m_settings.m_electromagneticThetaEnergyCorrectionEnabled) {
+    PANDORA_RETURN_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        LCContent::RegisterNonLinearityEnergyCorrection(
+            m_pPandora, m_settings.m_electromagneticThetaEnergyCorrectionPluginName, pandora::ELECTROMAGNETIC,
+            m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges,
+            m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges,
+            m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors))
+  } else {
+    PANDORA_RETURN_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        LCContent::RegisterNonLinearityEnergyCorrection(
+            m_pPandora, m_settings.m_electromagneticThetaEnergyCorrectionPluginName, pandora::ELECTROMAGNETIC,
+            std::vector<float>(), std::vector<float>()))
+  }
+
+  if (m_settings.m_hadronicThetaEnergyCorrectionEnabled) {
+    PANDORA_RETURN_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        LCContent::RegisterNonLinearityEnergyCorrection(
+            m_pPandora, m_settings.m_hadronicThetaEnergyCorrectionPluginName, pandora::HADRONIC,
+            m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges,
+            m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges,
+            m_settings.m_hadronicThetaEnergyCorrectionScaleFactors))
+  } else {
+    PANDORA_RETURN_RESULT_IF(
+        pandora::STATUS_CODE_SUCCESS, !=,
+        LCContent::RegisterNonLinearityEnergyCorrection(
+            m_pPandora, m_settings.m_hadronicThetaEnergyCorrectionPluginName, pandora::HADRONIC,
+            std::vector<float>(), std::vector<float>()))
+  }
+
   lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
   softwareCompensationParameters.m_softCompParameters = m_settings.m_softCompParameters;
   softwareCompensationParameters.m_softCompEnergyDensityBins = m_settings.m_softCompEnergyDensityBins;
@@ -327,6 +389,34 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
                                                                                    softwareCompensationParameters))
 
   return pandora::STATUS_CODE_SUCCESS;
+}
+
+bool DDPandoraPFANewAlgorithm::validateThetaEnergyCorrectionSettings() const {
+  if (m_settings.m_electromagneticThetaEnergyCorrectionEnabled &&
+      !isConsistentThetaEnergyTable(m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges,
+                                    m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges,
+                                    m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors)) {
+    error() << "ElectromagneticThetaEnergyCorrection: bin edges must be strictly increasing and "
+            << "ScaleFactors must hold (nTheta-1)*(nEnergy-1) entries; got "
+            << m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges.size() << " theta edges, "
+            << m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges.size() << " energy edges, "
+            << m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors.size() << " scale factors" << endmsg;
+    return false;
+  }
+
+  if (m_settings.m_hadronicThetaEnergyCorrectionEnabled &&
+      !isConsistentThetaEnergyTable(m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges,
+                                    m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges,
+                                    m_settings.m_hadronicThetaEnergyCorrectionScaleFactors)) {
+    error() << "HadronicThetaEnergyCorrection: bin edges must be strictly increasing and "
+            << "ScaleFactors must hold (nTheta-1)*(nEnergy-1) entries; got "
+            << m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges.size() << " theta edges, "
+            << m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges.size() << " energy edges, "
+            << m_settings.m_hadronicThetaEnergyCorrectionScaleFactors.size() << " scale factors" << endmsg;
+    return false;
+  }
+
+  return true;
 }
 
 void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
@@ -408,6 +498,16 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_settings.m_outputEnergyCorrectionPoints = m_outputEnergyCorrectionPoints;
   m_settings.m_ecalInputEnergyCorrectionPoints = m_ecalInputEnergyCorrectionPoints;
   m_settings.m_ecalOutputEnergyCorrectionPoints = m_ecalOutputEnergyCorrectionPoints;
+  m_settings.m_electromagneticThetaEnergyCorrectionEnabled = m_emThetaEnergyEnabled.value();
+  m_settings.m_electromagneticThetaEnergyCorrectionPluginName = m_emThetaEnergyPluginName.value();
+  m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges = m_emThetaEnergyThetaBinEdges.value();
+  m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges = m_emThetaEnergyEnergyBinEdges.value();
+  m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors = m_emThetaEnergyScaleFactors.value();
+  m_settings.m_hadronicThetaEnergyCorrectionEnabled = m_hadThetaEnergyEnabled.value();
+  m_settings.m_hadronicThetaEnergyCorrectionPluginName = m_hadThetaEnergyPluginName.value();
+  m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges = m_hadThetaEnergyThetaBinEdges.value();
+  m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges = m_hadThetaEnergyEnergyBinEdges.value();
+  m_settings.m_hadronicThetaEnergyCorrectionScaleFactors = m_hadThetaEnergyScaleFactors.value();
   m_settings.m_trackCreatorName = m_trackCreatorName;
   m_settings.m_detectorName = m_detectorName;
   m_caloHitCreatorSettings.m_eCalBarrelNormalVector = m_eCalBarrelNormalVector;
