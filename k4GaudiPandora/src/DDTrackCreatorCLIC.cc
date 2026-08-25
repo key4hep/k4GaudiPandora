@@ -56,6 +56,14 @@ DDTrackCreatorCLIC::DDTrackCreatorCLIC(const Settings& settings, pandora::Pandor
       m_tanLambdaEndcapDisk(0.f), m_geoSvc(geoSvc)
 
 {
+  // The DDKalTest tracking system and the LCTrack factory used to be built by the base constructor.
+  // They are set up here instead, so that a creator which does not extrapolate track states itself
+  // (and never calls GetTrackStatesAtCalo) does not have to build them.
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
+  this->InitialiseTrackingSystem();
+#endif
+  m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
+
   m_trackerInnerR = getTrackingRegionExtent()[0];
   m_trackerOuterR = getTrackingRegionExtent()[1];
   m_trackerZmax = getTrackingRegionExtent()[2];

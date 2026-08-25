@@ -48,7 +48,7 @@
 #include <cmath>
 
 DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm)
-    : m_settings(settings), m_pandora(pandora), m_algorithm(*algorithm) {}
+    : PfoCreatorBase(pandora, algorithm), m_settings(settings) {}
 
 pandora::StatusCode
 DDPfoCreator::CreateParticleFlowObjects(edm4hep::ClusterCollection& pClusterCollection,
@@ -361,26 +361,6 @@ bool DDPfoCreator::AreAnyOtherSiblingsInList(const pandora::Track* const pPandor
   }
 
   return false;
-}
-
-void DDPfoCreator::AddTracksToRecoParticle(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                           edm4hep::MutableReconstructedParticle& pReconstructedParticle) const {
-  for (const auto* pTrack : pPandoraPfo->GetTrackList()) {
-    const auto& pLcioTrack = *static_cast<const edm4hep::Track*>(pTrack->GetParentAddress());
-    pReconstructedParticle.addToTracks(pLcioTrack);
-  }
-}
-
-void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
-    const pandora::ParticleFlowObject* const pPandoraPfo,
-    edm4hep::MutableReconstructedParticle& reconstructedParticle) const {
-  const float momentum[3] = {pPandoraPfo->GetMomentum().GetX(), pPandoraPfo->GetMomentum().GetY(),
-                             pPandoraPfo->GetMomentum().GetZ()};
-  reconstructedParticle.setMomentum(momentum);
-  reconstructedParticle.setEnergy(pPandoraPfo->GetEnergy());
-  reconstructedParticle.setMass(pPandoraPfo->GetMass());
-  reconstructedParticle.setCharge(pPandoraPfo->GetCharge());
-  reconstructedParticle.setPDG(pPandoraPfo->GetParticleId());
 }
 
 DDPfoCreator::Settings::Settings()

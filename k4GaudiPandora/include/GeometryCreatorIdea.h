@@ -18,15 +18,15 @@
  */
 
 /**
- *  @file   DDMarlinPandora/include/DDGeometryCreatorALLEGRO.h
+ *  @file   k4GaudiPandora/include/GeometryCreatorIdea.h
  *
  *  @brief  Header file for the geometry creator class.
  *
  *  $Log: $
  */
 
-#ifndef DDGEOMETRYALLEGRO_CREATOR_H
-#define DDGEOMETRYALLEGRO_CREATOR_H
+#ifndef GeometryCreatorIdea_h
+#define GeometryCreatorIdea_h
 
 #include "Api/PandoraApi.h"
 
@@ -35,17 +35,28 @@
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 /**
- *  @brief  DDGeometryCreator class
+ *  @brief  Geometry creator for the IDEA detector
  */
-class DDGeometryCreatorALLEGRO : public DDGeometryCreator {
+class GeometryCreatorIdea : public DDGeometryCreator {
 public:
+  class Settings : public DDGeometryCreator::Settings {
+  public:
+    Settings() = default;
+    ~Settings() = default;
+
+    /// Whether the geometry has a dual-readout HCAL endcap.  The reduced CI geometry is
+    /// barrel-only, and registering an endcap subdetector it does not have would fail the
+    /// DetType lookup in getExtension.
+    bool m_hasHcalEndcap = true;
+  };
+
   /**
    *  @brief  Constructor
    *
    *  @param  settings the creator settings
    *  @param  pPandora address of the relevant pandora instance
    */
-  DDGeometryCreatorALLEGRO(const Settings& settings, pandora::Pandora& pPandora, Gaudi::Algorithm* algorithm);
+  GeometryCreatorIdea(const Settings& settings, pandora::Pandora& pPandora, Gaudi::Algorithm* algorithm);
 
   /**
    *  @brief  Create geometry
@@ -59,6 +70,17 @@ private:
    *  @param  subDetectorTypeMap the sub detector type map
    */
   void SetMandatorySubDetectorParameters(SubDetectorTypeMap& subDetectorTypeMap) const override;
+
+  const bool m_hasHcalEndcap; ///< see Settings::m_hasHcalEndcap
+
+  // IDEA ECAL parameters (fiber DRC for o1, crystal DRC for o2)
+  void SetEcalParameters(const dd4hep::rec::LayeredCalorimeterData& inputParameters,
+                         PandoraApi::Geometry::SubDetector::Parameters& paramBarrel,
+                         PandoraApi::Geometry::SubDetector::Parameters& paramEndcap) const;
+  void SetHcalBarrelParameters(const dd4hep::rec::LayeredCalorimeterData& inputParameters,
+                               PandoraApi::Geometry::SubDetector::Parameters& paramBarrel) const;
+  void SetHcalEndcapParameters(const dd4hep::rec::LayeredCalorimeterData& inputParameters,
+                               PandoraApi::Geometry::SubDetector::Parameters& paramEndcap) const;
 };
 
-#endif // #ifndef GEOMETRY_CREATOR_H
+#endif

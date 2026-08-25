@@ -22,18 +22,15 @@ from Configurables import EventDataSvc
 from Configurables import DDPandoraPFANewAlgorithm
 
 from Configurables import GeoSvc
-from Configurables import UniqueIDGenSvc
-# from Configurables import RootHistSvc
-# from Configurables import Gaudi__Histograming__Sink__Root as RootHistoSink
+
 import os
-import sys
 
 iosvc = IOSvc()
-iosvc.Input = "output_REC.edm4hep.root"
-iosvc.Output = "output_pandora.root"
+iosvc.Input = "output_pandora_ttbar.root"
+iosvc.Output = "output_externalClustering.root"
 
-id_service = UniqueIDGenSvc("UniqueIDGenSvc")
-
+# GeoSvc used to be configured as a side effect of importing runPandora.py; now that only the
+# parameters are imported it has to be set up explicitly here.
 geoservice = GeoSvc("GeoSvc")
 geoservice.detectors = [
     os.environ["K4GEO"] + "/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml"
@@ -41,18 +38,34 @@ geoservice.detectors = [
 geoservice.OutputLevel = INFO
 geoservice.EnableGeant4Geo = False
 
-# the parameters live next to this file; k4run does not put the options directory on sys.path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import sys
 
-from pandoraParams import params
+# Get the absolute path of the directory where this script resides
+# to avoid redefining the pandora input parameters
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
+# import the parameters only -- importing runPandora.py itself would re-execute its IOSvc and
+# GeoSvc configuration and silently override the input/output files set above
+import pandoraParams
+
+# copy, so that the overrides below do not mutate the shared module-level dictionary
+params = dict(pandoraParams.params)
+
+# dummy Pandora settings file containing only external clustering algo
+params["PandoraSettingsXmlFile"] = current_dir+"/PandoraSettingsExternalClustering.xml"
+# rename output collection names to avoid conflicts
+params["ClusterCollections"] = ["PandoraClusters"]
+params["ClusterCollectionName"] = ["GaudiExternalClusters"]
+params["PFOCollectionName"] = ["GaudiExternalClusteringPandoraPFOs"]
+params["StartVertexCollectionName"] = ["GaudiExternalClusteringPandoraStartVertices"]
 
 pandora = DDPandoraPFANewAlgorithm("PandoraPFANewAlgorithm", **params)
 
 ApplicationMgr(
     TopAlg=[pandora],
     EvtSel="NONE",
-    EvtMax=1,
+    EvtMax=-1,
     ExtSvc=[EventDataSvc("EventDataSvc")],
     OutputLevel=INFO,
 )

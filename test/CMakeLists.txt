@@ -87,6 +87,51 @@ add_test(NAME "compare_DDSimpleMuonDigi"
 )
 set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimpleMuonDigi")
 
+#---------------------------------------------------------------
+# IDEA PF reconstruction.
+#
+# PandoraSettingsIdea.xml drives ClusterNeutralPid and SatelliteAssignmentOnnx, which
+# live in libLCContentML, so these tests exist only when the ML build is enabled.
+if(K4GP_BUILD_ML)
+  include(ExternalData)
+  # The templates are tried in order.  The local store is there so that the models can be
+  # changed and tested without a round trip through the web server; drop it once they are
+  # uploaded.  To use it, copy each model to test/models/local/ named after its md5.
+  list(APPEND ExternalData_URL_TEMPLATES
+    "file://${CMAKE_CURRENT_SOURCE_DIR}/models/local/%(hash)"
+    "https://key4hep.web.cern.ch:443/testFiles/k4GaudiPandora/%(hash)"
+  )
+
+  add_test(NAME "clone_FCCConfig"
+    COMMAND bash -c "test -d FCC-config || git clone https://github.com/HEP-FCC/FCC-config.git --depth 1"
+  )
+
+  add_test(NAME "run_idea_sim_digi_reco"
+    COMMAND bash -c "FCC-config/FCCee/FullSim/IDEA/IDEA_o2_v01/ctest_sim_digi_reco.sh"
+  )
+  set_tests_properties("run_idea_sim_digi_reco" PROPERTIES DEPENDS "clone_FCCConfig")
+  # simulating the wedge peaks around 7 GB, so do not stack it with the other jobs
+  set_tests_properties("run_idea_sim_digi_reco" PROPERTIES RUN_SERIAL TRUE)
+
+  ExternalData_Add_Test(idea_pandora_models
+    NAME "run_PandoraIdea"
+    COMMAND "${PROJECT_SOURCE_DIR}/test/scripts/run-idea-pandora.sh"
+            DATA{${PROJECT_SOURCE_DIR}/test/models/photonId_ParT_multi.onnx}
+            DATA{${PROJECT_SOURCE_DIR}/test/models/group_transformer.onnx}
+            "${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandoraIdea.py"
+            --PandoraPFAIdeaAlgorithm.PandoraSettingsXmlFile "${PROJECT_SOURCE_DIR}/test/PandoraSettingsIdea.xml"
+            --IOSvc.Input IDEA_o2_v01_digi_reco.root
+            --IOSvc.Output output_pandora_idea.root
+  )
+  set_tests_properties("run_PandoraIdea" PROPERTIES DEPENDS "run_idea_sim_digi_reco")
+  ExternalData_Add_Target(idea_pandora_models)
+endif()
+
+add_test(NAME "run_Pandora_externalClustering"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runExternalClustering.py --IOSvc.Input output_pandora_ttbar.root --IOSvc.Output output_pandora_externalClustering.root
+)
+set_tests_properties("run_Pandora_externalClustering" PROPERTIES DEPENDS "run_Pandora_ttbar")
+
 # Set the environment for all tests in this directory at once
 # This follows the k4-project-template setup
 get_filename_component(CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)

@@ -178,6 +178,17 @@ public:
   void Reset();
 
 protected:
+  /**
+   *  @brief  Build the DDKalTest tracking system used by GetTrackStatesAtCalo to extrapolate track
+   *          states to the calorimeter face.  Deliberately not called from the constructor: a
+   *          creator whose track states are already extrapolated upstream does not need it and
+   *          should not pay to build it.  A derived class that calls GetTrackStatesAtCalo must
+   *          call this from its constructor.
+   */
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
+  void InitialiseTrackingSystem();
+#endif
+
   const Settings m_settings;           ///< The track creator settings
   pandora::Pandora& m_pandora;         ///< Reference to the pandora object to create tracks and track relationships
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the parent algorithm
@@ -206,8 +217,10 @@ protected:
    *
    *  @return boolean
    */
-  virtual bool PassesQualityCuts(const edm4hep::Track& pTrack,
-                                 const PandoraApi::Track::Parameters& trackParameters) const = 0;
+  virtual bool PassesQualityCuts(const edm4hep::Track& /*pTrack*/,
+                                 const PandoraApi::Track::Parameters& /*trackParameters*/) const {
+    return true; // no cuts by default: the selection may be done upstream of the creator
+  }
 
   /**
    *  @brief  Decide whether track reaches the ecal surface
@@ -215,7 +228,8 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void TrackReachesECAL(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const = 0;
+  virtual void TrackReachesECAL(const edm4hep::Track& /*pTrack*/,
+                                PandoraApi::Track::Parameters& /*trackParameters*/) const {}
 
   /**
    *  @brief  Determine whether a track can be used to form a pfo under the following conditions:
@@ -225,8 +239,8 @@ protected:
    *  @param  pTrack the lcio track
    *  @param  trackParameters the track parameters
    */
-  virtual void DefineTrackPfoUsage(const edm4hep::Track& pTrack,
-                                   PandoraApi::Track::Parameters& trackParameters) const = 0;
+  virtual void DefineTrackPfoUsage(const edm4hep::Track& /*pTrack*/,
+                                   PandoraApi::Track::Parameters& /*trackParameters*/) const {}
 
   /**
    *  @brief  Extract kink information from specified collection
@@ -338,8 +352,12 @@ protected:
    *  @brief  Obtain track time when it reaches ECAL
    *
    *  @param  pTrack the lcio track
+   *  @param  trackTime to receive the generic time: path length from the reference point to the
+   *          intersection, divided by momentum
+   *
+   *  @return STATUS_CODE_NOT_FOUND if the helix meets neither calorimeter surface
    */
-  float CalculateTrackTimeAtCalorimeter(const edm4hep::Track& pTrack) const;
+  pandora::StatusCode CalculateTrackTimeAtCalorimeter(const edm4hep::Track& pTrack, float& trackTime) const;
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
