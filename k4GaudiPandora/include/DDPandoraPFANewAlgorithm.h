@@ -88,14 +88,14 @@ public:
                                                              ///< correction in the ECAL
 
     // Theta-energy (2D) calibration, EM branch
-    bool m_electromagneticThetaEnergyCorrectionEnabled = false;
+    std::string m_electromagneticThetaEnergyCorrectionFile = "";
     std::string m_electromagneticThetaEnergyCorrectionPluginName = "PhotonEMNonLinearity";
     std::vector<float> m_electromagneticThetaEnergyCorrectionThetaBinEdges{};
     std::vector<float> m_electromagneticThetaEnergyCorrectionEnergyBinEdges{};
     std::vector<float> m_electromagneticThetaEnergyCorrectionScaleFactors{};
 
     // Theta-energy (2D) calibration, HAD branch
-    bool m_hadronicThetaEnergyCorrectionEnabled = false;
+    std::string m_hadronicThetaEnergyCorrectionFile = "";
     std::string m_hadronicThetaEnergyCorrectionPluginName = "HadronicThetaEnergyBinned";
     std::vector<float> m_hadronicThetaEnergyCorrectionThetaBinEdges{};
     std::vector<float> m_hadronicThetaEnergyCorrectionEnergyBinEdges{};
@@ -173,8 +173,9 @@ private:
    */
   void finaliseSteeringParameters();
 
-  /// Check the theta-energy calibration tables are well formed. Logs and returns false if not.
-  bool validateThetaEnergyCorrectionSettings() const;
+  /// Read the theta-energy calibration tables from their json files, if any are configured.
+  /// Logs and returns false if a file cannot be read or holds a table that is not well formed.
+  bool loadThetaEnergyCorrectionTables();
 
   /**
    *  @brief  Reset the pandora pfa new processor
@@ -377,39 +378,14 @@ private:
   Gaudi::Property<std::vector<float>> m_ecalOutputEnergyCorrectionPoints{
       this, "ECALOutputEnergyCorrectionPoints", {}, "The output energy points for electromagnetic energy correction"};
 
-  // Theta-energy (2D) calibration, EM branch
-  Gaudi::Property<bool> m_emThetaEnergyEnabled{
-      this, "ElectromagneticThetaEnergyCorrectionEnabled", false,
-      "Whether to enable theta-energy correction on the Pandora EM branch"};
-  Gaudi::Property<std::string> m_emThetaEnergyPluginName{
-      this, "ElectromagneticThetaEnergyCorrectionPluginName", std::string("PhotonEMNonLinearity"),
-      "The name of the Pandora EM theta-energy correction plugin"};
-  Gaudi::Property<std::vector<float>> m_emThetaEnergyThetaBinEdges{
-      this, "ElectromagneticThetaEnergyCorrectionThetaBinEdges", {},
-      "The theta bin edges for Pandora EM theta-energy correction"};
-  Gaudi::Property<std::vector<float>> m_emThetaEnergyEnergyBinEdges{
-      this, "ElectromagneticThetaEnergyCorrectionEnergyBinEdges", {},
-      "The energy bin edges for Pandora EM theta-energy correction"};
-  Gaudi::Property<std::vector<float>> m_emThetaEnergyScaleFactors{
-      this, "ElectromagneticThetaEnergyCorrectionScaleFactors", {},
-      "The row-major theta-energy scale factors for Pandora EM theta-energy correction"};
-
-  // Theta-energy (2D) calibration, HAD branch
-  Gaudi::Property<bool> m_hadThetaEnergyEnabled{
-      this, "HadronicThetaEnergyCorrectionEnabled", false,
-      "Whether to enable theta-energy correction on the Pandora HAD branch"};
-  Gaudi::Property<std::string> m_hadThetaEnergyPluginName{
-      this, "HadronicThetaEnergyCorrectionPluginName", std::string("HadronicThetaEnergyBinned"),
-      "The name of the Pandora HAD theta-energy correction plugin"};
-  Gaudi::Property<std::vector<float>> m_hadThetaEnergyThetaBinEdges{
-      this, "HadronicThetaEnergyCorrectionThetaBinEdges", {},
-      "The theta bin edges for Pandora HAD theta-energy correction"};
-  Gaudi::Property<std::vector<float>> m_hadThetaEnergyEnergyBinEdges{
-      this, "HadronicThetaEnergyCorrectionEnergyBinEdges", {},
-      "The energy bin edges for Pandora HAD theta-energy correction"};
-  Gaudi::Property<std::vector<float>> m_hadThetaEnergyScaleFactors{
-      this, "HadronicThetaEnergyCorrectionScaleFactors", {},
-      "The row-major theta-energy scale factors for Pandora HAD theta-energy correction"};
+  // Theta-energy (2D) calibration. Each branch takes the path to a single json calibration table,
+  // as written by the calibration scripts. An empty path leaves that branch uncorrected.
+  Gaudi::Property<std::string> m_emThetaEnergyFile{
+      this, "ElectromagneticThetaEnergyCorrectionFile", std::string(""),
+      "Path to the json theta-energy calibration table for the Pandora EM branch"};
+  Gaudi::Property<std::string> m_hadThetaEnergyFile{
+      this, "HadronicThetaEnergyCorrectionFile", std::string(""),
+      "Path to the json theta-energy calibration table for the Pandora HAD branch"};
   // EXTRA PARAMETERS FROM NIKIFOROS m_caloEncodingString
   Gaudi::Property<std::string> m_trackCreatorName{this, "TrackCreatorName", "DDTrackCreatorCLIC",
                                                   "The name of the DDTrackCreator implementation"};

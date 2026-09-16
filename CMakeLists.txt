@@ -38,6 +38,7 @@ find_package(k4FWCore)
 find_package(PandoraSDK REQUIRED)
 find_package(LCContent REQUIRED)
 find_package(Gaudi)
+find_package(nlohmann_json REQUIRED)
 find_package(k4Reco)
 
 #---------------------------------------------------------------
