@@ -46,6 +46,10 @@ namespace pandora {
 class Pandora;
 }
 
+// forward declarations for the external clustering algorithm
+class ExternalEventParameter;
+class ExternalClusterHolder;
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 struct DDPandoraPFANewAlgorithm final
@@ -61,7 +65,8 @@ struct DDPandoraPFANewAlgorithm final
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
           const std::vector<const edm4hep::CalorimeterHitCollection*>&,
-          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&)> {
+          const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&,
+          const std::vector<const edm4hep::ClusterCollection*>&)> {
 public:
   class Settings {
   public:
@@ -137,7 +142,8 @@ public:
              const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
              const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections) const override;
+             const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>& caloLinkCollections,
+             const std::vector<const edm4hep::ClusterCollection*>& clusterCollections) const override;
 
   const pandora::Pandora* GetPandora() const;
 
@@ -165,6 +171,9 @@ private:
   std::unique_ptr<DDMCParticleCreator> m_pDDMCParticleCreator; ///< The mc particle creator
   std::unique_ptr<DDPfoCreator> m_pfoCreator;                  ///< The pfo creator
   SmartIF<IGeoSvc> m_geoSvc;                                   ///< The GeoSvc
+  ExternalEventParameter* m_extEvtParam;                     ///< external event parameter (pandora::ExternalParameters)
+                                                             ///< created by this algo but deleted by Pandora
+  std::unique_ptr<ExternalClusterHolder> m_extClusterHolder; ///< Pointer to external cluster holder
 
   Settings m_settings{};                                       ///< The settings for the pandora pfa new processor
   DDCaloHitCreator::Settings m_caloHitCreatorSettings{};       ///< The calo hit creator settings
@@ -221,7 +230,9 @@ private:
                                             "The bfield in the muon barrel, units Tesla"};
   Gaudi::Property<float> m_muonEndCapBField{this, "MuonEndCapBField", 0.01f,
                                             "The bfield in the muon endcap, units Tesla"};
-  Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false, "Whether to use the BField map from DD4hep"};
+  Gaudi::Property<bool> m_useDD4hepField{this, "UseDD4hepField", false,
+                                         "Use local magnetic field value from dd4hep. It allows to use consistent "
+                                         "values to unpack the track states produced upstream."};
   // Track relationship parameters
   Gaudi::Property<int> m_shouldFormTrackRelationships{
       this, "ShouldFormTrackRelationships", 1, "Whether to form pandora track relationships using v0 and kink info"};

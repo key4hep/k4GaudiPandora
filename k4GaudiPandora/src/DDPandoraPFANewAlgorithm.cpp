@@ -31,6 +31,7 @@
 
 #include "DDBFieldPlugin.h"
 
+#include "DDExternalClusteringAlgorithm.h"
 #include "DDTrackCreatorCLIC.h"
 #include "DDTrackCreatorILD.h"
 
@@ -115,6 +116,7 @@ DDPandoraPFANewAlgorithm::DDPandoraPFANewAlgorithm(const std::string& name, ISvc
                            KeyValues("LCalCaloHitCollections", {}),
                            KeyValues("LHCalCaloHitCollections", {}),
                            KeyValues("RelCaloHitCollections", {}),
+                           KeyValues("ClusterCollections", {}),
                        },
                        {KeyValues("ClusterCollectionName", {"PandoraPFANewClusters"}),
                         KeyValues("PFOCollectionName", {"PandoraPFANewPFOs"}),
@@ -152,6 +154,24 @@ StatusCode DDPandoraPFANewAlgorithm::initialize() {
   m_pfoCreator = std::make_unique<DDPfoCreator>(m_pfoCreatorSettings, m_pPandora, this);
 
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, registerUserComponents())
+
+  // Register DDExternalClusteringAlgorithm
+  PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                          PandoraApi::RegisterAlgorithmFactory(m_pPandora, "DDExternalClustering",
+                                                               new DDExternalClusteringAlgorithm::Factory))
+
+  // Set external parameters for DDExternalClusteringAlgorithm
+  // ExternalClusterHolder is owned by this algorithm
+  // ExternalEventParameter is created by this algo and deleted by Pandora
+  if (!inputLocations("ClusterCollections").empty()) {
+    m_extEvtParam = new ExternalEventParameter();
+    m_extClusterHolder = std::make_unique<ExternalClusterHolder>();
+    m_extEvtParam->m_externalClusterHolder = m_extClusterHolder.get();
+
+    PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                            PandoraApi::SetExternalParameters(m_pPandora, "DDExternalClustering", m_extEvtParam))
+  }
+
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, m_geometryCreator->CreateGeometry())
   PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
                           PandoraApi::ReadSettings(m_pPandora, m_settings.m_pandoraSettingsXmlFile))
@@ -172,9 +192,18 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& mCalCollections,
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& lCalCollections,
                                      const std::vector<const edm4hep::CalorimeterHitCollection*>& lhCalCollections,
-                                     const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&) const {
+                                     const std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*>&,
+                                     const std::vector<const edm4hep::ClusterCollection*>& clusterCollections) const {
   try {
-
+    // Clear the track creator's per-event bookkeeping when this event goes out
+    // of scope, on the normal and the exception paths alike. It has to happen
+    // here rather than at the top of the next event: m_trackVector holds
+    // edm4hep::Track handles into the input collections, which are only alive
+    // for the duration of this call.
+    struct ResetGuard {
+      const DDPandoraPFANewAlgorithm* self;
+      ~ResetGuard() { self->reset(); }
+    } resetGuard{this};
     std::vector<edm4hep::MCParticle> mcParticlesVector;
     for (const auto& mcParticleCollection : MCParticleCollections) {
       mcParticlesVector.insert(mcParticlesVector.end(), mcParticleCollection->begin(), mcParticleCollection->end());
@@ -263,6 +292,26 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                             m_caloHitCreator->createCaloHits(eCalHitCollections, hCalHitCollections, mCalHitCollections,
                                                              lCalHitCollectionsVector, lhCalHitCollectionsVector))
 
+    // host edm4hep clusters for the external clustering algorithm
+    auto externalClustersPtr = std::make_unique<std::vector<std::vector<edm4hep::Cluster>>>();
+    externalClustersPtr->reserve(clusterCollections.size());
+
+    if (!clusterCollections.empty()) {
+      // loop over the input cluster collections and fill the external clusters vector
+      for (const auto* clusterCollection : clusterCollections) {
+        std::vector<edm4hep::Cluster> clusterValues;
+        clusterValues.reserve(clusterCollection->size());
+
+        for (const auto& cluster : *clusterCollection) {
+          clusterValues.push_back(cluster);
+        }
+
+        externalClustersPtr->push_back(std::move(clusterValues));
+      }
+
+      m_extClusterHolder->setExternalClusters(externalClustersPtr.get());
+    }
+
     // PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
     //                         m_pDDMCParticleCreator->CreateCaloHitToMCParticleRelationships(
     //                             caloLinkCollections, m_pCaloHitCreator->GetCalorimeterHitVector(), eCalCollections,
@@ -278,7 +327,6 @@ DDPandoraPFANewAlgorithm::operator()(const std::vector<const edm4hep::MCParticle
                             m_pfoCreator->CreateParticleFlowObjects(
                                 pClusterCollection, pReconstructedParticleCollection, pStartVertexCollection))
     PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=, PandoraApi::Reset(m_pPandora))
-    // Reset();
 
     return std::make_tuple(std::move(pClusterCollection), std::move(pReconstructedParticleCollection),
                            std::move(pStartVertexCollection));
@@ -437,6 +485,7 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_settings.m_minCleanCorrectedHitEnergy = m_minCleanCorrectedHitEnergy;
 
   m_trackCreatorSettings.m_bField = getFieldFromCompact();
+  m_trackCreatorSettings.m_useDD4hepField = m_useDD4hepField;
 
   // Get ECal Barrel extension by type, ignore plugs and rings
   const dd4hep::rec::LayeredCalorimeterData* eCalBarrelExtension =

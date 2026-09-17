@@ -21,13 +21,16 @@
 
 #include "Api/PandoraApi.h"
 
+#include <DD4hep/Fields.h>
 #include <DDSegmentation/BitFieldCoder.h>
 #include <edm4hep/ReconstructedParticleCollection.h>
 #include <edm4hep/Track.h>
 #include <edm4hep/VertexCollection.h>
 
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
 #include <k4Reco/GaudiDDKalTest.h>
 #include <k4Reco/GaudiDDKalTestTrack.h>
+#endif
 
 #include <memory>
 
@@ -115,7 +118,9 @@ public:
 
     /// Nikiforos: Moved from main class
 
-    float m_bField;                ///< The bfield
+    float m_bField;                ///< The bfield, taken at the origin, used as the global curvature reference
+    bool m_useDD4hepField;         ///< Whether to convert omega to pT with the DD4hep field at each track
+                                   ///< state's reference point instead of the global m_bField
     int m_eCalBarrelInnerSymmetry; ///< ECal barrel inner symmetry order
     float m_eCalBarrelInnerPhi0;   ///< ECal barrel inner phi 0
     float m_eCalBarrelInnerR;      ///< ECal barrel inner radius
@@ -158,7 +163,9 @@ public:
   const TrackVector& GetTrackVector() const;
 
   /**
-   *  @brief  Calculate possible second track state at the ECal Endcap
+   *  @brief  Pass the track state(s) at the calorimeter of the input track to pandora. When built
+   *          with K4GAUDIPANDORA_USE_DDKALTEST only the first one is used, and a possible second
+   *          track state at the ECal Endcap is recomputed; otherwise all of them are passed on
    *
    *  @param track lcio track
    *  @param trackParameters pandora LCTrackParameters
@@ -182,9 +189,12 @@ protected:
   TrackList m_daughterTrackList;          ///< The list of daughter tracks
   TrackToPidMap m_trackToPidMap;          ///< The map from track addresses to particle ids, where set by kinks/V0s
   float m_minimalTrackStateRadiusSquared; ///< minimal track state radius, derived value
-  std::shared_ptr<GaudiDDKalTest> m_trackingSystem = {};             ///< Tracking system used for track states
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
+  std::shared_ptr<GaudiDDKalTest> m_trackingSystem = {}; ///< Tracking system used for track states
+#endif
   dd4hep::DDSegmentation::BitFieldCoder m_encoder = {};              ///< cell ID encoder
   std::shared_ptr<lc_content::LCTrackFactory> m_lcTrackFactory = {}; ///< LCTrackFactor for creating LCTracks
+  dd4hep::OverlayedField m_dd4hepField;                              ///< DD4hep field, used when m_useDD4hepField
 
   /// Nikiforos: Need to implement following abstract functions according to detector model
 
@@ -309,6 +319,20 @@ protected:
    *  @param  inputTrackState the pandora input track state
    */
   void CopyTrackState(const edm4hep::TrackState& pTrackState, pandora::InputTrackState& inputTrackState) const;
+
+  /**
+   *  @brief  The z field [Tesla] to convert a track state's omega into a transverse momentum.
+   *
+   *          With Settings::m_useDD4hepField this is the DD4hep field at @p position, so the
+   *          conversion uses the curvature the track actually has there. Otherwise it is the
+   *          global Settings::m_bField taken at the origin, which is the convention the track
+   *          states are written in by default.
+   *
+   *  @param  position the track state reference point, units mm
+   *
+   *  @return the z component of the field, units Tesla
+   */
+  float GetBFieldForTrackState(const edm4hep::Vector3f& position) const;
 
   /**
    *  @brief  Obtain track time when it reaches ECAL

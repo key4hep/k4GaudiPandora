@@ -47,16 +47,18 @@ DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandor
                                        const Gaudi::Algorithm* pAlgorithm)
     : m_settings(settings), m_pandora(pandora), m_algorithm(*pAlgorithm), m_trackVector(0), m_v0TrackList(TrackList()),
       m_parentTrackList(TrackList()), m_daughterTrackList(TrackList()), m_trackToPidMap(TrackToPidMap()),
-      m_minimalTrackStateRadiusSquared(0.f) {
+      m_minimalTrackStateRadiusSquared(0.f), m_dd4hepField(dd4hep::Detector::getInstance().field()) {
   const float ecalInnerR = settings.m_eCalBarrelInnerR;
   const float tsTolerance = settings.m_trackStateTolerance;
   m_minimalTrackStateRadiusSquared = (ecalInnerR - tsTolerance) * (ecalInnerR - tsTolerance);
+#ifdef K4GAUDIPANDORA_USE_DDKALTEST
   // wrap in shared_ptr with a dummy destructor
   m_trackingSystem = std::make_shared<GaudiDDKalTest>(&m_algorithm);
   m_trackingSystem->init();
   //  FIXME: get info from metadata, collection, or service
   m_encoder = dd4hep::DDSegmentation::BitFieldCoder("subdet:5,side:-2,layer:9,module:8,sensor:8");
   m_trackingSystem->setEncoder(m_encoder);
+#endif
   m_lcTrackFactory = std::make_shared<lc_content::LCTrackFactory>();
 }
 
@@ -297,7 +299,8 @@ void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track& pTrack,
 
   const auto& pTrackState = getEDM4hepTrackState(pTrack, edm4hep::TrackState::AtIP);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState.omega));
+  const double bField(this->GetBFieldForTrackState(pTrackState.referencePoint));
+  const double pt(bField * 2.99792e-4 / std::fabs(pTrackState.omega));
   trackParameters.m_momentumAtDca =
       pandora::CartesianVector(std::cos(pTrackState.phi), std::sin(pTrackState.phi), pTrackState.tanLambda) * pt;
 
@@ -334,21 +337,30 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
-  size_t i = static_cast<size_t>(-1);
-  for (size_t j = 0; j < track.getTrackStates().size(); ++j) {
-    if (track.getTrackStates()[j].location == edm4hep::TrackState::AtCalorimeter) {
-      i = j;
-      break;
+  std::vector<edm4hep::TrackState> statesAtCalo;
+  for (const auto& ts : track.getTrackStates()) {
+    if (ts.location == edm4hep::TrackState::AtCalorimeter) {
+      statesAtCalo.push_back(ts);
     }
   }
 
-  if (i == static_cast<size_t>(-1)) {
+  if (statesAtCalo.empty()) {
     m_algorithm.verbose() << "Track does not have a trackState at calorimeter" << endmsg;
     // streamlog_out(DEBUG3) << toString(track) << endmsg;
     return;
   }
 
-  const auto& trackAtCalo = track.getTrackStates(i);
+#ifndef K4GAUDIPANDORA_USE_DDKALTEST
+  // The extrapolations were done upstream, so every track state at the calorimeter that the input
+  // track carries is passed on and pandora is left to choose between them.
+  m_algorithm.verbose() << "Passing on " << statesAtCalo.size() << " track state(s) at the calorimeter" << endmsg;
+  for (const auto& stateAtCalo : statesAtCalo) {
+    pandora::InputTrackState pandoraTrackState;
+    this->CopyTrackState(stateAtCalo, pandoraTrackState);
+    trackParameters.m_trackStates.push_back(pandoraTrackState);
+  }
+#else
+  const auto& trackAtCalo = statesAtCalo.front();
 
   const auto& tsPosition = trackAtCalo.referencePoint;
 
@@ -365,6 +377,10 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     return;
   }
 
+  // The track state at the calorimeter on the input track is the first face the track reaches, but
+  // a particle entering through the barrel can still shower in the endcap, and which face is the
+  // relevant one is not known until the cluster is. Recompute the extrapolation to the endcap face
+  // with DDKalTest and pass it on as an additional track state, leaving the choice to pandora.
   GaudiDDKalTestTrack trk(&m_algorithm, m_trackingSystem.get());
   const auto& trkHits = track.getTrackerHits();
   std::vector<edm4hep::TrackerHit> trkHitsVec(trkHits.begin(), trkHits.end());
@@ -438,13 +454,15 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
     this->CopyTrackState(trackStateAtCaloEndcap, pandoraAtEndcap);
     trackParameters.m_trackStates.push_back(pandoraAtEndcap);
   }
+#endif
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track& track) const {
 
-  auto const& ts = track.getTrackStates(edm4hep::TrackState::AtIP);
+  // Look the state up by location, as everywhere else in this class.
+  auto const ts = getEDM4hepTrackState(track, edm4hep::TrackState::AtIP);
   const pandora::Helix helix(ts.phi, ts.D0, ts.Z0, ts.omega, ts.tanLambda, m_settings.m_bField);
   const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
 
@@ -500,7 +518,8 @@ void DDTrackCreatorBase::CopyTrackState(edm4hep::TrackState const& pTrackState,
   // if (!pTrackState)
   //   throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 
-  const double pt(m_settings.m_bField * 2.99792e-4 / std::fabs(pTrackState.omega));
+  const double bField(this->GetBFieldForTrackState(pTrackState.referencePoint));
+  const double pt(bField * 2.99792e-4 / std::fabs(pTrackState.omega));
 
   const double px(pt * std::cos(pTrackState.phi));
   const double py(pt * std::sin(pTrackState.phi));
@@ -511,6 +530,28 @@ void DDTrackCreatorBase::CopyTrackState(edm4hep::TrackState const& pTrackState,
   const double zs(pTrackState.referencePoint[2]);
 
   inputTrackState = pandora::TrackState(xs, ys, zs, px, py, pz);
+}
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+float DDTrackCreatorBase::GetBFieldForTrackState(const edm4hep::Vector3f& position) const {
+  if (!m_settings.m_useDD4hepField) {
+    return m_settings.m_bField;
+  }
+
+  double bfield[3] = {0., 0., 0.};
+  m_dd4hepField.magneticField({position[0] * dd4hep::mm, position[1] * dd4hep::mm, position[2] * dd4hep::mm}, bfield);
+  const float localBField(bfield[2] / dd4hep::tesla);
+
+  // A track state can sit outside the region the field is described over, in
+  // which case DD4hep returns zero and pT below would come out as zero.
+  if (std::fabs(localBField) < std::numeric_limits<float>::epsilon()) {
+    m_algorithm.error() << "No DD4hep field at track state reference point (" << position[0] << ", " << position[1]
+                        << ", " << position[2] << ") mm; cannot convert omega to a momentum." << endmsg;
+    throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
+  }
+
+  return localBField;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -528,5 +569,5 @@ DDTrackCreatorBase::Settings::Settings()
       m_curvatureToMomentumFactor(0.3f / 2000.f), m_minTrackECalDistanceFromIp(100.f), m_maxTrackSigmaPOverP(0.15f),
       m_minMomentumForTrackHitChecks(1.f), m_maxBarrelTrackerInnerRDistance(50.f),
       m_minBarrelTrackerHitFractionOfExpected(0.2f), m_minFtdHitsForBarrelTrackerHitFraction(2),
-      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_eCalBarrelInnerSymmetry(0),
-      m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}
+      m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_useDD4hepField(false),
+      m_eCalBarrelInnerSymmetry(0), m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}

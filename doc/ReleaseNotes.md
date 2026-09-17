@@ -1,3 +1,48 @@
+# v00.04.00
+
+* 2026-09-09 SanghyunKo ([PR#26](https://github.com/key4hep/k4GaudiPandora/pull/26))
+  - Enabled `DDExternalClusteringAlgorithm`. The static getter function from the previous `DDPandoraPFANewProcessor` has been removed by turning the algorithm into `pandora::ExternallyConfiguredAlgorithm`.
+
+* 2026-08-25 Ben Rosser ([PR#48](https://github.com/key4hep/k4GaudiPandora/pull/48))
+  - Move the `BitFieldCoder` used to decode the layer out of the event loop: it is now built once in `initialize()` and held as a member. Suggested by @jmcarcell in review.
+  - `caloLayout` is const
+
+* 2026-08-21 Juan Miguel Carceller ([PR#49](https://github.com/key4hep/k4GaudiPandora/pull/49))
+  - Set the Gaudi plugin search path for all tests to prefer locally built plugins
+
+* 2026-08-20 Thomas Madlener ([PR#47](https://github.com/key4hep/k4GaudiPandora/pull/47))
+  - Clone `CLDConfig` only once in tests to allow for multiple test runs without failure
+
+* 2026-08-18 Thomas Madlener ([PR#46](https://github.com/key4hep/k4GaudiPandora/pull/46))
+  - Remove the components that are part of the `k4-project-template` 
+  - Propagate build dependencies to downstream consumers
+
+* 2026-08-18 Federico Meloni ([PR#37](https://github.com/key4hep/k4GaudiPandora/pull/37))
+  - Updated CalculateTrackTimeAtCalorimeter to look up trackstate by location, not index.
+
+* 2026-08-18 Thomas Madlener ([PR#36](https://github.com/key4hep/k4GaudiPandora/pull/36))
+  - Remove the code for the old Marlin processors as they are entirely unused here
+
+* 2026-08-18 Federico Meloni ([PR#35](https://github.com/key4hep/k4GaudiPandora/pull/35))
+  - The pT of tracks in CopyTrackState now use the dd4hep local field instead of global fixed value when UseDD4hepField is set to True
+
+* 2026-08-17 Federico Meloni ([PR#33](https://github.com/key4hep/k4GaudiPandora/pull/33))
+  - Fix bug in missing call of DDPandoraPFANewAlgorithm::reset(). The local vectors are now reset again
+
+# v0.3.0
+
+* 2026-08-12 Federico Meloni ([PR#31](https://github.com/key4hep/k4GaudiPandora/pull/31))
+  - Added the flag `K4GAUDIPANDORA_USE_DDKALTEST` to compile with the DDKalTest-based recomputation of the track states at the calorimeter faces, instead of using a direct unpacking of what is provided from upstream. **The default is `ON`, so that the legacy behaviour is preserved.**
+
+* 2026-04-30 Juan Miguel Carceller ([PR#29](https://github.com/key4hep/k4GaudiPandora/pull/29))
+  - Use a single output in the CollectionMerger since this is going be changed in k4FWCore in https://github.com/key4hep/k4FWCore/pull/408
+
+* 2026-04-16 Thomas Madlener ([PR#28](https://github.com/key4hep/k4GaudiPandora/pull/28))
+  - Use the newly added `k4FWCore::getCellIDEncoding` utility for retrieving the cell id encoding.
+
+* 2026-02-24 Mateusz Jakub Fila ([PR#27](https://github.com/key4hep/k4GaudiPandora/pull/27))
+  - Remove histogram interface compatibility with Gaudi versions older that v39
+
 # v00.02.00
 
 * 2026-01-19 Thomas Madlener ([PR#25](https://github.com/key4hep/k4GaudiPandora/pull/25))

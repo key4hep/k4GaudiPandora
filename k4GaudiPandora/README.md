@@ -16,6 +16,39 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+## Build options
+
+### `K4GAUDIPANDORA_USE_DDKALTEST` (default `ON`)
+
+Selects where the track states at the calorimeter faces that pandora needs are computed.
+The default `ON` preserves the legacy code behaviour. Setting this to `OFF` removes the
+transitive dependencies to LCIO, KalTest and DDKalTest.
+
+With the default `ON`, they are **recomputed here with DDKalTest**. For tracks whose
+`edm4hep::TrackState::AtCalorimeter` state is in the barrel,
+`DDTrackCreatorBase::GetTrackStatesAtCalo` recomputes the extrapolation to the ECal endcap face and
+passes it to pandora as an *additional* track state, so that LCContent's
+`TrackClusterAssociationAlgorithm` can consider both. A particle entering through the barrel can
+still shower in the endcap, so which of the two faces is the relevant one is not known until the
+cluster is (see
+[iLCSoft/DDMarlinPandora#12](https://github.com/iLCSoft/DDMarlinPandora/pull/12)). This uses
+`k4Reco::GaudiTrkUtils` (the source of the dependency on LCIO, KalTest and DDKalTest).
+
+With `OFF`, they are expected to have been **computed upstream**, as `k4ActsTracking`'s
+algorithms does with `ExtrapolateToCalo=True`. Nothing is recomputed here: *all*
+`AtCalorimeter` track states found on the input track are forwarded to pandora, so the number of
+faces it can choose between is whatever the upstream extrapolation stored.
+
+Note that `OFF` does not make k4GaudiPandora depend on k4ActsTracking; nothing is linked or included
+from it.
+
+Caveats when `OFF`:
+
+- The input tracks **must** carry an `AtCalorimeter` track state. Tracks without one are dropped by
+  the track creators, which report `Failed to extract a track`.
+- `TrackStateTolerance` has no effect, since it only bounds the acceptance radius of the endcap
+  state.
+
 DDCaloDigi has been ported. The following changes have been done:
 - The function `getLayerConfig` has been included inside `initialize()` to avoid
   having it run multiple times for every hit in the input. The member
