@@ -13,9 +13,10 @@
 #include "DD4hep/Detector.h"
 #include "DD4hep/DD4hepUnits.h"
 #include "DDRec/DetectorData.h"
-#include "DDRec/DCH_info.h"
+#include "detectorCommon/WireTracker_info.h"
 #include "DD4hep/DetType.h"
 #include "DD4hep/DetectorSelector.h"
+
 
 #include <algorithm>
 #include <cmath>
@@ -65,7 +66,8 @@ DDTrackCreatorALLEGRO::DDTrackCreatorALLEGRO(const Settings& settings, pandora::
     // Get DCH parameters
     try {
         const std::vector< dd4hep::DetElement>& dchDets= dd4hep::DetectorSelector(mainDetector).detectors(  ( dd4hep::DetType::TRACKER |  dd4hep::DetType::BARREL  | dd4hep::DetType::GASEOUS ), dd4hep::DetType::VERTEX) ;
-        auto dchExtension = dchDets[0].extension<dd4hep::rec::DCH_info>();
+        auto dchExtension = dchDets[0].extension<dd4hep::rec::WireTracker_info_struct>();
+
         m_dchInnerR = dchExtension->rin/dd4hep::mm ;
         m_dchOuterR = dchExtension->rout/dd4hep::mm ;
         m_dchOuterZ = dchExtension->Lhalf/dd4hep::mm ;
