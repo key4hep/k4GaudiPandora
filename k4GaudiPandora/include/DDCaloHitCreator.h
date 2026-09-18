@@ -67,12 +67,16 @@ public:
     StringVector m_lHCalCaloHitCollections; ///< The lhcal calorimeter hit collections
     StringVector m_muonCaloHitCollections;  ///< The muon calorimeter hit collections
 
-    float m_eCalToMip;        ///< The calibration from deposited ECal energy to mip
-    float m_hCalToMip;        ///< The calibration from deposited HCal energy to mip
-    float m_muonToMip;        ///< The calibration from deposited Muon energy to mip
-    float m_eCalMipThreshold; ///< Threshold for creating calo hits in the ECal, units mip
-    float m_hCalMipThreshold; ///< Threshold for creating calo hits in the HCal, units mip
-    float m_muonMipThreshold; ///< Threshold for creating calo hits in the Muon system, units mip
+    float m_eCalToMip;                  ///< The calibration from deposited ECal energy to mip
+    float m_hCalToMip;                  ///< The calibration from deposited HCal energy to mip
+    FloatVector m_eCalBarrelToMipVec{}; ///< The calibration from deposited ECal barrel layer energy to mip
+    FloatVector m_eCalEndcapToMipVec{}; ///< The calibration from deposited ECal endcap layer energy to mip
+    FloatVector m_hCalBarrelToMipVec{}; ///< The calibration from deposited HCal barrel layer energy to mip
+    FloatVector m_hCalEndcapToMipVec{}; ///< The calibration from deposited HCal endcap layer energy to mip
+    float m_muonToMip;                  ///< The calibration from deposited Muon energy to mip
+    float m_eCalMipThreshold;           ///< Threshold for creating calo hits in the ECal, units mip
+    float m_hCalMipThreshold;           ///< Threshold for creating calo hits in the HCal, units mip
+    float m_muonMipThreshold;           ///< Threshold for creating calo hits in the Muon system, units mip
 
     float m_eCalToEMGeV;        ///< The calibration from deposited ECal energy to EM energy
     float m_eCalToHadGeVBarrel; ///< The calibration from deposited ECal barrel energy to hadronic energy

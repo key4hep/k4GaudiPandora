@@ -181,6 +181,16 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(const std::vector<Colle
           caloHitParameters.m_hadronicEnergy = eCalToHadGeVEndCap * hit.getEnergy();
         }
 
+        // AD: use MIP calibration per layer if it's provided for ALLEGRO
+        if (m_settings.m_detectorName == "ALLEGRO") {
+          if (bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_ecalBarrelSystemId &&
+              !m_settings.m_eCalBarrelToMipVec.empty())
+            eCalToMip = m_settings.m_eCalBarrelToMipVec[bitFieldCoder.get(hit.getCellID(), "layer")];
+          if (bitFieldCoder.get(hit.getCellID(), "system") != m_settings.m_ecalBarrelSystemId &&
+              !m_settings.m_eCalEndcapToMipVec.empty())
+            eCalToMip = m_settings.m_eCalEndcapToMipVec[bitFieldCoder.get(hit.getCellID(), "layer")];
+        }
+
         caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * eCalToMip * absorberCorrection;
 
         if (caloHitParameters.m_mipEquivalentEnergy.Get() < eCalMipThreshold)
@@ -270,7 +280,18 @@ pandora::StatusCode DDCaloHitCreator::createHCalCaloHits(const std::vector<Colle
           this->getEndCapCaloHitProperties(hit, endcapLayers, caloHitParameters, absorberCorrection);
         }
 
-        caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * m_settings.m_hCalToMip * absorberCorrection;
+        float hCalToMip = m_settings.m_hCalToMip;
+        // AD: use MIP calibration per layer if it's provided for ALLEGRO
+        if (m_settings.m_detectorName == "ALLEGRO") {
+          if (bitFieldCoder.get(hit.getCellID(), "system") == m_settings.m_hcalBarrelSystemId &&
+              !m_settings.m_hCalBarrelToMipVec.empty())
+            hCalToMip = m_settings.m_hCalBarrelToMipVec[bitFieldCoder.get(hit.getCellID(), "layer")];
+          if (bitFieldCoder.get(hit.getCellID(), "system") != m_settings.m_hcalBarrelSystemId &&
+              !m_settings.m_hCalEndcapToMipVec.empty())
+            hCalToMip = m_settings.m_hCalEndcapToMipVec[bitFieldCoder.get(hit.getCellID(), "pseudoLayer")];
+        }
+
+        caloHitParameters.m_mipEquivalentEnergy = hit.getEnergy() * hCalToMip * absorberCorrection;
 
         if (caloHitParameters.m_mipEquivalentEnergy.Get() < m_settings.m_hCalMipThreshold)
           continue;
