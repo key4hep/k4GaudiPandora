@@ -197,8 +197,16 @@ private:
   // Calibration constants
   Gaudi::Property<float> m_eCalToMip{this, "ECalToMipCalibration", 1.0f,
                                      "The calibration from deposited ECal energy to mip"};
+  Gaudi::Property<std::vector<float>> m_eCalBarrelToMipVec{
+      this, "ECalBarrelToMipCalibration", {}, "The calibration from deposited ECal barrel layer energy to mip"};
+  Gaudi::Property<std::vector<float>> m_eCalEndcapToMipVec{
+      this, "ECalEndcapToMipCalibration", {}, "The calibration from deposited ECal endcap layer energy to mip"};
   Gaudi::Property<float> m_hCalToMip{this, "HCalToMipCalibration", 1.0f,
                                      "The calibration from deposited HCal energy to mip"};
+  Gaudi::Property<std::vector<float>> m_hCalBarrelToMipVec{
+      this, "HCalBarrelToMipCalibration", {}, "The calibration from deposited HCal barrel layer energy to mip"};
+  Gaudi::Property<std::vector<float>> m_hCalEndcapToMipVec{
+      this, "HCalEndcapToMipCalibration", {}, "The calibration from deposited HCal endcap layer energy to mip"};
   Gaudi::Property<float> m_eCalMipThreshold{this, "ECalMipThreshold", 0.0f,
                                             "Threshold for creating calo hits in the ECal, units mip"};
   Gaudi::Property<float> m_muonToMip{this, "MuonToMipCalibration", 1.0f,
@@ -371,6 +379,7 @@ private:
       "The name of the DD4hep constant that contains the Encoding string for the Calo detectors"};
   /// EXTRA parameter that would initialize everything for ALLEGRO detector if m_detectorName=="ALLEGRO"
   Gaudi::Property<std::string> m_detectorName{this, "DetectorName", "", "The name of the detector"};
+
   Gaudi::Property<std::vector<float>> m_eCalBarrelNormalVector{
       this,
       "ECalBarrelNormalVector",

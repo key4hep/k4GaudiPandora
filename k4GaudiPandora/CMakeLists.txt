@@ -46,6 +46,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       EDM4HEP::edm4hep
                       DD4hep::DDRec
                       DD4hep::DDCore
+                      k4geo::detectorCommon
                       CLHEP::CLHEP
                       GSL::gsl
                       GSL::gslcblas # This seems to be necessary on Ubuntu 24.04 when linking with mold
