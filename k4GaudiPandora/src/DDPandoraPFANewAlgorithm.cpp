@@ -405,7 +405,11 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_pfoCreatorSettings.m_emConstantTerm = m_emConstantTerm;
   m_pfoCreatorSettings.m_hadConstantTerm = m_hadConstantTerm;
   m_caloHitCreatorSettings.m_eCalToMip = m_eCalToMip;
+  m_caloHitCreatorSettings.m_eCalBarrelToMipVec = m_eCalBarrelToMipVec;
+  m_caloHitCreatorSettings.m_eCalEndcapToMipVec = m_eCalEndcapToMipVec;
   m_caloHitCreatorSettings.m_hCalToMip = m_hCalToMip;
+  m_caloHitCreatorSettings.m_hCalBarrelToMipVec = m_hCalBarrelToMipVec;
+  m_caloHitCreatorSettings.m_hCalEndcapToMipVec = m_hCalEndcapToMipVec;
   m_caloHitCreatorSettings.m_eCalMipThreshold = m_eCalMipThreshold;
   m_caloHitCreatorSettings.m_muonToMip = m_muonToMip;
   m_caloHitCreatorSettings.m_hCalMipThreshold = m_hCalMipThreshold;
