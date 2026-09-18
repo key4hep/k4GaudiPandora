@@ -166,10 +166,10 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "ITheta",
                 # Known to be slightly different depending on the build type because
                 # optimizations can change decimals for float values after many decimals
-                "Phi",
+                "IPhi",
                 "DirectionError",
             ]:
-                if attr == "ITheta" or attr == "Phi" and j == 7:
+                if attr == "ITheta" or attr == "IPhi" and j == 7:
                     continue
                 assert (
                     getattr(cluster_gaudi, f"get{attr}")()
