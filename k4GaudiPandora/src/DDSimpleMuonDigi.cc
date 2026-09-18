@@ -94,7 +94,10 @@ StatusCode DDSimpleMuonDigi::initialize() {
   }
 
   const auto collName = inputLocations("MUONCollection")[0];
-  const auto encodingString = k4FWCore::getCellIDEncoding(collName, this);
+  // getCellIDEncoding was introduced in k4FWCore v01-06. Read the
+  // collection metadata directly so this algorithm remains compatible with
+  // the currently supported release stack (v01-05).
+  const auto encodingString = k4FWCore::getParameter<std::string>(collName + "__CellIDEncoding", this);
   if (!encodingString) {
     error() << "Encoding string not found for collection: " << collName << endmsg;
     return StatusCode::FAILURE;
