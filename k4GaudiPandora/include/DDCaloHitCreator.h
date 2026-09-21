@@ -29,10 +29,16 @@
 #include <edm4hep/CalorimeterHit.h>
 #include <edm4hep/CalorimeterHitCollection.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "GaudiKernel/Algorithm.h"
+
+namespace lc_content {
+class LCCaloHitParameters;
+class LCCaloHitFactory;
+} // namespace lc_content
 
 typedef std::vector<edm4hep::CalorimeterHit> CalorimeterHitVector;
 typedef std::vector<const edm4hep::CalorimeterHitCollection*> HitCollectionVector;
@@ -236,6 +242,8 @@ protected:
   dd4hep::VolumeManager m_volumeManager; ///< DD4hep volume manager
 
   const Gaudi::Algorithm& m_algorithm; ///< Pointer to the Gaudi algorithm for logging
+
+  std::shared_ptr<lc_content::LCCaloHitFactory> m_lcCaloHitFactory = {}; ///< LCCaloHitFactory for creating LCCaloHits
 };
 
 #endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H
