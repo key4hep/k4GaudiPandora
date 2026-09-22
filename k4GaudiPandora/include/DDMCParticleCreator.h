@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+namespace k4GaudiPandora {
+
 typedef std::vector<const edm4hep::MCParticleCollection*> MCPCollectionVector;
 typedef std::vector<const edm4hep::TrackMCParticleLinkCollection*> TrackMCLinkCollectionVector;
 typedef std::vector<const edm4hep::CaloHitSimCaloHitLinkCollection*> CaloHitSimCaloHitLinkCollectionVector;
@@ -89,5 +91,8 @@ private:
   const float m_bField;                ///< The magnetic field strength
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for logging
 };
+
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef K4GAUDIPANDORA_DDMCPARTICLECREATOR_H

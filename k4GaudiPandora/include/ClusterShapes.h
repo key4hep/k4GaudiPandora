@@ -22,6 +22,8 @@
 #include <array>
 #include <vector>
 
+namespace k4GaudiPandora {
+
 /**
  *    Utility class to derive properties of clusters, such as centre of gravity,
  *    axes of inertia, fits of the cluster shape and so on. All the details are
@@ -91,5 +93,8 @@ private:
   void findInertia();
   void findWidth();
 };
+
+
+} // namespace k4GaudiPandora
 
 #endif

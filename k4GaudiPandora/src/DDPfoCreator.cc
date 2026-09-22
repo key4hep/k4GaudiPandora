@@ -47,6 +47,8 @@
 #include <algorithm>
 #include <cmath>
 
+namespace k4GaudiPandora {
+
 DDPfoCreator::DDPfoCreator(const Settings& settings, pandora::Pandora& pandora, const Gaudi::Algorithm* algorithm)
     : m_settings(settings), m_pandora(pandora), m_algorithm(*algorithm) {}
 
@@ -385,3 +387,5 @@ void DDPfoCreator::SetRecoParticlePropertiesFromPFO(
 
 DDPfoCreator::Settings::Settings()
     : m_emStochasticTerm(0.17f), m_hadStochasticTerm(0.6f), m_emConstantTerm(0.01f), m_hadConstantTerm(0.03f) {}
+
+} // namespace k4GaudiPandora

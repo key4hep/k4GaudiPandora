@@ -32,6 +32,8 @@ class MutableVertex;
 class VertexCollection;
 } // namespace edm4hep
 
+namespace k4GaudiPandora {
+
 class DDPfoCreator {
 public:
   class Settings {
@@ -200,5 +202,8 @@ private:
   pandora::Pandora& m_pandora;         ///< Reference to the pandora object from which to extract the pfos
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for message streaming
 };
+
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef K4GAUDIPANDORA_DDPFOCREATOR_H

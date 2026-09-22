@@ -23,6 +23,8 @@
 
 class MsgStream;
 
+namespace k4GaudiPandora {
+
 class DDScintillatorPpdDigi {
 public:
   DDScintillatorPpdDigi() = default;
@@ -66,5 +68,8 @@ private:
   float m_elecNoise = 0;
   float m_elecMaxDynRange_MIP = 0;
 };
+
+
+} // namespace k4GaudiPandora
 
 #endif

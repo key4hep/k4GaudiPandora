@@ -23,6 +23,8 @@
 #include <string>
 
 /** detailed string for calo type */
+namespace k4GaudiPandora {
+
 std::ostream& operator<<(std::ostream& os, const CHT& cht) {
   os << " calo hit type: ";
 
@@ -138,3 +140,5 @@ CHT::CaloType caloTypeFromString(const std::string& name) {
   // jl: this should probably also have a separate "unknown" or "any" value?
   return CHT::em;
 }
+
+} // namespace k4GaudiPandora

@@ -46,11 +46,11 @@ namespace pandora {
 class Pandora;
 }
 
+namespace k4GaudiPandora {
+
 // forward declarations for the external clustering algorithm
 class ExternalEventParameter;
 class ExternalClusterHolder;
-
-namespace k4GaudiPandora {
 
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
