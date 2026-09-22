@@ -51,6 +51,8 @@
 #include <string>
 #include <vector>
 
+namespace k4GaudiPandora {
+
 double getFieldFromCompact() {
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
   const double position[3] = {0, 0, 0};      // position to calculate magnetic field at (the origin in this case)
@@ -536,4 +538,6 @@ DDPandoraPFANewAlgorithm::Settings::Settings()
 
 {}
 
-DECLARE_COMPONENT(DDPandoraPFANewAlgorithm)
+} // namespace k4GaudiPandora
+
+DECLARE_COMPONENT_WITH_ID(k4GaudiPandora::DDPandoraPFANewAlgorithm, "DDPandoraPFANewAlgorithm")

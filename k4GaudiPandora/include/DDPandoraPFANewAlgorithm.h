@@ -50,6 +50,8 @@ class Pandora;
 class ExternalEventParameter;
 class ExternalClusterHolder;
 
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 struct DDPandoraPFANewAlgorithm final
@@ -413,5 +415,7 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef DDPANDORAPFANEWALGORITHM_H
