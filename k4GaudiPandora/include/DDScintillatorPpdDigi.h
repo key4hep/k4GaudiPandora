@@ -69,7 +69,6 @@ private:
   float m_elecMaxDynRange_MIP = 0;
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif

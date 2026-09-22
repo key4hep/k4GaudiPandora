@@ -63,7 +63,6 @@ private:
   void SetMandatorySubDetectorParameters(SubDetectorTypeMap& subDetectorTypeMap) const;
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef GEOMETRY_CREATOR_H

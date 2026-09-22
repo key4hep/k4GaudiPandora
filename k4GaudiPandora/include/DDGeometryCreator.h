@@ -132,7 +132,6 @@ protected:
   Gaudi::Algorithm& m_algorithm;
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef GEOMETRY_CREATOR_H

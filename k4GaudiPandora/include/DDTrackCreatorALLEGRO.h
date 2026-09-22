@@ -120,7 +120,6 @@ protected:
   //    float CalculateTrackTimeAtCalorimeter(const EVENT::Track *const pTrack) const;
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef DDTRACK_CREATOR_ALLEGRO_H

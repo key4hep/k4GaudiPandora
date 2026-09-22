@@ -203,7 +203,6 @@ private:
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for message streaming
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef K4GAUDIPANDORA_DDPFOCREATOR_H

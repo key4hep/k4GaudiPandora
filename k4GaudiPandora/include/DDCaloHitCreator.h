@@ -240,7 +240,6 @@ protected:
   const Gaudi::Algorithm& m_algorithm; ///< Pointer to the Gaudi algorithm for logging
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H

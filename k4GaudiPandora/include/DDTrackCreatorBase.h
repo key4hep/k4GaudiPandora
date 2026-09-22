@@ -376,7 +376,6 @@ inline bool DDTrackCreatorBase::IsDaughter(const edm4hep::Track& pTrack) const {
   return (m_daughterTrackList.end() != m_daughterTrackList.find(GetTrackID(pTrack)));
 }
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef DDTRACK_CREATOR_BASE_H

@@ -110,7 +110,6 @@ inline pandora::Algorithm* DDExternalClusteringAlgorithm::Factory::CreateAlgorit
   return new DDExternalClusteringAlgorithm();
 }
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef DDEXTERNALCLUSTERINGALGORITHM_H

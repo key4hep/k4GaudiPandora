@@ -129,7 +129,6 @@ CHT::CaloID caloIDFromString(const std::string& name);
     is found, CHT::em is returned.*/
 CHT::CaloType caloTypeFromString(const std::string& name);
 
-
 } // namespace k4GaudiPandora
 
 #endif

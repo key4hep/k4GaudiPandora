@@ -92,7 +92,6 @@ private:
   const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for logging
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif // #ifndef K4GAUDIPANDORA_DDMCPARTICLECREATOR_H

@@ -94,7 +94,6 @@ private:
   void findWidth();
 };
 
-
 } // namespace k4GaudiPandora
 
 #endif
