@@ -41,18 +41,15 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <fstream>
+#include <functional>
 
 namespace {
 
 bool isStrictlyIncreasing(const std::vector<float>& values) {
-  if (values.size() < 2)
-    return false;
-  for (std::size_t i = 1; i < values.size(); ++i) {
-    if (values[i] <= values[i - 1])
-      return false;
-  }
-  return true;
+  // At least two edges are needed to define a bin, and the caller relies on that when it takes size() - 1.
+  return values.size() >= 2 && std::ranges::is_sorted(values, std::less_equal{});
 }
 
 bool isConsistentThetaEnergyTable(const std::vector<float>& thetaBinEdges, const std::vector<float>& energyBinEdges,
@@ -68,7 +65,7 @@ bool isConsistentThetaEnergyTable(const std::vector<float>& thetaBinEdges, const
 /// Returns false and fills errorMessage if the file cannot be read or the table is not well formed.
 bool readThetaEnergyTable(const std::string& path, const std::string& expectedEnergyBasis,
                           std::vector<float>& thetaBinEdges, std::vector<float>& energyBinEdges,
-                          std::vector<float>& scaleFactors, std::string& pluginName, std::string& errorMessage) {
+                          std::vector<float>& scaleFactors, std::string& errorMessage) {
   std::ifstream input(path);
   if (!input.is_open()) {
     errorMessage = "cannot open " + path;
@@ -100,9 +97,6 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
   }
 
   const nlohmann::json metadata = table.value("metadata", nlohmann::json::object());
-
-  // The plugin name may be carried in the table; otherwise the built-in default is kept.
-  pluginName = metadata.value("plugin_name", pluginName);
 
   const std::string energyBasis = metadata.value("energy_basis", std::string());
   if (energyBasis != expectedEnergyBasis) {
@@ -492,33 +486,30 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
 bool DDPandoraPFANewAlgorithm::loadThetaEnergyCorrectionTables() {
   std::string errorMessage;
 
-  if (!m_settings.m_electromagneticThetaEnergyCorrectionFile.empty()) {
-    if (!readThetaEnergyTable(m_settings.m_electromagneticThetaEnergyCorrectionFile, "em",
+  if (!m_emThetaEnergyFile.value().empty()) {
+    if (!readThetaEnergyTable(m_emThetaEnergyFile.value(), "em",
                               m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges,
                               m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges,
-                              m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors,
-                              m_settings.m_electromagneticThetaEnergyCorrectionPluginName, errorMessage)) {
+                              m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors, errorMessage)) {
       error() << "ElectromagneticThetaEnergyCorrectionFile: " << errorMessage << endmsg;
       return false;
     }
 
-    info() << "Read electromagnetic theta-energy calibration from "
-           << m_settings.m_electromagneticThetaEnergyCorrectionFile << ": "
+    info() << "Read electromagnetic theta-energy calibration from " << m_emThetaEnergyFile.value() << ": "
            << m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges.size() - 1 << " theta bins, "
            << m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges.size() - 1 << " energy bins" << endmsg;
   }
 
-  if (!m_settings.m_hadronicThetaEnergyCorrectionFile.empty()) {
-    if (!readThetaEnergyTable(m_settings.m_hadronicThetaEnergyCorrectionFile, "hadronic",
+  if (!m_hadThetaEnergyFile.value().empty()) {
+    if (!readThetaEnergyTable(m_hadThetaEnergyFile.value(), "hadronic",
                               m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges,
                               m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges,
-                              m_settings.m_hadronicThetaEnergyCorrectionScaleFactors,
-                              m_settings.m_hadronicThetaEnergyCorrectionPluginName, errorMessage)) {
+                              m_settings.m_hadronicThetaEnergyCorrectionScaleFactors, errorMessage)) {
       error() << "HadronicThetaEnergyCorrectionFile: " << errorMessage << endmsg;
       return false;
     }
 
-    info() << "Read hadronic theta-energy calibration from " << m_settings.m_hadronicThetaEnergyCorrectionFile << ": "
+    info() << "Read hadronic theta-energy calibration from " << m_hadThetaEnergyFile.value() << ": "
            << m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges.size() - 1 << " theta bins, "
            << m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges.size() - 1 << " energy bins" << endmsg;
   }
@@ -605,8 +596,6 @@ void DDPandoraPFANewAlgorithm::finaliseSteeringParameters() {
   m_settings.m_outputEnergyCorrectionPoints = m_outputEnergyCorrectionPoints;
   m_settings.m_ecalInputEnergyCorrectionPoints = m_ecalInputEnergyCorrectionPoints;
   m_settings.m_ecalOutputEnergyCorrectionPoints = m_ecalOutputEnergyCorrectionPoints;
-  m_settings.m_electromagneticThetaEnergyCorrectionFile = m_emThetaEnergyFile.value();
-  m_settings.m_hadronicThetaEnergyCorrectionFile = m_hadThetaEnergyFile.value();
   m_settings.m_trackCreatorName = m_trackCreatorName;
   m_settings.m_detectorName = m_detectorName;
   m_caloHitCreatorSettings.m_eCalBarrelNormalVector = m_eCalBarrelNormalVector;
