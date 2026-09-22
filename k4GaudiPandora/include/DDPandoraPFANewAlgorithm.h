@@ -88,14 +88,12 @@ public:
                                                              ///< correction in the ECAL
 
     // Theta-energy (2D) calibration, EM branch
-    std::string m_electromagneticThetaEnergyCorrectionFile = "";
     std::string m_electromagneticThetaEnergyCorrectionPluginName = "PhotonEMNonLinearity";
     std::vector<float> m_electromagneticThetaEnergyCorrectionThetaBinEdges{};
     std::vector<float> m_electromagneticThetaEnergyCorrectionEnergyBinEdges{};
     std::vector<float> m_electromagneticThetaEnergyCorrectionScaleFactors{};
 
     // Theta-energy (2D) calibration, HAD branch
-    std::string m_hadronicThetaEnergyCorrectionFile = "";
     std::string m_hadronicThetaEnergyCorrectionPluginName = "HadronicThetaEnergyBinned";
     std::vector<float> m_hadronicThetaEnergyCorrectionThetaBinEdges{};
     std::vector<float> m_hadronicThetaEnergyCorrectionEnergyBinEdges{};
