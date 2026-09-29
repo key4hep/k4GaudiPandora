@@ -194,8 +194,8 @@ pandora::StatusCode DDTrackCreatorALLEGRO::CreateTracks(const std::vector<edm4he
     trackParameters.m_particleId = (signedCurvature > 0) ? pandora::PI_PLUS : pandora::PI_MINUS;
     trackParameters.m_mass = pandora::PdgTable::GetParticleMass(pandora::PI_PLUS);
 
-    // Use particle id information from V0 and Kink finders (if any)
-    TrackToPidMap::const_iterator trackPIDiter = m_trackToPidMap.find(GetTrackID(pTrack));
+    // Use particle id information from V0 and Kink finders
+    auto trackPIDiter = m_trackToPidMap.find(GetTrackID(pTrack));
     if (trackPIDiter != m_trackToPidMap.end()) {
       trackParameters.m_particleId = trackPIDiter->second;
       trackParameters.m_mass = pandora::PdgTable::GetParticleMass(trackPIDiter->second);
@@ -216,7 +216,7 @@ pandora::StatusCode DDTrackCreatorALLEGRO::CreateTracks(const std::vector<edm4he
       this->DefineTrackPfoUsage(pTrack, trackParameters);
       // create Pandora track and add it to list of tracks
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::Track::Create(m_pandora, trackParameters, *m_lcTrackFactory));
+                              PandoraApi::Track::Create(m_pandora, trackParameters, *m_lcTrackFactory))
       m_trackVector.push_back(pTrack);
     } catch (pandora::StatusCodeException& statusCodeException) {
       m_algorithm.error() << "Failed to extract a track: " << statusCodeException.ToString() << endmsg;
@@ -348,8 +348,8 @@ int DDTrackCreatorALLEGRO::GetNSiWrapperHits(const edm4hep::Track& pTrack) const
 
 void DDTrackCreatorALLEGRO::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
                                                 PandoraApi::Track::Parameters& trackParameters) const {
-  bool canFormPfo(false);
-  bool canFormClusterlessPfo(false);
+  bool canFormPfo = false;
+  bool canFormClusterlessPfo = false;
 
   if (this->IsParent(pTrack)) {
     m_algorithm.debug() << "Track is parent!" << endmsg;
@@ -393,18 +393,18 @@ void DDTrackCreatorALLEGRO::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
       const float pX(momentumAtDca.GetX()), pY(momentumAtDca.GetY()), pZ(momentumAtDca.GetZ());
       const float pT(std::sqrt(pX * pX + pY * pY));
 
-      const float zCutForNonVertexTracks(m_dchInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks);
+      const float zCutForNonVertexTracks = m_dchInnerR * std::fabs(pZ / pT) + m_settings.m_zCutForNonVertexTracks;
       const bool passRzQualityCuts((zMin < zCutForNonVertexTracks) &&
                                    (rInner < m_dchInnerR + m_settings.m_maxBarrelTrackerInnerRDistance));
 
-      const bool isV0(this->IsV0(pTrack));
-      const bool isDaughter(this->IsDaughter(pTrack));
+      const bool isV0 = IsV0(pTrack);
+      const bool isDaughter = IsDaughter(pTrack);
 
       // Decide whether track can be associated with a pandora cluster and used to form a charged PFO
       if ((d0 < m_settings.m_d0TrackCut) && (z0 < m_settings.m_z0TrackCut) &&
           (rInner < m_dchInnerR + m_settings.m_maxBarrelTrackerInnerRDistance)) {
         canFormPfo = true;
-      } else if (passRzQualityCuts && (0 != m_settings.m_usingNonVertexTracks)) {
+      } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0) {
         canFormPfo = true;
       } else if (isV0 || isDaughter) {
         canFormPfo = true;
@@ -416,24 +416,23 @@ void DDTrackCreatorALLEGRO::DefineTrackPfoUsage(const edm4hep::Track& pTrack,
 
       // Decide whether track can be used to form a charged PFO, even if track fails to be associated with a pandora
       // cluster
-      const float particleMass(trackParameters.m_mass.Get());
-      const float trackEnergy(std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass));
+      const float particleMass = trackParameters.m_mass.Get();
+      const float trackEnergy = std::sqrt(momentumAtDca.GetMagnitudeSquared() + particleMass * particleMass);
 
-      if ((0 != m_settings.m_usingUnmatchedVertexTracks) &&
-          (trackEnergy < m_settings.m_unmatchedVertexTrackMaxEnergy)) {
+      if (m_settings.m_usingUnmatchedVertexTracks != 0 && trackEnergy < m_settings.m_unmatchedVertexTrackMaxEnergy) {
         if ((d0 < m_settings.m_d0UnmatchedVertexTrackCut) && (z0 < m_settings.m_z0UnmatchedVertexTrackCut) &&
             (rInner < m_dchInnerR + m_settings.m_maxBarrelTrackerInnerRDistance)) {
           canFormClusterlessPfo = true;
-        } else if (passRzQualityCuts && (0 != m_settings.m_usingNonVertexTracks) &&
-                   (0 != m_settings.m_usingUnmatchedNonVertexTracks)) {
+        } else if (passRzQualityCuts && m_settings.m_usingNonVertexTracks != 0 &&
+                   m_settings.m_usingUnmatchedNonVertexTracks != 0) {
           canFormClusterlessPfo = true;
         } else if (isV0 || isDaughter) {
           canFormClusterlessPfo = true;
         }
       }
-    } else if (this->IsDaughter(pTrack) || this->IsV0(pTrack)) {
-      m_algorithm.debug() << "Recovering daughter or v0 track " << trackParameters.m_momentumAtDca.Get().GetMagnitude()
-                          << endmsg;
+    } else if (IsDaughter(pTrack) || IsV0(pTrack)) {
+      m_algorithm.warning() << "Recovering daughter or v0 track "
+                            << trackParameters.m_momentumAtDca.Get().GetMagnitude() << endmsg;
       canFormPfo = true;
     }
   }
