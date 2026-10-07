@@ -37,29 +37,14 @@
 
 #include <Api/PandoraApi.h>
 #include <LCContent.h>
+#include <LCPlugins/LCEnergyCorrectionPlugins.h>
 #include <LCPlugins/LCSoftwareCompensation.h>
 
 #include <nlohmann/json.hpp>
 
-#include <algorithm>
 #include <fstream>
-#include <functional>
 
 namespace {
-
-bool isStrictlyIncreasing(const std::vector<float>& values) {
-  // At least two edges are needed to define a bin, and the caller relies on that when it takes size() - 1.
-  return values.size() >= 2 && std::ranges::is_sorted(values, std::less_equal{});
-}
-
-bool isConsistentThetaEnergyTable(const std::vector<float>& thetaBinEdges, const std::vector<float>& energyBinEdges,
-                                  const std::vector<float>& scaleFactors) {
-  if (!isStrictlyIncreasing(thetaBinEdges) || !isStrictlyIncreasing(energyBinEdges))
-    return false;
-  const std::size_t nThetaBins = thetaBinEdges.size() - 1;
-  const std::size_t nEnergyBins = energyBinEdges.size() - 1;
-  return (nThetaBins * nEnergyBins == scaleFactors.size());
-}
 
 /// Read a theta-energy calibration table from the json file written by the calibration scripts.
 /// Returns false and fills errorMessage if the file cannot be read or the table is not well formed.
@@ -105,7 +90,7 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
     return false;
   }
 
-  if (!isConsistentThetaEnergyTable(thetaBinEdges, energyBinEdges, scaleFactors)) {
+  if (!lc_content::LCEnergyCorrectionPlugins::ThetaEnergyTable::IsValid(thetaBinEdges, energyBinEdges, scaleFactors)) {
     errorMessage = path + ": bin edges must be strictly increasing and scales must hold " +
                    "(nTheta-1)*(nEnergy-1) entries; got " + std::to_string(thetaBinEdges.size()) + " theta edges, " +
                    std::to_string(energyBinEdges.size()) + " energy edges, " + std::to_string(scaleFactors.size()) +
