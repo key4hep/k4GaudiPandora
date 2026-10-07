@@ -30,6 +30,8 @@
 #include <DDRec/DetectorData.h>
 
 // dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 DDCaloHitCreatorALLEGRO::DDCaloHitCreatorALLEGRO(const Settings& settings, pandora::Pandora& pandora,
@@ -61,3 +63,5 @@ void DDCaloHitCreatorALLEGRO::getCommonCaloHitProperties(const edm4hep::Calorime
   caloHitParameters.m_inputEnergy = hit.getEnergy();
   caloHitParameters.m_time = hit.getTime();
 }
+
+} // namespace k4GaudiPandora

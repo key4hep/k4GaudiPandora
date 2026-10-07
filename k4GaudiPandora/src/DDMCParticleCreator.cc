@@ -37,6 +37,8 @@
 #include <vector>
 
 // forward declarations. See in DDPandoraPFANewProcessor.cc
+namespace k4GaudiPandora {
+
 double getFieldFromCompact();
 
 DDMCParticleCreator::DDMCParticleCreator(const Settings& settings, pandora::Pandora& pandora,
@@ -182,3 +184,5 @@ pandora::StatusCode DDMCParticleCreator::CreateCaloHitToMCParticleRelationships(
 DDMCParticleCreator::Settings::Settings()
     : m_mcParticleCollections(StringVector()), m_caloHitRelationCollections(StringVector()),
       m_trackRelationCollections(StringVector()) {}
+
+} // namespace k4GaudiPandora

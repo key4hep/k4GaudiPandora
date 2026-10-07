@@ -44,6 +44,8 @@
 #include <limits>
 
 // forward declarations. See in DDPandoraPFANewProcessor.cc
+namespace k4GaudiPandora {
+
 std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorALLEGRO::DDTrackCreatorALLEGRO(const Settings& settings, pandora::Pandora& pandora,
@@ -371,3 +373,5 @@ void DDTrackCreatorALLEGRO::TrackReachesECAL(const edm4hep::Track& pTrack,
 
   trackParameters.m_reachesCalorimeter = false;
 }
+
+} // namespace k4GaudiPandora

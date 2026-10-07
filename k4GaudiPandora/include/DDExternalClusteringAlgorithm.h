@@ -46,6 +46,8 @@ namespace pandora {
 class CaloHit;
 }
 
+namespace k4GaudiPandora {
+
 /**
  *  @brief  ExternalClusterHolder class - holds pointers to the external clusters and the calo hits
  */
@@ -107,5 +109,7 @@ private:
 inline pandora::Algorithm* DDExternalClusteringAlgorithm::Factory::CreateAlgorithm() const {
   return new DDExternalClusteringAlgorithm();
 }
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef DDEXTERNALCLUSTERINGALGORITHM_H

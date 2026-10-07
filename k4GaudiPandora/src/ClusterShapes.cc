@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <iostream>
 
+namespace k4GaudiPandora {
+
 ClusterShapes::ClusterShapes(int nhits, float* a, float* x, float* y, float* z)
     :
 
@@ -221,3 +223,5 @@ void ClusterShapes::findWidth() {
    return
    end
 */
+
+} // namespace k4GaudiPandora

@@ -39,6 +39,8 @@
 #include <vector>
 
 // dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 // double getCoilOuterR();
@@ -690,3 +692,5 @@ DDCaloHitCreator::Settings::Settings()
       m_hCalBarrelNormalVector({0.0, 0.0, 1.0}), m_muonBarrelNormalVector({0.0, 0.0, 1.0}) {}
 
 const CalorimeterHitVector& DDCaloHitCreator::GetCalorimeterHitVector() const { return m_calorimeterHitVector; }
+
+} // namespace k4GaudiPandora

@@ -26,6 +26,8 @@
 
 #include <Gaudi/Algorithm.h>
 
+namespace k4GaudiPandora {
+
 class DDGeometryCreator {
 public:
   class Settings {
@@ -129,5 +131,7 @@ protected:
   pandora::Pandora& m_pPandora; ///< Reference to the pandora object to create the geometry
   Gaudi::Algorithm& m_algorithm;
 };
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef GEOMETRY_CREATOR_H

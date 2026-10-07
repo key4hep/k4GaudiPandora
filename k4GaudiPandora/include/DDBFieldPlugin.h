@@ -36,6 +36,8 @@
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
+namespace k4GaudiPandora {
+
 /**
  *  @brief  DDBFieldPlugin class
  */
@@ -50,5 +52,7 @@ private:
 
   dd4hep::OverlayedField m_field; ///< The field instance from DD4hep
 };
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef K4GAUDIPANDORA_DDBFIELD_PLUGIN_H

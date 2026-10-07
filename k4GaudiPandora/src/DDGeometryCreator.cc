@@ -33,6 +33,8 @@
 
 // Forward declarations. See DDPandoraPFANewProcessor.cc
 //  dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 std::vector<double> getTrackingRegionExtent();
@@ -430,3 +432,5 @@ pandora::StatusCode DDGeometryCreator::CreateRegularBoxGaps(unsigned int symmetr
 //------------------------------------------------------------------------------------------------------------------------------------------
 
 DDGeometryCreator::Settings::Settings() : m_createGaps(false) {}
+
+} // namespace k4GaudiPandora

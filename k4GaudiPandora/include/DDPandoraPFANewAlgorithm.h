@@ -46,6 +46,8 @@ namespace pandora {
 class Pandora;
 }
 
+namespace k4GaudiPandora {
+
 // forward declarations for the external clustering algorithm
 class ExternalEventParameter;
 class ExternalClusterHolder;
@@ -413,5 +415,7 @@ private:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef DDPANDORAPFANEWALGORITHM_H
