@@ -39,6 +39,7 @@ find_package(PandoraSDK REQUIRED)
 find_package(LCContent REQUIRED)
 find_package(Gaudi)
 find_package(k4Reco)
+find_package(k4geo)
 
 #---------------------------------------------------------------
 option(K4GAUDIPANDORA_USE_DDKALTEST
