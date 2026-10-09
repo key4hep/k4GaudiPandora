@@ -64,3 +64,92 @@ DDCaloDigi has been ported. The following changes have been done:
 
 DDMarlinPandora has been ported
 - DDPfoCreator: `SetRecoParticleReferencePoint` has been removed
+
+## Theta-energy calibration
+
+`DDPandoraPFANewAlgorithm` can correct the energy of each cluster using a table of correction factors. The factor
+depends on the cluster's polar angle (theta) and its energy. Two separate tables can be given: one for
+electromagnetic (EM) clusters and one for hadronic clusters. Each table is stored in a JSON file.
+
+### Settings
+
+| Setting | Description |
+|---|---|
+| `ElectromagneticThetaEnergyCorrectionFile` | Path to the JSON file with the EM correction table. |
+| `HadronicThetaEnergyCorrectionFile` | Path to the JSON file with the hadronic correction table. |
+
+Both settings are empty by default. In that case the matching plugin (see below) is still available to Pandora, but
+it does not change any energies.
+
+A relative path is taken relative to the directory the job is run from, in the same way as `PandoraSettingsXmlFile`.
+
+The files are read when the job starts. If a file cannot be opened, or the table in it is not valid, the job stops
+and prints an error explaining the problem.
+
+### Pandora settings XML
+
+The corrections are applied by two Pandora plugins:
+
+| Plugin name | Corrects | Uses the table from |
+|---|---|---|
+| `PhotonEMNonLinearity` | EM clusters | `ElectromagneticThetaEnergyCorrectionFile` |
+| `HadronicThetaEnergyBinned` | hadronic clusters | `HadronicThetaEnergyCorrectionFile` |
+
+A correction only takes effect if the Pandora settings XML lists its plugin:
+
+```xml
+<ElectromagneticEnergyCorrectionPlugins>PhotonEMNonLinearity</ElectromagneticEnergyCorrectionPlugins>
+<HadronicEnergyCorrectionPlugins>HadronicThetaEnergyBinned</HadronicEnergyCorrectionPlugins>
+```
+
+If these entries already list other plugins, add the new names to the existing list.
+
+The `ConeBasedMerging` and `ProximityBasedMerging` algorithms can also use the hadronic table when they compare
+cluster energies with track momenta. To enable this, add the following to the settings of each of these algorithms
+in the XML:
+
+```xml
+<UseThetaEnergyCorrectionForTrackComparison>true</UseThetaEnergyCorrectionForTrackComparison>
+<ThetaEnergyCorrectionName>HadronicThetaEnergyBinned</ThetaEnergyCorrectionName>
+```
+
+### JSON file format
+
+Example of an EM table with two theta bins and two energy bins:
+
+```json
+{
+  "theta_edges": [0.0, 1.5708, 3.1416],
+  "energy_edges": [0.0, 50.0, 1000.0],
+  "scales": [1.02, 1.01, 1.03, 1.02],
+  "metadata": {
+    "energy_basis": "em"
+  }
+}
+```
+
+| Key | Description |
+|---|---|
+| `theta_edges` | Bin edges in theta, in radians. Theta always lies between 0 and π. |
+| `energy_edges` | Bin edges in energy, in GeV. |
+| `scales` | The correction factors, one per bin, as a single list. |
+| `metadata.energy_basis` | `"em"` for the EM file, `"hadronic"` for the hadronic file. |
+
+The table must meet these requirements:
+
+- `theta_edges` and `energy_edges` each have at least two values, and each value is larger than the one before it.
+- `scales` has one value for every combination of a theta bin and an energy bin, which is
+  (number of theta edges − 1) × (number of energy edges − 1) values.
+- The values in `scales` are grouped by theta bin: first all energy bins of the first theta bin, then all energy bins
+  of the second theta bin, and so on. In the example above, the first two values belong to the first theta bin.
+
+Any other keys in the file, such as `domain` or `counts` written by the calibration scripts, are ignored.
+
+### Clusters outside the table
+
+The corrected energy is the original energy multiplied by the factor for the cluster's bin. A cluster that falls
+outside the table keeps its original energy, with one exception for high energies:
+
+- Theta below the first edge, or equal to or above the last edge: not corrected.
+- Energy below the first edge: not corrected.
+- Energy equal to or above the last edge: corrected with the factor of the last energy bin.

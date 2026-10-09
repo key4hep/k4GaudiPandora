@@ -92,6 +92,18 @@ add_test(NAME "run_Pandora_externalClustering"
 )
 set_tests_properties("run_Pandora_externalClustering" PROPERTIES DEPENDS "run_Pandora_ttbar")
 
+# Theta-energy calibration: a valid EM table loads and the job runs
+add_test(NAME "run_Pandora_thetaEnergy"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Output output_pandora_thetaEnergy.root --PandoraPFANewAlgorithm.ElectromagneticThetaEnergyCorrectionFile ${PROJECT_SOURCE_DIR}/test/inputs/theta_energy_em.json
+)
+set_tests_properties("run_Pandora_thetaEnergy" PROPERTIES DEPENDS "run_marlin_wrapper")
+
+# Theta-energy calibration: an EM table given to the hadronic branch stops the job at initialize
+add_test(NAME "run_Pandora_thetaEnergy_wrongBasis"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Output output_pandora_thetaEnergy_wrongBasis.root --PandoraPFANewAlgorithm.HadronicThetaEnergyCorrectionFile ${PROJECT_SOURCE_DIR}/test/inputs/theta_energy_em.json
+)
+set_tests_properties("run_Pandora_thetaEnergy_wrongBasis" PROPERTIES DEPENDS "run_marlin_wrapper" PASS_REGULAR_EXPRESSION "expected \"hadronic\"")
+
 # Set the environment for all tests in this directory at once
 # This follows the k4-project-template setup
 get_filename_component(CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
