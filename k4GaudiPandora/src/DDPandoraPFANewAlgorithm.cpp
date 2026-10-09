@@ -42,9 +42,20 @@
 
 #include <nlohmann/json.hpp>
 
+#include <DD4hep/DD4hepUnits.h>
+#include <DD4hep/DetType.h>
+#include <DD4hep/Detector.h>
+#include <DD4hep/DetectorSelector.h>
+#include <DDRec/DetectorData.h>
+
 #include <algorithm>
 #include <cctype>
+#include <cstdlib>
 #include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -121,18 +132,6 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
 }
 
 } // namespace
-
-#include <DD4hep/DD4hepUnits.h>
-#include <DD4hep/DetType.h>
-#include <DD4hep/Detector.h>
-#include <DD4hep/DetectorSelector.h>
-#include <DDRec/DetectorData.h>
-
-#include <cstdlib>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
 
 double getFieldFromCompact() {
   dd4hep::Detector& mainDetector = dd4hep::Detector::getInstance();
