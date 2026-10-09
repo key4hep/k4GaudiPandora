@@ -42,6 +42,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 
 namespace {
@@ -65,6 +67,11 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
     return false;
   }
 
+  if (!table.is_object()) {
+    errorMessage = path + " does not hold a json object at the top level";
+    return false;
+  }
+
   for (const auto* key : {"theta_edges", "energy_edges", "scales"}) {
     if (!table.contains(key)) {
       errorMessage = path + " has no \"" + std::string(key) + "\" entry";
@@ -81,9 +88,21 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
     return false;
   }
 
-  const nlohmann::json metadata = table.value("metadata", nlohmann::json::object());
+  const auto metadataIt = table.find("metadata");
+  if (metadataIt == table.end() || !metadataIt->is_object()) {
+    errorMessage = path + " has no metadata object (expected metadata.energy_basis \"" + expectedEnergyBasis + "\")";
+    return false;
+  }
 
-  const std::string energyBasis = metadata.value("energy_basis", std::string());
+  const auto energyBasisIt = metadataIt->find("energy_basis");
+  if (energyBasisIt == metadataIt->end() || !energyBasisIt->is_string()) {
+    errorMessage = path + " has no metadata.energy_basis (expected \"" + expectedEnergyBasis + "\")";
+    return false;
+  }
+
+  std::string energyBasis = energyBasisIt->get<std::string>();
+  std::transform(energyBasis.begin(), energyBasis.end(), energyBasis.begin(),
+                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
   if (energyBasis != expectedEnergyBasis) {
     errorMessage =
         path + " was produced with energy_basis \"" + energyBasis + "\", expected \"" + expectedEnergyBasis + "\"";
@@ -91,10 +110,10 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
   }
 
   if (!lc_content::LCEnergyCorrectionPlugins::ThetaEnergyTable::IsValid(thetaBinEdges, energyBinEdges, scaleFactors)) {
-    errorMessage = path + ": bin edges must be strictly increasing and scales must hold " +
-                   "(nTheta-1)*(nEnergy-1) entries; got " + std::to_string(thetaBinEdges.size()) + " theta edges, " +
-                   std::to_string(energyBinEdges.size()) + " energy edges, " + std::to_string(scaleFactors.size()) +
-                   " scale factors";
+    errorMessage = path + ": bin edges must be finite and strictly increasing, scales must hold " +
+                   "(nTheta-1)*(nEnergy-1) entries, and every scale must be finite and positive; got " +
+                   std::to_string(thetaBinEdges.size()) + " theta edges, " + std::to_string(energyBinEdges.size()) +
+                   " energy edges, " + std::to_string(scaleFactors.size()) + " scale factors";
     return false;
   }
 
@@ -423,34 +442,28 @@ pandora::StatusCode DDPandoraPFANewAlgorithm::registerUserComponents() const {
   // Theta-energy (2D) calibration. Both plugin names are registered unconditionally so that a
   // Pandora settings XML naming them is always valid: without a payload they fall back to the
   // 1D overload with empty points, which is the identity.
-  if (!m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors.empty()) {
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             LCContent::RegisterNonLinearityEnergyCorrection(
-                                 m_pPandora, m_settings.m_electromagneticThetaEnergyCorrectionPluginName,
-                                 pandora::ELECTROMAGNETIC,
-                                 m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges,
-                                 m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges,
-                                 m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors))
-  } else {
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             LCContent::RegisterNonLinearityEnergyCorrection(
-                                 m_pPandora, m_settings.m_electromagneticThetaEnergyCorrectionPluginName,
-                                 pandora::ELECTROMAGNETIC, std::vector<float>(), std::vector<float>()))
-  }
+  const auto registerThetaEnergy =
+      [this](const std::string& name, const pandora::EnergyCorrectionType energyCorrectionType,
+             const pandora::FloatVector& thetaBinEdges, const pandora::FloatVector& energyBinEdges,
+             const pandora::FloatVector& scaleFactors) {
+        if (scaleFactors.empty())
+          return LCContent::RegisterNonLinearityEnergyCorrection(m_pPandora, name, energyCorrectionType, {}, {});
+        return LCContent::RegisterNonLinearityEnergyCorrection(m_pPandora, name, energyCorrectionType, thetaBinEdges,
+                                                               energyBinEdges, scaleFactors);
+      };
 
-  if (!m_settings.m_hadronicThetaEnergyCorrectionScaleFactors.empty()) {
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             LCContent::RegisterNonLinearityEnergyCorrection(
-                                 m_pPandora, m_settings.m_hadronicThetaEnergyCorrectionPluginName, pandora::HADRONIC,
-                                 m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges,
-                                 m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges,
-                                 m_settings.m_hadronicThetaEnergyCorrectionScaleFactors))
-  } else {
-    PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                             LCContent::RegisterNonLinearityEnergyCorrection(
-                                 m_pPandora, m_settings.m_hadronicThetaEnergyCorrectionPluginName, pandora::HADRONIC,
-                                 std::vector<float>(), std::vector<float>()))
-  }
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                           registerThetaEnergy(m_settings.m_electromagneticThetaEnergyCorrectionPluginName,
+                                               pandora::ELECTROMAGNETIC,
+                                               m_settings.m_electromagneticThetaEnergyCorrectionThetaBinEdges,
+                                               m_settings.m_electromagneticThetaEnergyCorrectionEnergyBinEdges,
+                                               m_settings.m_electromagneticThetaEnergyCorrectionScaleFactors))
+
+  PANDORA_RETURN_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
+                           registerThetaEnergy(m_settings.m_hadronicThetaEnergyCorrectionPluginName, pandora::HADRONIC,
+                                               m_settings.m_hadronicThetaEnergyCorrectionThetaBinEdges,
+                                               m_settings.m_hadronicThetaEnergyCorrectionEnergyBinEdges,
+                                               m_settings.m_hadronicThetaEnergyCorrectionScaleFactors))
 
   lc_content::LCSoftwareCompensationParameters softwareCompensationParameters;
   softwareCompensationParameters.m_softCompParameters = m_settings.m_softCompParameters;
