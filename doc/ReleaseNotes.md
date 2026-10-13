@@ -1,3 +1,14 @@
+# v00.05.00
+
+* 2026-10-13 Thomas Madlener ([PR#55](https://github.com/Key4hep/k4GaudiPandora/pull/55))
+  - Make the conversion to calorimeter hits for Pandora use the newly introduced `LCCaloHit`s that allow for a more flexible customization
+
+* 2026-10-07 Juan Miguel Carceller ([PR#61](https://github.com/Key4hep/k4GaudiPandora/pull/61))
+  - Require EDM4hep 1.0 and remove the pre-1.0 cluster phi compatibility check.
+
+* 2026-09-18 Juan Miguel Carceller ([PR#54](https://github.com/Key4hep/k4GaudiPandora/pull/54))
+  - Fix PFO comparison with current EDM4hep (https://github.com/key4hep/EDM4hep/pull/520)
+
 # v00.04.00
 
 * 2026-09-09 SanghyunKo ([PR#26](https://github.com/key4hep/k4GaudiPandora/pull/26))
