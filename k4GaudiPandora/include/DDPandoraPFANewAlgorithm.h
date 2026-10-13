@@ -382,7 +382,7 @@ private:
       this, "ElectromagneticThetaEnergyCorrectionFile", std::string(""),
       "Path to the json theta-energy calibration table for the Pandora EM branch"};
   Gaudi::Property<std::string> m_hadThetaEnergyFile{
-      this, "HadronicThetaEnergyCorrectionFile", std::string(""),
+      this, "HadronicThetaEnergyCorrectionFile", "",
       "Path to the json theta-energy calibration table for the Pandora HAD branch"};
   // EXTRA PARAMETERS FROM NIKIFOROS m_caloEncodingString
   Gaudi::Property<std::string> m_trackCreatorName{this, "TrackCreatorName", "DDTrackCreatorCLIC",
