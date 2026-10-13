@@ -379,7 +379,7 @@ private:
   // Theta-energy (2D) calibration. Each branch takes the path to a single json calibration table,
   // as written by the calibration scripts. An empty path leaves that branch uncorrected.
   Gaudi::Property<std::string> m_emThetaEnergyFile{
-      this, "ElectromagneticThetaEnergyCorrectionFile", std::string(""),
+      this, "ElectromagneticThetaEnergyCorrectionFile", "",
       "Path to the json theta-energy calibration table for the Pandora EM branch"};
   Gaudi::Property<std::string> m_hadThetaEnergyFile{
       this, "HadronicThetaEnergyCorrectionFile", "",
