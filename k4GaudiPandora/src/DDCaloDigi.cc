@@ -44,6 +44,8 @@
 #include <sstream>
 #include <string>
 
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* DDCaloDigi::getExtension(unsigned int includeFlag,
                                                               unsigned int excludeFlag) const {
   dd4hep::Detector* mainDetector = m_geoSvc->getDetector();
@@ -1188,3 +1190,5 @@ int DDCaloDigi::getStripOrientationFromColName(std::string_view colName) const {
   }
   return orientation;
 }
+
+} // namespace k4GaudiPandora

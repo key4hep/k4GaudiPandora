@@ -34,6 +34,8 @@
 #include <ranges>
 #include <utility>
 
+namespace k4GaudiPandora {
+
 DDSimpleMuonDigi::DDSimpleMuonDigi(const std::string& aName, ISvcLocator* aSvcLoc)
     : MultiTransformer(aName, aSvcLoc,
                        {
@@ -188,4 +190,6 @@ float DDSimpleMuonDigi::computeHitTime(const edm4hep::SimCalorimeterHit& h) cons
   return 0.f;
 }
 
-DECLARE_COMPONENT(DDSimpleMuonDigi)
+} // namespace k4GaudiPandora
+
+DECLARE_COMPONENT_WITH_ID(k4GaudiPandora::DDSimpleMuonDigi, "DDSimpleMuonDigi")

@@ -23,6 +23,8 @@
 
 #include "DD4hep/DD4hepUnits.h"
 
+namespace k4GaudiPandora {
+
 DDBFieldPlugin::DDBFieldPlugin(const dd4hep::Detector& detector) : m_field(detector.field()) { /* nop */ }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -48,3 +50,5 @@ pandora::StatusCode DDBFieldPlugin::ReadSettings(const pandora::TiXmlHandle /*xm
   /* nop */
   return pandora::STATUS_CODE_SUCCESS;
 }
+
+} // namespace k4GaudiPandora

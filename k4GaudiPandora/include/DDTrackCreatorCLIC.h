@@ -36,6 +36,8 @@ class IGeoSvc;
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
+namespace k4GaudiPandora {
+
 /**
  *  @brief  DDTrackCreatorCLIC class
  */
@@ -105,5 +107,7 @@ protected:
    */
   void DefineTrackPfoUsage(const edm4hep::Track& pTrack, PandoraApi::Track::Parameters& trackParameters) const override;
 };
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef DDTRACK_CREATOR_CLIC_H

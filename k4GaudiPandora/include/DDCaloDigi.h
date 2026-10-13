@@ -95,6 +95,8 @@
  *  @version $Id$ <br>
  */
 
+namespace k4GaudiPandora {
+
 const int MAX_LAYERS = 200;
 const int MAX_STAVES = 16;
 
@@ -439,5 +441,7 @@ private:
   enum { SQUARE, STRIP_ALIGN_ALONG_SLAB, STRIP_ALIGN_ACROSS_SLAB, SIECAL = 0, SCECAL };
 };
 
-DECLARE_COMPONENT(DDCaloDigi)
+} // namespace k4GaudiPandora
+
+DECLARE_COMPONENT_WITH_ID(k4GaudiPandora::DDCaloDigi, "DDCaloDigi")
 #endif

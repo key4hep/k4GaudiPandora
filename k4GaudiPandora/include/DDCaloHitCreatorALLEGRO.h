@@ -32,6 +32,8 @@
 
 #include "DDCaloHitCreator.h"
 
+namespace k4GaudiPandora {
+
 /**
  *  @brief  DDCaloHitCreator class
  */
@@ -68,4 +70,7 @@ private:
   void getCommonCaloHitProperties(const edm4hep::CalorimeterHit& hit,
                                   PandoraApi::CaloHit::Parameters& caloHitParameters) const;
 };
+
+} // namespace k4GaudiPandora
+
 #endif

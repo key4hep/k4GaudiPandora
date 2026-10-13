@@ -37,6 +37,8 @@
 #include <tuple>
 #include <vector>
 
+namespace k4GaudiPandora {
+
 struct DDSimpleMuonDigi final
     : k4FWCore::MultiTransformer<
           std::tuple<edm4hep::CalorimeterHitCollection, edm4hep::CaloHitSimCaloHitLinkCollection>(
@@ -75,4 +77,7 @@ private:
   bool useLayer(const CHT::Layout caloLayout, const size_t layer) const;
   float computeHitTime(const edm4hep::SimCalorimeterHit& h) const;
 };
+
+} // namespace k4GaudiPandora
+
 #endif

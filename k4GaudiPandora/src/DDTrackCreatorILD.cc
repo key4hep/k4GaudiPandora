@@ -45,6 +45,8 @@
 #include <cmath>
 #include <limits>
 
+namespace k4GaudiPandora {
+
 DDTrackCreatorILD::DDTrackCreatorILD(const Settings& settings, pandora::Pandora& pPandora,
                                      const Gaudi::Algorithm* thisAlg, SmartIF<IGeoSvc> geoSvc)
     : DDTrackCreatorBase(settings, pPandora, thisAlg), m_cosTpc(0.f), m_tpcInnerR(0.f), m_tpcOuterR(0.f),
@@ -523,3 +525,5 @@ int DDTrackCreatorILD::GetNFtdHits(const edm4hep::Track& pTrack) const {
 }
 
 //
+
+} // namespace k4GaudiPandora

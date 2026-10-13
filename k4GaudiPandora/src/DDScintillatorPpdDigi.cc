@@ -26,6 +26,8 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace k4GaudiPandora {
+
 using std::cout;
 using std::endl;
 
@@ -145,3 +147,5 @@ float DDScintillatorPpdDigi::getDigitisedEnergy(float energy, CLHEP::MTwistEngin
   }
   return correctedEnergy;
 }
+
+} // namespace k4GaudiPandora

@@ -34,6 +34,8 @@
 
 // Forward declarations. See DDPandoraPFANewProcessor.cc
 //  dd4hep::rec::LayeredCalorimeterData * getExtension(std::string detectorName);
+namespace k4GaudiPandora {
+
 dd4hep::rec::LayeredCalorimeterData* getExtension(unsigned int includeFlag, unsigned int excludeFlag = 0);
 
 std::vector<double> getTrackingRegionExtent();
@@ -179,3 +181,5 @@ void DDGeometryCreatorALLEGRO::SetMandatorySubDetectorParameters(SubDetectorType
     m_algorithm.error() << "Failed to access COIL parameters: " << e.what() << endmsg;
   }
 }
+
+} // namespace k4GaudiPandora

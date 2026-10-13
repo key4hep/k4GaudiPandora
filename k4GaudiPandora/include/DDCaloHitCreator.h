@@ -35,6 +35,8 @@
 
 #include "GaudiKernel/Algorithm.h"
 
+namespace k4GaudiPandora {
+
 namespace lc_content {
 class LCCaloHitParameters;
 class LCCaloHitFactory;
@@ -245,5 +247,7 @@ protected:
 
   std::shared_ptr<lc_content::LCCaloHitFactory> m_lcCaloHitFactory = {}; ///< LCCaloHitFactory for creating LCCaloHits
 };
+
+} // namespace k4GaudiPandora
 
 #endif // K4GAUDIPANDORA_DDCALO_HIT_CREATOR_H

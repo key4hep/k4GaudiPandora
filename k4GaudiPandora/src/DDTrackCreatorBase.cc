@@ -41,6 +41,8 @@
 #include <vector>
 
 // forward declaration
+namespace k4GaudiPandora {
+
 std::vector<double> getTrackingRegionExtent();
 
 DDTrackCreatorBase::DDTrackCreatorBase(const Settings& settings, pandora::Pandora& pandora,
@@ -571,3 +573,5 @@ DDTrackCreatorBase::Settings::Settings()
       m_minBarrelTrackerHitFractionOfExpected(0.2f), m_minFtdHitsForBarrelTrackerHitFraction(2),
       m_trackStateTolerance(0.f), m_trackingSystemName("DDKalTest"), m_bField(0.f), m_useDD4hepField(false),
       m_eCalBarrelInnerSymmetry(0), m_eCalBarrelInnerPhi0(0.f), m_eCalBarrelInnerR(0.f), m_eCalEndCapInnerZ(0.f) {}
+
+} // namespace k4GaudiPandora

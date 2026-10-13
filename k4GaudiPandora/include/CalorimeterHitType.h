@@ -22,6 +22,8 @@
 #include <ostream>
 #include <string>
 
+namespace k4GaudiPandora {
+
 /** Helper class for decoding/encoding lcio::CalorimeterHit types for the ILD
  *  detector. The encoding is: caloType + 10 * caloID + 1000 * layout + 10000 * layerNum <br>
  *  (see enums: CaloType, CaloID and Layout for possible values).<br>
@@ -126,5 +128,7 @@ CHT::CaloID caloIDFromString(const std::string& name);
 /** Return caloType from string, e.g. if name contains tolower("Had") CHT::had is returned. In case no known type
     is found, CHT::em is returned.*/
 CHT::CaloType caloTypeFromString(const std::string& name);
+
+} // namespace k4GaudiPandora
 
 #endif

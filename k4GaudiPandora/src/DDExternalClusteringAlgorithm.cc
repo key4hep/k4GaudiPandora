@@ -35,6 +35,8 @@
 #include "GaudiKernel/AnyDataWrapper.h"
 
 // setters and getters for the external cluster holder
+namespace k4GaudiPandora {
+
 void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters) {
   m_externalClusters = externalClusters;
 }
@@ -155,3 +157,5 @@ pandora::StatusCode DDExternalClusteringAlgorithm::ReadSettings(const pandora::T
 
   return pandora::STATUS_CODE_SUCCESS;
 }
+
+} // namespace k4GaudiPandora

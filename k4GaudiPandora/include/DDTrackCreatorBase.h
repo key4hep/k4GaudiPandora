@@ -34,13 +34,6 @@
 
 #include <memory>
 
-typedef uint64_t TrackID;
-
-typedef std::vector<edm4hep::Track> TrackVector;
-typedef podio::RelationRange<edm4hep::Track> TrackRange;
-typedef std::set<TrackID> TrackList;
-typedef std::map<TrackID, int> TrackToPidMap;
-
 namespace lc_content {
 class LCTrackParameters;
 class LCTrackFactory;
@@ -49,6 +42,15 @@ class LCTrackFactory;
 namespace Gaudi {
 class Algorithm;
 }
+
+namespace k4GaudiPandora {
+
+typedef uint64_t TrackID;
+
+typedef std::vector<edm4hep::Track> TrackVector;
+typedef podio::RelationRange<edm4hep::Track> TrackRange;
+typedef std::set<TrackID> TrackList;
+typedef std::map<TrackID, int> TrackToPidMap;
 
 /**
  *  @brief  DDTrackCreatorBase class
@@ -373,5 +375,7 @@ inline bool DDTrackCreatorBase::IsParent(const edm4hep::Track& pTrack) const {
 inline bool DDTrackCreatorBase::IsDaughter(const edm4hep::Track& pTrack) const {
   return (m_daughterTrackList.end() != m_daughterTrackList.find(GetTrackID(pTrack)));
 }
+
+} // namespace k4GaudiPandora
 
 #endif // #ifndef DDTRACK_CREATOR_BASE_H
