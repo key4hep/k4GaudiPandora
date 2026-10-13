@@ -112,8 +112,8 @@ bool readThetaEnergyTable(const std::string& path, const std::string& expectedEn
   }
 
   std::string energyBasis = energyBasisIt->get<std::string>();
-  std::transform(energyBasis.begin(), energyBasis.end(), energyBasis.begin(),
-                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  std::ranges::transform(energyBasis, energyBasis.begin(),
+                         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
   if (energyBasis != expectedEnergyBasis) {
     errorMessage =
         path + " was produced with energy_basis \"" + energyBasis + "\", expected \"" + expectedEnergyBasis + "\"";
