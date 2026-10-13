@@ -1,0 +1,8 @@
+{
+  "theta_edges": [0.0, 1.5708, 3.1416],
+  "energy_edges": [0.0, 50.0, 1000.0],
+  "scales": [1.02, 1.01, 1.03, 1.02],
+  "metadata": {
+    "energy_basis": "em"
+  }
+}
