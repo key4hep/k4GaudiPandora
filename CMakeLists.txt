@@ -23,7 +23,7 @@ project(k4GaudiPandora LANGUAGES CXX)
 
 # please keep this layout for version setting, used by the automatic tagging script
 set(PACKAGE_VERSION_MAJOR 0)
-set(PACKAGE_VERSION_MINOR 3)
+set(PACKAGE_VERSION_MINOR 5)
 set(PACKAGE_VERSION_PATCH 0)
 
 set(PACKAGE_VERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}.${PACKAGE_VERSION_PATCH}")
@@ -33,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH $ENV{PANDORAPFA}/cmakemodules)
 find_package(ROOT COMPONENTS RIO Tree)
 find_package(DD4hep)
 find_package(GSL REQUIRED)
-find_package(EDM4HEP)
+find_package(EDM4HEP 1.0 REQUIRED)
 find_package(k4FWCore)
 find_package(PandoraSDK REQUIRED)
 find_package(LCContent REQUIRED)

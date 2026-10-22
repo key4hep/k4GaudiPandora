@@ -1,3 +1,45 @@
+# v00.05.00
+
+* 2026-10-13 Thomas Madlener ([PR#55](https://github.com/Key4hep/k4GaudiPandora/pull/55))
+  - Make the conversion to calorimeter hits for Pandora use the newly introduced `LCCaloHit`s that allow for a more flexible customization
+
+* 2026-10-07 Juan Miguel Carceller ([PR#61](https://github.com/Key4hep/k4GaudiPandora/pull/61))
+  - Require EDM4hep 1.0 and remove the pre-1.0 cluster phi compatibility check.
+
+* 2026-09-18 Juan Miguel Carceller ([PR#54](https://github.com/Key4hep/k4GaudiPandora/pull/54))
+  - Fix PFO comparison with current EDM4hep (https://github.com/key4hep/EDM4hep/pull/520)
+
+# v00.04.00
+
+* 2026-09-09 SanghyunKo ([PR#26](https://github.com/key4hep/k4GaudiPandora/pull/26))
+  - Enabled `DDExternalClusteringAlgorithm`. The static getter function from the previous `DDPandoraPFANewProcessor` has been removed by turning the algorithm into `pandora::ExternallyConfiguredAlgorithm`.
+
+* 2026-08-25 Ben Rosser ([PR#48](https://github.com/key4hep/k4GaudiPandora/pull/48))
+  - Move the `BitFieldCoder` used to decode the layer out of the event loop: it is now built once in `initialize()` and held as a member. Suggested by @jmcarcell in review.
+  - `caloLayout` is const
+
+* 2026-08-21 Juan Miguel Carceller ([PR#49](https://github.com/key4hep/k4GaudiPandora/pull/49))
+  - Set the Gaudi plugin search path for all tests to prefer locally built plugins
+
+* 2026-08-20 Thomas Madlener ([PR#47](https://github.com/key4hep/k4GaudiPandora/pull/47))
+  - Clone `CLDConfig` only once in tests to allow for multiple test runs without failure
+
+* 2026-08-18 Thomas Madlener ([PR#46](https://github.com/key4hep/k4GaudiPandora/pull/46))
+  - Remove the components that are part of the `k4-project-template` 
+  - Propagate build dependencies to downstream consumers
+
+* 2026-08-18 Federico Meloni ([PR#37](https://github.com/key4hep/k4GaudiPandora/pull/37))
+  - Updated CalculateTrackTimeAtCalorimeter to look up trackstate by location, not index.
+
+* 2026-08-18 Thomas Madlener ([PR#36](https://github.com/key4hep/k4GaudiPandora/pull/36))
+  - Remove the code for the old Marlin processors as they are entirely unused here
+
+* 2026-08-18 Federico Meloni ([PR#35](https://github.com/key4hep/k4GaudiPandora/pull/35))
+  - The pT of tracks in CopyTrackState now use the dd4hep local field instead of global fixed value when UseDD4hepField is set to True
+
+* 2026-08-17 Federico Meloni ([PR#33](https://github.com/key4hep/k4GaudiPandora/pull/33))
+  - Fix bug in missing call of DDPandoraPFANewAlgorithm::reset(). The local vectors are now reset again
+
 # v0.3.0
 
 * 2026-08-12 Federico Meloni ([PR#31](https://github.com/key4hep/k4GaudiPandora/pull/31))

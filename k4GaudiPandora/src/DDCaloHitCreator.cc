@@ -26,6 +26,7 @@
 #include <DD4hep/DetectorSelector.h>
 #include <DDCaloHitCreator.h>
 #include <DDRec/DetectorData.h>
+#include <LCObjects/LCCaloHit.h>
 
 #include "GaudiKernel/MsgStream.h"
 
@@ -48,6 +49,8 @@ DDCaloHitCreator::DDCaloHitCreator(const Settings& settings, pandora::Pandora& p
                                    const Gaudi::Algorithm* algorithm)
     : m_settings(settings), m_pandora(pandora), m_hCalBarrelLayerThickness(0.f), m_hCalEndCapLayerThickness(0.f),
       m_calorimeterHitVector(0), m_volumeManager(), m_algorithm(*algorithm) {
+  m_lcCaloHitFactory = std::make_shared<lc_content::LCCaloHitFactory>();
+
   const std::vector<dd4hep::rec::LayeredCalorimeterStruct::Layer>& barrelLayers =
       getExtension((dd4hep::DetType::CALORIMETER | dd4hep::DetType::HADRONIC | dd4hep::DetType::BARREL),
                    (dd4hep::DetType::AUXILIARY | dd4hep::DetType::FORWARD))
@@ -151,7 +154,7 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
           }
         }
 
-        PandoraApi::CaloHit::Parameters caloHitParameters;
+        lc_content::LCCaloHitParameters caloHitParameters;
         caloHitParameters.m_hitType = pandora::ECAL;
         caloHitParameters.m_isDigital = false;
         caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
@@ -184,7 +187,7 @@ pandora::StatusCode DDCaloHitCreator::createECalCaloHits(
         }
 
         PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                                PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+                                PandoraApi::CaloHit::Create(m_pandora, caloHitParameters, *m_lcCaloHitFactory))
 
       } catch (const std::exception& e) {
         m_algorithm.error() << "Exception processing ECAL hit: " << e.what() << endmsg;
@@ -222,7 +225,7 @@ DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
   for (const auto& hit : hCalCaloHits) {
     try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
+      lc_content::LCCaloHitParameters caloHitParameters;
       caloHitParameters.m_hitType = pandora::HCAL;
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
@@ -248,7 +251,7 @@ DDCaloHitCreator::createHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
       caloHitParameters.m_electromagneticEnergy = m_settings.m_hCalToEMGeV * hit.getEnergy();
 
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters, *m_lcCaloHitFactory))
 
     } catch (const std::exception& e) {
       m_algorithm.error() << "Exception processing HCAL hit: " << e.what() << endmsg;
@@ -286,7 +289,7 @@ DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
   for (const auto& hit : muonCaloHits) {
     try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
+      lc_content::LCCaloHitParameters caloHitParameters;
       caloHitParameters.m_hitType = pandora::MUON;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
       caloHitParameters.m_isInOuterSamplingLayer = true;
@@ -324,7 +327,7 @@ DDCaloHitCreator::createMuonCaloHits(const std::vector<edm4hep::CalorimeterHit>&
       }
 
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters, *m_lcCaloHitFactory))
 
     } catch (const std::exception& e) {
       m_algorithm.error() << "Exception processing muon hit: " << e.what() << endmsg;
@@ -361,7 +364,7 @@ DDCaloHitCreator::createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
 
   for (const auto& hit : inputLCalCaloHits) {
     try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
+      lc_content::LCCaloHitParameters caloHitParameters;
       caloHitParameters.m_hitType = pandora::ECAL;
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
@@ -380,7 +383,7 @@ DDCaloHitCreator::createLCalCaloHits(const std::vector<edm4hep::CalorimeterHit>&
       caloHitParameters.m_hadronicEnergy = m_settings.m_eCalToHadGeVEndCap * hit.getEnergy();
 
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters, *m_lcCaloHitFactory))
 
     } catch (const std::exception& e) {
       m_algorithm.error() << "Exception processing LCal hit: " << e.what() << endmsg;
@@ -414,7 +417,7 @@ DDCaloHitCreator::createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>
 
   for (const auto& hit : LHCalCaloHits) {
     try {
-      PandoraApi::CaloHit::Parameters caloHitParameters;
+      lc_content::LCCaloHitParameters caloHitParameters;
       caloHitParameters.m_hitType = pandora::HCAL;
       caloHitParameters.m_isDigital = false;
       caloHitParameters.m_layer = bitFieldCoder.get(hit.getCellID(), "layer");
@@ -434,7 +437,7 @@ DDCaloHitCreator::createLHCalCaloHits(const std::vector<edm4hep::CalorimeterHit>
       caloHitParameters.m_electromagneticEnergy = m_settings.m_hCalToEMGeV * hit.getEnergy();
 
       PANDORA_THROW_RESULT_IF(pandora::STATUS_CODE_SUCCESS, !=,
-                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters))
+                              PandoraApi::CaloHit::Create(m_pandora, caloHitParameters, *m_lcCaloHitFactory))
 
     } catch (const std::exception& e) {
       m_algorithm.error() << "Exception processing LHCal hit: " << e.what() << endmsg;

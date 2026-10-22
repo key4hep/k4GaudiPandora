@@ -26,6 +26,8 @@
 #include <edm4hep/EventHeaderCollection.h>
 #include <edm4hep/SimCalorimeterHitCollection.h>
 
+#include <DDSegmentation/BitFieldCoder.h>
+
 #include <Gaudi/Property.h>
 
 #include <k4FWCore/Transformer.h>
@@ -66,10 +68,9 @@ private:
   Gaudi::Property<std::string> m_detectorNameEndcap{this, "detectornameE", "YokeEndcap",
                                                     "Name of the second subdetector"};
 
-  std::string m_collName{};
-  std::string m_encodingString{};
   std::vector<bool> m_useLayersBarrelVec{}, m_useLayersEndcapVec{};
   SmartIF<IGeoSvc> m_geoSvc;
+  dd4hep::DDSegmentation::BitFieldCoder m_bitFieldCoder{};
 
   bool useLayer(const CHT::Layout caloLayout, const size_t layer) const;
   float computeHitTime(const edm4hep::SimCalorimeterHit& h) const;
