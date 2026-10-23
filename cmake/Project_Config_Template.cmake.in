@@ -13,7 +13,7 @@ find_dependency(GSL REQUIRED)
 find_dependency(EDM4HEP)
 find_dependency(k4FWCore)
 find_dependency(PandoraSDK)
-find_dependency(LCContent)
+find_dependency(LCContent 5.1)
 find_dependency(Gaudi)
 find_dependency(k4Reco)
 

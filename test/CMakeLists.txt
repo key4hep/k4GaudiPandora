@@ -94,11 +94,7 @@ set_tests_properties("compare_DDSimpleMuonDigi" PROPERTIES DEPENDS "run_DDSimple
 # live in libLCContentML, so these tests exist only when the ML build is enabled.
 if(K4GP_BUILD_ML)
   include(ExternalData)
-  # The templates are tried in order.  The local store is there so that the models can be
-  # changed and tested without a round trip through the web server; drop it once they are
-  # uploaded.  To use it, copy each model to test/models/local/ named after its md5.
   list(APPEND ExternalData_URL_TEMPLATES
-    "file://${CMAKE_CURRENT_SOURCE_DIR}/models/local/%(hash)"
     "https://key4hep.web.cern.ch:443/testFiles/k4GaudiPandora/%(hash)"
   )
 
