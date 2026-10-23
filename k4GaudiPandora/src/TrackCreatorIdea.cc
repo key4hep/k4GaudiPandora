@@ -20,6 +20,7 @@
 
 #include "Pandora/PandoraEnumeratedTypes.h"
 #include "Pandora/PandoraInputTypes.h"
+#include "Pandora/PdgTable.h"
 
 #include <Gaudi/Algorithm.h>
 
@@ -53,7 +54,8 @@ pandora::StatusCode TrackCreatorIdea::CreateTracks(const std::vector<edm4hep::Tr
 
       const float signedCurvature = trackState.omega;
       trackParameters.m_particleId = 0; // no PID at this stage
-      trackParameters.m_mass = 0.;      // no mass at this stage
+      trackParameters.m_mass =
+          pandora::PdgTable::GetParticleMass(pandora::PI_PLUS); // pion hypothesis, as the other creators
 
       if (signedCurvature != 0.f)
         trackParameters.m_charge = static_cast<int>(signedCurvature / std::fabs(signedCurvature));

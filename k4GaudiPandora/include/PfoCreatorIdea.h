@@ -40,12 +40,9 @@ public:
     ~Settings() = default;
 
     /// Dual-readout correction factors, needed to propagate the per-hit energy errors through
-    /// E_DR = (S - chi C) / (1 - chi).  Overwritten from the DualReadoutCorrection plugin instance
-    /// once pandora has read its settings, so they cannot drift from the chi actually applied; the
-    /// defaults only mirror the plugin's own so that a stray unconfigured instance still yields a
-    /// sensible scale rather than 1.
-    float m_chiEcal = 0.41f;
-    float m_chiHcal = 0.31f;
+    /// E_DR = (S - chi C) / (1 - chi).  Overridden by the DualReadoutCorrection plugin's values.
+    float m_chiEcal = 0.f;
+    float m_chiHcal = 0.f;
   };
 
 public:

@@ -45,7 +45,13 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
 
 # PandoraPFAIdeaAlgorithm registers the ONNX algorithms (ClusterNeutralPid,
 # SatelliteAssignmentOnnx) provided by LCContentML, so it is built only when ML is enabled.
-option(K4GP_BUILD_ML "Build the ONNX/ML-dependent IDEA reconstruction (needs LCContentML)" OFF)
+# Defaults to ON when the LCContent found provides LCContentML (built with -DLCContent_BUILD_ML=ON).
+if(TARGET LCContent::LCContentML)
+  set(_k4gp_build_ml_default ON)
+else()
+  set(_k4gp_build_ml_default OFF)
+endif()
+option(K4GP_BUILD_ML "Build the ONNX/ML-dependent IDEA reconstruction (needs LCContentML)" ${_k4gp_build_ml_default})
 if(K4GP_BUILD_ML)
     list(APPEND _plugin_sources src/PandoraPFAIdeaAlgorithm.cc)
 endif()

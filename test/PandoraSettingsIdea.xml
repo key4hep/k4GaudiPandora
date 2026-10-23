@@ -19,7 +19,7 @@
 <pandora>
     <!-- GLOBAL SETTINGS -->
     <IsMonitoringEnabled>false</IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo>true</ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo>false</ShouldDisplayAlgorithmInfo>
     <ShouldCollapseMCParticlesToPfoTarget>false</ShouldCollapseMCParticlesToPfoTarget>
 
     <!-- PLUGIN REGISTRATION -->
@@ -33,7 +33,6 @@
 
     <algorithm type = "DDExternalClustering">
         <FlagClustersAsPhotons>false</FlagClustersAsPhotons>
-        <UseClusterPID>false</UseClusterPID>
     </algorithm>
 
     <algorithm type = "TrackClusterAssociation">
@@ -104,7 +103,6 @@
 
     <algorithm type = "CreatePfo">
         <OutputPfoListName>PfoIdea</OutputPfoListName>
-        <PtCut>0.6</PtCut>
         <NeutralHadEnergyScale>1.0</NeutralHadEnergyScale>
     </algorithm>
 </pandora>
