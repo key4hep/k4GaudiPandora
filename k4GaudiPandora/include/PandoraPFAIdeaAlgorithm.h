@@ -86,7 +86,8 @@ private:
   Gaudi::Property<std::string> m_pandoraSettingsXmlFile{this, "PandoraSettingsXmlFile", "",
                                                         "The pandora settings xml file"};
 
-  Gaudi::Property<bool> m_hasHcalEndcap{this, "HasHcalEndcap", true,
+  Gaudi::Property<bool> m_hasHcalEndcap{
+      this, "HasHcalEndcap", true,
       "Whether the geometry has a dual-readout HCAL endcap.  Set false only for a barrel-only "
       "geometry; the calo steering vectors must then drop the endcap subdetector too"};
 
