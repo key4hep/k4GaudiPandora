@@ -25,11 +25,11 @@ add_test(NAME "clone_CLDConfig"
 )
 
 add_test(NAME "run_ddsim"
-  COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml -G --numberOfEvents 3 --outputFile sim.edm4hep.root --gun.energy '10*GeV' --gun.particle 'mu-' --gun.distribution uniform --gun.multiplicity 10"
+  COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml -G --numberOfEvents 3 --outputFile sim.edm4hep.root --gun.energy '10*GeV' --gun.particle 'mu-' --gun.distribution uniform --gun.multiplicity 10 --random.seed 42"
   )
 
 add_test(NAME "run_ddsim_ttbar"
-  COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml --numberOfEvents 3 --outputFile sim_ttbar.edm4hep.root --inputFile CLDConfig/test/yyxyev_000.stdhep"
+  COMMAND bash -c "ddsim --compactFile $K4GEO/FCCee/CLD/compact/CLD_o2_v07/CLD_o2_v07.xml --numberOfEvents 3 --outputFile sim_ttbar.edm4hep.root --inputFile CLDConfig/test/yyxyev_000.stdhep --random.seed 42"
   )
 set_tests_properties("run_ddsim_ttbar" PROPERTIES DEPENDS "clone_CLDConfig")
 
