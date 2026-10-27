@@ -20,6 +20,7 @@
 
 # A simple script to compare the PFOs from the Gaudi and Marlin output
 import argparse
+import math
 from podio.reading import get_reader
 
 parser = argparse.ArgumentParser(description="Compare hits from Gaudi and Marlin")
@@ -164,12 +165,17 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "Position",
                 "PositionError",
                 "ITheta",
-                # Known to be slightly different depending on the build type because
-                # optimizations can change decimals for float values after many decimals
                 "IPhi",
                 "DirectionError",
             ]:
-                if attr == "ITheta" or attr == "IPhi" and j == 7:
+                if attr in ("ITheta", "IPhi"):
+                    # The inertia angles differ by a few float ULPs between builds (e.g. FMA
+                    # contraction depends on the compiler target), so compare them with a tolerance
+                    gaudi_val = getattr(cluster_gaudi, f"get{attr}")()
+                    marlin_val = getattr(cluster_marlin, f"get{attr}")()
+                    assert math.isclose(
+                        gaudi_val, marlin_val, rel_tol=0, abs_tol=1e-6
+                    ), f"{attr} differ for cluster {j}: {gaudi_val} vs {marlin_val}"
                     continue
                 assert (
                     getattr(cluster_gaudi, f"get{attr}")()
