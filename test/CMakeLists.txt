@@ -21,7 +21,7 @@ limitations under the License.
 find_package(k4geo REQUIRED)
 
 add_test(NAME "clone_CLDConfig"
-  COMMAND bash -c "if ! test -f CLDReconstruction.py; then git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* . && sed -i -e '/Overlay.Overlay/d' -e '/HighLevelReco.RecoMCTruthLink/d' CLDReconstruction.py; fi"
+  COMMAND bash -c "if ! test -f CLDReconstruction.py; then git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* .; fi"
 )
 
 add_test(NAME "run_ddsim"
@@ -34,12 +34,12 @@ add_test(NAME "run_ddsim_ttbar"
 set_tests_properties("run_ddsim_ttbar" PROPERTIES DEPENDS "clone_CLDConfig")
 
 add_test(NAME "run_marlin_wrapper"
-  COMMAND k4run CLDReconstruction.py --inputFiles sim.edm4hep.root
+  COMMAND k4run CLDReconstruction.py --overlay Skip --inputFiles sim.edm4hep.root
 )
 set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim")
 
 add_test(NAME "run_marlin_wrapper_ttbar"
-  COMMAND k4run CLDReconstruction.py --inputFiles sim_ttbar.edm4hep.root --outputBasename output_ttbar
+  COMMAND k4run CLDReconstruction.py --overlay Skip --inputFiles sim_ttbar.edm4hep.root --outputBasename output_ttbar
 )
 set_tests_properties("run_marlin_wrapper_ttbar" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim_ttbar")
 
