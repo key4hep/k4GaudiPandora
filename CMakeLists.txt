@@ -58,9 +58,9 @@ message(STATUS "K4GAUDIPANDORA_USE_DDKALTEST: ${K4GAUDIPANDORA_USE_DDKALTEST}")
 
 #---------------------------------------------------------------
 
-include(cmake/Key4hepConfig.cmake)
-
 include(GNUInstallDirs)
+
+include(cmake/Key4hepConfig.cmake)
 
 
 add_subdirectory(k4GaudiPandora)
