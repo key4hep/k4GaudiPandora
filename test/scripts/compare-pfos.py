@@ -169,12 +169,13 @@ for i, frame_gaudi in enumerate(events_gaudi):
                 "DirectionError",
             ]:
                 if attr in ("ITheta", "IPhi"):
-                    # The inertia angles differ by a few float ULPs between builds (e.g. FMA
-                    # contraction depends on the compiler target), so compare them with a tolerance
+                    # The inertia angles differ by a float ULP between builds (e.g. FMA
+                    # contraction depends on the compiler target). rel_tol = 2^-22 accepts 2 ULPs of
+                    # a float32 of any magnitude (3 for the upper half of a power-of-two range), never 4
                     gaudi_val = getattr(cluster_gaudi, f"get{attr}")()
                     marlin_val = getattr(cluster_marlin, f"get{attr}")()
                     assert math.isclose(
-                        gaudi_val, marlin_val, rel_tol=0, abs_tol=1e-6
+                        gaudi_val, marlin_val, rel_tol=2**-22, abs_tol=0
                     ), f"{attr} differ for cluster {j}: {gaudi_val} vs {marlin_val}"
                     continue
                 assert (
