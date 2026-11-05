@@ -27,6 +27,7 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
                     src/DDExternalClusteringAlgorithm.cc
                     src/DDGeometryCreator.cc
                     src/DDMCParticleCreator.cc
+                    src/PfoCreatorBase.cc
                     src/DDPfoCreator.cc
                     src/DDSimpleMuonDigi.cc
                     src/DDTrackCreatorBase.cc
@@ -36,7 +37,24 @@ set(_plugin_sources ${CMAKE_CURRENT_LIST_DIR}/
                     src/DDGeometryCreatorALLEGRO.cc
                     src/DDTrackCreatorALLEGRO.cc
                     src/DDCaloHitCreatorALLEGRO.cc
+                    src/TrackCreatorIdea.cc
+                    src/DualReadoutCaloHitCreator.cc
+                    src/PfoCreatorIdea.cc
+                    src/GeometryCreatorIdea.cc
 )
+
+# PandoraPFAIdeaAlgorithm registers the ONNX algorithms (ClusterNeutralPid,
+# SatelliteAssignmentOnnx) provided by LCContentML, so it is built only when ML is enabled.
+# Defaults to ON when the LCContent found provides LCContentML (built with -DLCContent_BUILD_ML=ON).
+if(TARGET LCContent::LCContentML)
+  set(_k4gp_build_ml_default ON)
+else()
+  set(_k4gp_build_ml_default OFF)
+endif()
+option(K4GP_BUILD_ML "Build the ONNX/ML-dependent IDEA reconstruction (needs LCContentML)" ${_k4gp_build_ml_default})
+if(K4GP_BUILD_ML)
+    list(APPEND _plugin_sources src/PandoraPFAIdeaAlgorithm.cc)
+endif()
 
 gaudi_add_module(k4GaudiPandoraPlugins
                  SOURCES ${_plugin_sources}
@@ -52,6 +70,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       nlohmann_json::nlohmann_json
                       ${PandoraSDK_LIBRARIES}
                       ${LCContent_LIBRARIES}
+                      $<$<BOOL:${K4GP_BUILD_ML}>:LCContent::LCContentML>
                     )
 if(K4GAUDIPANDORA_USE_DDKALTEST)
   target_compile_definitions(k4GaudiPandoraPlugins PRIVATE K4GAUDIPANDORA_USE_DDKALTEST)

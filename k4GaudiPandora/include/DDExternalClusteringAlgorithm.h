@@ -32,9 +32,7 @@
 #include "Objects/CaloHit.h"
 #include "Pandora/ExternallyConfiguredAlgorithm.h"
 
-// Podio
-#include "podio/ObjectID.h"
-
+#include "edm4hep/CalorimeterHit.h"
 #include "edm4hep/Cluster.h"
 
 // c++
@@ -95,7 +93,8 @@ private:
   pandora::StatusCode Run();
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
-  typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
+  // keyed by the hit handle (podio::ObjectID is null until the collection is in place)
+  typedef std::unordered_map<edm4hep::CalorimeterHit, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
   bool m_flagClustersAsPhotons = false; ///< Whether to automatically flag new clusters as fixed photons
 
