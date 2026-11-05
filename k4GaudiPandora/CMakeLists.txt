@@ -67,6 +67,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       CLHEP::CLHEP
                       GSL::gsl
                       GSL::gslcblas # This seems to be necessary on Ubuntu 24.04 when linking with mold
+                      nlohmann_json::nlohmann_json
                       ${PandoraSDK_LIBRARIES}
                       ${LCContent_LIBRARIES}
                       $<$<BOOL:${K4GP_BUILD_ML}>:LCContent::LCContentML>

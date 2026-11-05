@@ -38,6 +38,7 @@ find_package(k4FWCore)
 find_package(PandoraSDK REQUIRED)
 find_package(LCContent 5.1 REQUIRED)
 find_package(Gaudi)
+find_package(nlohmann_json REQUIRED)
 find_package(k4Reco)
 
 #---------------------------------------------------------------
@@ -57,9 +58,9 @@ message(STATUS "K4GAUDIPANDORA_USE_DDKALTEST: ${K4GAUDIPANDORA_USE_DDKALTEST}")
 
 #---------------------------------------------------------------
 
-include(cmake/Key4hepConfig.cmake)
-
 include(GNUInstallDirs)
+
+include(cmake/Key4hepConfig.cmake)
 
 
 add_subdirectory(k4GaudiPandora)

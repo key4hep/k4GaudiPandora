@@ -21,7 +21,7 @@ limitations under the License.
 find_package(k4geo REQUIRED)
 
 add_test(NAME "clone_CLDConfig"
-  COMMAND bash -c "if ! test -f CLDReconstruction.py; then git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* . && sed -i -e '/Overlay.Overlay/d' -e '/HighLevelReco.RecoMCTruthLink/d' CLDReconstruction.py; fi"
+  COMMAND bash -c "if ! test -f CLDReconstruction.py; then git clone https://github.com/key4hep/CLDConfig.git --depth 1 && cp -r CLDConfig/CLDConfig/* .; fi"
 )
 
 add_test(NAME "run_ddsim"
@@ -34,12 +34,12 @@ add_test(NAME "run_ddsim_ttbar"
 set_tests_properties("run_ddsim_ttbar" PROPERTIES DEPENDS "clone_CLDConfig")
 
 add_test(NAME "run_marlin_wrapper"
-  COMMAND k4run CLDReconstruction.py --inputFiles sim.edm4hep.root
+  COMMAND k4run CLDReconstruction.py --overlay Skip --inputFiles sim.edm4hep.root
 )
 set_tests_properties("run_marlin_wrapper" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim")
 
 add_test(NAME "run_marlin_wrapper_ttbar"
-  COMMAND k4run CLDReconstruction.py --inputFiles sim_ttbar.edm4hep.root --outputBasename output_ttbar
+  COMMAND k4run CLDReconstruction.py --overlay Skip --inputFiles sim_ttbar.edm4hep.root --outputBasename output_ttbar
 )
 set_tests_properties("run_marlin_wrapper_ttbar" PROPERTIES DEPENDS "clone_CLDConfig;run_ddsim_ttbar")
 
@@ -127,6 +127,18 @@ add_test(NAME "run_Pandora_externalClustering"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runExternalClustering.py --IOSvc.Input output_pandora_ttbar.root --IOSvc.Output output_pandora_externalClustering.root
 )
 set_tests_properties("run_Pandora_externalClustering" PROPERTIES DEPENDS "run_Pandora_ttbar")
+
+# Theta-energy calibration: a valid EM table loads and the job runs
+add_test(NAME "run_Pandora_thetaEnergy"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Output output_pandora_thetaEnergy.root --PandoraPFANewAlgorithm.ElectromagneticThetaEnergyCorrectionFile ${PROJECT_SOURCE_DIR}/test/inputs/theta_energy_em.json
+)
+set_tests_properties("run_Pandora_thetaEnergy" PROPERTIES DEPENDS "run_marlin_wrapper")
+
+# Theta-energy calibration: an EM table given to the hadronic branch stops the job at initialize
+add_test(NAME "run_Pandora_thetaEnergy_wrongBasis"
+  COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Output output_pandora_thetaEnergy_wrongBasis.root --PandoraPFANewAlgorithm.HadronicThetaEnergyCorrectionFile ${PROJECT_SOURCE_DIR}/test/inputs/theta_energy_em.json
+)
+set_tests_properties("run_Pandora_thetaEnergy_wrongBasis" PROPERTIES DEPENDS "run_marlin_wrapper" PASS_REGULAR_EXPRESSION "expected \"hadronic\"")
 
 # Set the environment for all tests in this directory at once
 # This follows the k4-project-template setup
