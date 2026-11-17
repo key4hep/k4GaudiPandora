@@ -285,6 +285,7 @@ bool DDTrackCreatorBase::IsConflictingRelationship(TrackRange const& trackVec) c
   return false;
 }
 
+namespace {
 edm4hep::TrackState getEDM4hepTrackState(const edm4hep::Track& track, int location) {
   for (const auto& ts : track.getTrackStates()) {
     if (ts.location == location) {
@@ -293,6 +294,7 @@ edm4hep::TrackState getEDM4hepTrackState(const edm4hep::Track& track, int locati
   }
   throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
 }
+} // namespace
 
 void DDTrackCreatorBase::GetTrackStates(const edm4hep::Track& pTrack,
                                         PandoraApi::Track::Parameters& trackParameters) const {
