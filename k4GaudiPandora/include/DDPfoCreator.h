@@ -19,6 +19,8 @@
 #ifndef K4GAUDIPANDORA_DDPFOCREATOR_H
 #define K4GAUDIPANDORA_DDPFOCREATOR_H 1
 
+#include "PfoCreatorBase.h"
+
 #include "Api/PandoraApi.h"
 
 #include <Gaudi/Algorithm.h>
@@ -32,7 +34,7 @@ class MutableVertex;
 class VertexCollection;
 } // namespace edm4hep
 
-class DDPfoCreator {
+class DDPfoCreator : public PfoCreatorBase {
 public:
   class Settings {
   public:
@@ -138,24 +140,6 @@ private:
                                                         pandora::CartesianVector& referencePoint) const;
 
   /**
-   *  @brief  Add tracks to reconstructed particle
-   *
-   *  @param  pPandoraPfo the address of the pandora pfo
-   *  @param  pReconstructedParticle the address of the reconstructed particle to be added tracks
-   */
-  void AddTracksToRecoParticle(const pandora::ParticleFlowObject* const pPandoraPfo,
-                               edm4hep::MutableReconstructedParticle& pReconstructedParticle) const;
-
-  /**
-   *  @brief  Set properties of reconstructed particle from pandora pfo
-   *
-   *  @param  pPandoraPfo the address of the pandora pfo
-   *  @param  pReconstructedParticle the address of the reconstructed particle to be set properties
-   */
-  void SetRecoParticlePropertiesFromPFO(const pandora::ParticleFlowObject* const pPandoraPfo,
-                                        edm4hep::MutableReconstructedParticle& pReconstructedParticle) const;
-
-  /**
    *  @brief  Whether parent and daughter tracks are associated with the same pfo
    *
    *  @param  pPandoraTrack the address of the pandora track
@@ -196,9 +180,7 @@ private:
   bool AreAnyOtherSiblingsInList(const pandora::Track* const pPandoraTrack,
                                  const pandora::TrackList& allTrackList) const;
 
-  const Settings m_settings;           ///< The pfo creator settings
-  pandora::Pandora& m_pandora;         ///< Reference to the pandora object from which to extract the pfos
-  const Gaudi::Algorithm& m_algorithm; ///< Reference to the Gaudi algorithm for message streaming
+  const Settings m_settings; ///< The pfo creator settings
 };
 
 #endif // #ifndef K4GAUDIPANDORA_DDPFOCREATOR_H

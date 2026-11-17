@@ -42,10 +42,12 @@ faces it can choose between is whatever the upstream extrapolation stored.
 Note that `OFF` does not make k4GaudiPandora depend on k4ActsTracking; nothing is linked or included
 from it.
 
+Independently of this option, a track with no `AtCalorimeter` state is still passed to pandora with
+`reachesCalorimeter` false: the state remains (0,0,0) and `timeAtCalorimeter` is -1 when the track doesn't
+reach calo (Pandora requires them as mendatory input parameters). Use ReachesCalorimeter() method to check it.
+
 Caveats when `OFF`:
 
-- The input tracks **must** carry an `AtCalorimeter` track state. Tracks without one are dropped by
-  the track creators, which report `Failed to extract a track`.
 - `TrackStateTolerance` has no effect, since it only bounds the acceptance radius of the endcap
   state.
 
