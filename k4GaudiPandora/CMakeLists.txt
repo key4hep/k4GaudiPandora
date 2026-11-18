@@ -44,6 +44,7 @@ gaudi_add_module(k4GaudiPandoraPlugins
                       k4FWCore::k4FWCore
                       k4FWCore::k4Interface
                       EDM4HEP::edm4hep
+                      EDM4HEP::utils
                       DD4hep::DDRec
                       DD4hep::DDCore
                       CLHEP::CLHEP

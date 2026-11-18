@@ -20,7 +20,6 @@
 #include "DDMCParticleCreator.h"
 
 #include <Api/PandoraApi.h>
-#include <Objects/Helix.h>
 
 #include <edm4hep/CaloHitContribution.h>
 #include <edm4hep/CaloHitMCParticleLinkCollection.h>
@@ -29,6 +28,7 @@
 #include <edm4hep/SimTrackerHit.h>
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackMCParticleLinkCollection.h>
+#include <edm4hep/utils/Helix.h>
 
 #include <cmath>
 #include <limits>
@@ -81,9 +81,9 @@ DDMCParticleCreator::CreateTrackToMCParticleRelationships(const TrackMCLinkColle
       try {
         // Get reconstructed momentum at dca
         const auto& trackState = pTrack.getTrackStates(0);
-        const pandora::Helix helixFit(trackState.phi, trackState.D0, trackState.Z0, trackState.omega,
-                                      trackState.tanLambda, m_bField);
-        const float recoMomentum = helixFit.GetMomentum().GetMagnitude();
+        const auto helixFit = edm4hep::utils::Helix::fromTrackState(trackState, m_bField);
+        const auto& momentum = helixFit.getMomentum();
+        const float recoMomentum = std::hypot(momentum.x, momentum.y, momentum.z);
 
         // APS: I am not sure why we chose the best MCParticle per trackRelationCollection, but this was like this from
         // the start, and we only have one track collection, so it doesn't matter...
