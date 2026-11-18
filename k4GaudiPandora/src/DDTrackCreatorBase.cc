@@ -26,17 +26,20 @@
 
 // From Pandora LCContent
 #include <LCObjects/LCTrack.h>
-#include <Objects/Helix.h>
 
 #include <Gaudi/Algorithm.h>
 
 #include <edm4hep/Track.h>
 #include <edm4hep/TrackState.h>
 #include <edm4hep/VertexCollection.h>
+#include <edm4hep/utils/Helix.h>
 
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <numbers>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -461,54 +464,40 @@ void DDTrackCreatorBase::GetTrackStatesAtCalo(edm4hep::Track const& track,
 
 float DDTrackCreatorBase::CalculateTrackTimeAtCalorimeter(const edm4hep::Track& track) const {
 
-  // Look the state up by location, as everywhere else in this class.
-  auto const ts = getEDM4hepTrackState(track, edm4hep::TrackState::AtIP);
-  const pandora::Helix helix(ts.phi, ts.D0, ts.Z0, ts.omega, ts.tanLambda, m_settings.m_bField);
-  const pandora::CartesianVector& referencePoint(helix.GetReferencePoint());
+  const auto ts = getEDM4hepTrackState(track, edm4hep::TrackState::AtIP);
+  try {
+    const auto helix = edm4hep::utils::Helix::fromTrackState(ts, m_settings.m_bField);
+    const auto& momentum = helix.getMomentum();
 
-  // First project to endcap
-  float minGenericTime(std::numeric_limits<float>::max());
-
-  pandora::CartesianVector bestECalProjection(0.f, 0.f, 0.f);
-  const int signPz((helix.GetMomentum().GetZ() > 0.f) ? 1 : -1);
-  (void)helix.GetPointInZ(static_cast<float>(signPz) * m_settings.m_eCalEndCapInnerZ, referencePoint,
-                          bestECalProjection, minGenericTime);
-
-  // Then project to barrel surface(s)
-  pandora::CartesianVector barrelProjection(0.f, 0.f, 0.f);
-  if (m_settings.m_eCalBarrelInnerSymmetry > 0) {
-    // Polygon
-    float twopi_n = 2. * M_PI / (static_cast<float>(m_settings.m_eCalBarrelInnerSymmetry));
-
-    for (int i = 0; i < m_settings.m_eCalBarrelInnerSymmetry; ++i) {
-      float genericTime(std::numeric_limits<float>::max());
-      const float phi(twopi_n * static_cast<float>(i) + m_settings.m_eCalBarrelInnerPhi0);
-
-      const pandora::StatusCode statusCode(helix.GetPointInXY(
-          m_settings.m_eCalBarrelInnerR * std::cos(phi), m_settings.m_eCalBarrelInnerR * std::sin(phi),
-          std::cos(phi + 0.5 * M_PI), std::sin(phi + 0.5 * M_PI), referencePoint, barrelProjection, genericTime));
-
-      if ((pandora::STATUS_CODE_SUCCESS == statusCode) && (genericTime < minGenericTime)) {
-        minGenericTime = genericTime;
-        bestECalProjection = barrelProjection;
+    // Start with the endcap, then check the barrel for an earlier crossing.
+    const double endcapZ = std::copysign(m_settings.m_eCalEndCapInnerZ, momentum.z);
+    auto minLength = helix.lengthToZ(endcapZ);
+    const auto consider = [&minLength](std::optional<double> length) {
+      if (length && (!minLength || *length < *minLength)) {
+        minLength = length;
       }
-    }
-  } else {
-    // Cylinder
-    float genericTime(std::numeric_limits<float>::max());
-    const pandora::StatusCode statusCode(
-        helix.GetPointOnCircle(m_settings.m_eCalBarrelInnerR, referencePoint, barrelProjection, genericTime));
+    };
 
-    if ((pandora::STATUS_CODE_SUCCESS == statusCode) && (genericTime < minGenericTime)) {
-      minGenericTime = genericTime;
-      bestECalProjection = barrelProjection;
+    const double radius = m_settings.m_eCalBarrelInnerR;
+    if (const int symmetry = m_settings.m_eCalBarrelInnerSymmetry; symmetry > 0) {
+      const double phiStep = 2. * std::numbers::pi / symmetry;
+      for (int i = 0; i < symmetry; ++i) {
+        const double phi = phiStep * i + m_settings.m_eCalBarrelInnerPhi0;
+        const edm4hep::Vector3d normal{std::cos(phi), std::sin(phi), 0.};
+        consider(helix.lengthToPlane({radius * normal.x, radius * normal.y, 0.}, normal));
+      }
+    } else {
+      consider(helix.lengthToRadius(radius));
     }
+
+    if (!minLength) {
+      throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
+    }
+    // Pandora's generic time is transverse path length divided by pT (equivalently, 3D path length / |p|).
+    return *minLength / std::hypot(momentum.x, momentum.y);
+  } catch (const std::invalid_argument&) {
+    throw pandora::StatusCodeException(pandora::STATUS_CODE_INVALID_PARAMETER);
   }
-
-  if (bestECalProjection.GetMagnitudeSquared() < std::numeric_limits<float>::epsilon())
-    throw pandora::StatusCodeException(pandora::STATUS_CODE_NOT_INITIALIZED);
-
-  return minGenericTime;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
