@@ -1,0 +1,5 @@
+<pandora>
+    <ShouldCollapseMCParticlesToPfoTarget>false</ShouldCollapseMCParticlesToPfoTarget>
+    <algorithm type="DDExternalClustering" />
+    <algorithm type="CheckCluster" />
+</pandora>
