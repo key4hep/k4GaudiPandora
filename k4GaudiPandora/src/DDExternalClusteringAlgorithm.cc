@@ -25,14 +25,16 @@
  *  $Log: $
  */
 
-#include "edm4hep/Cluster.h"
-#include "edm4hep/ClusterCollection.h"
+#include "DDExternalClusteringAlgorithm.h"
+
+#include "edm4hep/CalorimeterHit.h"
 
 #include "Pandora/AlgorithmHeaders.h"
 
-#include "DDExternalClusteringAlgorithm.h"
-#include "Gaudi/Algorithm.h"
-#include "GaudiKernel/AnyDataWrapper.h"
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
 
 // setters and getters for the external cluster holder
 void ExternalClusterHolder::setExternalClusters(std::vector<std::vector<edm4hep::Cluster>>* externalClusters) {
@@ -56,14 +58,14 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
     if (pCaloHitList->empty())
       return pandora::STATUS_CODE_SUCCESS;
 
-    // Populate pandora parent address to calo hit map
-    ExternalToPandoraCaloHitMap caloHitMap;
+    // Match by hit identity: collections produced in the same job can share object IDs
+    // before they are put into a podio Frame.
+    std::unordered_map<edm4hep::CalorimeterHit, const pandora::CaloHit*> caloHitMap;
+    caloHitMap.reserve(pCaloHitList->size());
 
     for (const auto* pCaloHit : *pCaloHitList) {
-      const edm4hep::CalorimeterHit* edmCaloHit =
-          static_cast<const edm4hep::CalorimeterHit*>(pCaloHit->GetParentAddress());
-
-      caloHitMap.emplace(edmCaloHit->id(), pCaloHit);
+      const auto& edmCaloHit = *static_cast<const edm4hep::CalorimeterHit*>(pCaloHit->GetParentAddress());
+      caloHitMap.emplace(edmCaloHit, pCaloHit);
     }
 
     // Recreate external clusters within the pandora framework
@@ -89,7 +91,7 @@ pandora::StatusCode DDExternalClusteringAlgorithm::Run() {
         // find corresponding pandora hits
         // and fill pandora calo hit list
         for (const auto& edmHit : calorimeterHitVec) {
-          auto itr = caloHitMap.find(edmHit.id());
+          auto itr = caloHitMap.find(edmHit);
 
           if (itr == caloHitMap.end())
             continue;

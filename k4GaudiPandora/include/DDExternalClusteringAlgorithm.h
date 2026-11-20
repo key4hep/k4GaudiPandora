@@ -29,22 +29,11 @@
 
 // Pandora
 #include "Helpers/XmlHelper.h"
-#include "Objects/CaloHit.h"
 #include "Pandora/ExternallyConfiguredAlgorithm.h"
-
-// Podio
-#include "podio/ObjectID.h"
 
 #include "edm4hep/Cluster.h"
 
-// c++
-#include <map>
-#include <unordered_map>
 #include <vector>
-
-namespace pandora {
-class CaloHit;
-}
 
 /**
  *  @brief  ExternalClusterHolder class - holds pointers to the external clusters and the calo hits
@@ -94,8 +83,6 @@ public:
 private:
   pandora::StatusCode Run();
   pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
-
-  typedef std::unordered_map<podio::ObjectID, const pandora::CaloHit*> ExternalToPandoraCaloHitMap;
 
   bool m_flagClustersAsPhotons = false; ///< Whether to automatically flag new clusters as fixed photons
 

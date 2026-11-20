@@ -92,6 +92,17 @@ add_test(NAME "run_Pandora_externalClustering"
 )
 set_tests_properties("run_Pandora_externalClustering" PROPERTIES DEPENDS "run_Pandora_ttbar")
 
+add_executable(test_external_clustering
+  test-external-clustering.cpp
+  ${PROJECT_SOURCE_DIR}/k4GaudiPandora/src/DDExternalClusteringAlgorithm.cc
+)
+target_include_directories(test_external_clustering PRIVATE ${PROJECT_SOURCE_DIR}/k4GaudiPandora/include)
+target_include_directories(test_external_clustering SYSTEM PRIVATE ${PandoraSDK_INCLUDE_DIRS})
+target_link_libraries(test_external_clustering PRIVATE EDM4HEP::edm4hep ${PandoraSDK_LIBRARIES})
+add_test(NAME "external_clustering_same_job"
+  COMMAND test_external_clustering ${CMAKE_CURRENT_SOURCE_DIR}/inputs/external_clustering.xml
+)
+
 # Theta-energy calibration: a valid EM table loads and the job runs
 add_test(NAME "run_Pandora_thetaEnergy"
   COMMAND k4run ${PROJECT_SOURCE_DIR}/k4GaudiPandora/options/runPandora.py --IOSvc.Output output_pandora_thetaEnergy.root --PandoraPFANewAlgorithm.ElectromagneticThetaEnergyCorrectionFile ${PROJECT_SOURCE_DIR}/test/inputs/theta_energy_em.json
